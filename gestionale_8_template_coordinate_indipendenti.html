@@ -198,7 +198,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <div id="commodityFlow" class="hidden">
 <section class="panel">
 <h2>Preventivi Fix e Flex <span class="badge-draft">BOZZA LISTINI</span></h2>
-<p class="note">Sezione separata dalle promo FLAT. Qui si stima solo la <b>materia prima</b>: per Fix quota fissa + corrispettivo €/kWh o €/Smc; per Flex PUN o PSV + spread. I prezzi cambiano se il cliente ha P.IVA e se è già cliente Fastweb. I valori di listino sono una bozza: puoi modificarli sotto e ricalcolare.</p>
+<p class="note">Sezione separata dalle promo FLAT. Qui si stima solo la <b>materia prima</b>: per Fix quota fissa + corrispettivo €/kWh o €/Smc; per Flex quota fissa + PUN o PSV + spread. I prezzi cambiano se il cliente ha P.IVA e se è già cliente Fastweb. I valori di listino sono una bozza: puoi modificarli sotto e ricalcolare.</p>
 <div class="checks">
 <label><input type="radio" name="fxOffer" id="fxOfferFix" value="fix" checked> Fix</label>
 <label><input type="radio" name="fxOffer" id="fxOfferFlex" value="flex"> Flex</label>
@@ -231,7 +231,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label>PUN stimato (€/kWh)<input id="fxPun" type="number" min="0" step="0.001"></label>
 <label>PSV stimato (€/Smc)<input id="fxPsv" type="number" min="0" step="0.001"></label>
 </div>
-<p class="note">PUN e PSV sono indici variabili: inserisci la stima usata per il preventivo. Lo spread applicato è quello di listino (bozza), diverso per P.IVA e cliente Fastweb.</p>
+<p class="note">PUN e PSV sono indici variabili: inserisci la stima usata per il preventivo. Quota fissa e spread sono di listino (bozza) e cambiano per P.IVA e cliente Fastweb.</p>
 </div>
 <div class="actions">
 <button type="button" id="fxCalculate">Calcola preventivo Fix/Flex</button>
@@ -250,12 +250,12 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <p class="note">Modifica i valori e ricalcola. Privato = senza P.IVA. Fastweb = già cliente Fastweb.</p>
 <h3>Fix — quota fissa + corrispettivo</h3>
 <div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Quota fissa €/mese</th><th>Corrispettivo</th></tr></thead><tbody id="fxFixTable"></tbody></table></div>
-<h3>Flex — indice + spread</h3>
+<h3>Flex — quota fissa + indice + spread</h3>
 <div class="grid">
 <label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
 <label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
 </div>
-<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Spread</th></tr></thead><tbody id="fxFlexTable"></tbody></table></div>
+<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Quota fissa €/mese</th><th>Spread</th></tr></thead><tbody id="fxFlexTable"></tbody></table></div>
 </section>
 </div>
 
@@ -599,8 +599,8 @@ const COMMODITY_RATES={
     },
     flex:{
       index:0.110,
-      private:{no:{spread:0.028},yes:{spread:0.018}},
-      piva:{no:{spread:0.024},yes:{spread:0.016}}
+      private:{no:{monthly:8.5,spread:0.028},yes:{monthly:7.5,spread:0.018}},
+      piva:{no:{monthly:10,spread:0.024},yes:{monthly:9,spread:0.016}}
     }
   },
   gas:{
@@ -611,8 +611,8 @@ const COMMODITY_RATES={
     },
     flex:{
       index:0.40,
-      private:{no:{spread:0.090},yes:{spread:0.070}},
-      piva:{no:{spread:0.080},yes:{spread:0.065}}
+      private:{no:{monthly:9,spread:0.090},yes:{monthly:8,spread:0.070}},
+      piva:{no:{monthly:11,spread:0.080},yes:{monthly:10,spread:0.065}}
     }
   }
 };
@@ -643,15 +643,15 @@ function calcCommodityService(service,offer,consumption,spend,isPiva,isFw,indexV
   const unit=COMMODITY_RATES[service].unit;
   const rate=fxRate(service,offer,isPiva,isFw);
   let monthly=0, unitP=0, annual=0, indexUsed=null, spread=null;
+  monthly=Number(rate.monthly||0);
   if(offer==="fix"){
-    monthly=Number(rate.monthly||0);
     unitP=Number(rate.price||0);
     annual=monthly*12+consumption*unitP;
   }else{
     indexUsed=Number(indexValue);
     spread=Number(rate.spread||0);
     unitP=indexUsed+spread;
-    annual=consumption*unitP;
+    annual=monthly*12+consumption*unitP;
   }
   const saving=(Number.isFinite(spend)&&spend>0)?spend-annual:null;
   return {service,unit,consumption,currentSpend:spend,monthly,unitPrice:unitP,indexUsed,spread,annual,saving};
@@ -704,7 +704,7 @@ function renderCommodityResult(q){
     const s=q.sections[key]; if(!s)continue;
     let det="";
     if(q.offer==="fix")det=`Fisso ${money(s.monthly)}/mese + ${unitPrice(s.unitPrice,s.unit)}`;
-    else det=`${key==="light"?"PUN":"PSV"} ${unitPrice(s.indexUsed,s.unit)} + spread ${unitPrice(s.spread,s.unit)} = ${unitPrice(s.unitPrice,s.unit)}`;
+    else det=`Fisso ${money(s.monthly)}/mese + ${key==="light"?"PUN":"PSV"} ${unitPrice(s.indexUsed,s.unit)} + spread ${unitPrice(s.spread,s.unit)}`;
     const sav=s.saving==null?"—":money(s.saving);
     html+=`<tr><td><b>${title}</b></td><td>${num(s.consumption)} ${s.unit}</td><td>${det}</td><td>${money(s.annual)}</td><td>${sav}</td></tr>`;
   }
@@ -720,8 +720,8 @@ function buildCommodityHtml(q){
   const cards=keys.map(([k,title])=>{
     const s=q.sections[k];
     let rows="";
+    rows+=`<div class="crow"><span>Quota fissa</span><b>${money(s.monthly)} / mese</b></div>`;
     if(q.offer==="fix"){
-      rows+=`<div class="crow"><span>Quota fissa</span><b>${money(s.monthly)} / mese</b></div>`;
       rows+=`<div class="crow"><span>Corrispettivo</span><b>${unitPrice(s.unitPrice,s.unit)}</b></div>`;
     }else{
       rows+=`<div class="crow"><span>${k==="light"?"PUN stimato":"PSV stimato"}</span><b>${unitPrice(s.indexUsed,s.unit)}</b></div>`;
@@ -735,7 +735,7 @@ function buildCommodityHtml(q){
   const tot=Object.values(q.sections).reduce((a,s)=>a+s.annual,0);
   const formula=q.offer==="fix"
     ?"Fix: quota fissa annuale + consumo × corrispettivo unitario."
-    :"Flex: consumo × (indice PUN/PSV + spread).";
+    :"Flex: quota fissa annuale + consumo × (indice PUN/PSV + spread).";
   const cust=q.customer||{}, shop=q.shop||{};
   return `<div class="cpage" data-offer="${q.offer}">
     <div class="chead"><div class="ctitle"><small>PROMO ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
@@ -805,7 +805,7 @@ function renderCommodityRateTables(){
       for(const [fw,fwL] of [["no","No"],["yes","Sì"]]){
         const r=COMMODITY_RATES[svc].flex[seg][fw];
         const unit=COMMODITY_RATES[svc].unit;
-        flex+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.flex.${seg}.${fw}.spread" type="number" min="0" step="0.001" value="${r.spread}"> €/${unit}</td></tr>`;
+        flex+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.flex.${seg}.${fw}.monthly" type="number" min="0" step="0.01" value="${r.monthly}"></td><td><input data-fx="${svc}.flex.${seg}.${fw}.spread" type="number" min="0" step="0.001" value="${r.spread}"> €/${unit}</td></tr>`;
       }
     }
   }
