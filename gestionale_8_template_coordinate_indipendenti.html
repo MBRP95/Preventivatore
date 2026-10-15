@@ -34,15 +34,15 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qicard dl{margin:0;padding:10px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:12.5px;line-height:1.45}
 .qicard dt{color:#222;font-weight:700}
 .qicard dd{margin:0;font-weight:600;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.qoffers{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.qoffers{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1;min-width:0}
 .qpage.is-single .qoffers{grid-template-columns:1fr}
-.qoffer{background:#FFF9DF;border-radius:18px;padding:12px 12px 10px;min-height:0;display:flex;flex-direction:column}
+.qoffer{background:#FFF9DF;border-radius:18px;padding:12px 12px 10px;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .qoffer-main{display:flex;gap:6px;flex:1}
 .qart{position:relative;flex:0 0 128px;width:128px;height:320px;overflow:hidden;margin:0}
 .qart img{height:320px;width:auto;max-width:none;display:block;object-fit:contain;object-position:left top}
 
 .qart--gas{flex-basis:128px;width:128px}
-.qbody{flex:1;min-width:0;padding-top:2px}
+.qbody{flex:1;min-width:0;padding-top:2px;overflow:hidden}
 .qban{background:#111;color:#FFD000;border-radius:14px;text-align:center;padding:11px 8px 12px;margin-bottom:10px}
 .qban small{display:block;font-style:italic;font-weight:800;font-size:11px;letter-spacing:.2px}
 .qban b{display:block;font-style:italic;font-size:17px;font-weight:900;margin-top:2px}
@@ -60,26 +60,27 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qcost .lbl{font-weight:800;font-size:13px}
 .qcost .val{font-size:26px;font-weight:900;margin:6px 0 2px;line-height:1}
 .qcost .u{font-size:11px;color:#444}
-.qmonth{background:#F3C89A;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:10px 10px;font-size:11px;font-weight:700;color:#555;white-space:nowrap;flex-wrap:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.qmonth{background:#F3C89A;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:10px 10px;font-size:11px;font-weight:700;color:#555;white-space:nowrap;flex-wrap:nowrap;min-width:0;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .qmonth span{white-space:nowrap;flex:0 0 auto}
 .qmonth b{font-size:13px;color:#111;white-space:nowrap;flex:0 0 auto}
 .qoffer.no-save .qmetrics{display:none}
 .qoffer.no-save .qcost{padding:36px 8px 28px}
 .qoffer.no-save .qcost .val{font-size:30px}
-.qstats{display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;margin-top:8px;padding:12px 8px;background:#fff;border-radius:16px;min-height:72px}
+.qstats{display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;margin-top:8px;padding:12px 8px;background:#fff;border-radius:16px;min-height:72px;min-width:0;max-width:100%;box-sizing:border-box}
 .qstats.n1{justify-content:center;padding:14px 18px}
 .qstats.n2{justify-content:space-evenly}
 .qstat{text-align:left;font-size:11px;color:#222;border-right:0;padding:4px 10px;display:flex;flex-direction:row;align-items:center;gap:8px;flex:1 1 0;min-width:0;position:relative}
 .qstat:not(:last-child):after{content:"";position:absolute;right:0;top:14%;bottom:14%;width:1.5px;background:#222}
 .qstat:first-child{padding-left:8px}
-.qstats.n1 .qstat{flex:0 1 220px;padding-left:0;padding-right:0}
+.qstats.n1 .qstat{flex:1 1 auto;max-width:240px;padding-left:0;padding-right:0}
 .qstats.n1 .qstat:after{display:none}
 .qstat-txt{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .qstat svg{display:block;flex-shrink:0}
 .qstat span{font-size:10px;color:#222;font-weight:700;line-height:1.2;white-space:nowrap}
-.qstat-field{background:#E8E9ED;border-radius:10px;padding:7px 10px;min-height:30px;display:flex;flex-direction:column;justify-content:center;gap:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.qstat-field{background:#E8E9ED;border-radius:10px;padding:7px 10px;min-height:30px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .qstat b{display:block;color:#111;font-size:13px;font-weight:800;margin:0;white-space:nowrap}
 .qstat i{display:block;font-style:normal;color:#666;font-size:8.5px;white-space:nowrap}
+.qpage > .qstats{margin-top:10px}
 .qfoot{margin-top:12px;background:#fff;border-radius:16px;display:grid;grid-template-columns:repeat(4,1fr);padding:14px 6px;position:relative;z-index:1}
 .qfootitem{display:flex;gap:10px;align-items:center;padding:4px 12px;border-right:1px solid #e0e0e0;font-size:9px;line-height:1.3;color:#555}
 .qfootitem:last-child{border:0}
@@ -319,7 +320,7 @@ function offerHtml(type,sec,q,single){
         <div class="qmonth"><span>Canone mensile</span><b>${money(monthlyOf(sec))} al mese</b></div>
       </div>
     </div>
-    ${statsHtml(offerStatsHtml(type,sec,q))}
+    ${single?statsHtml(offerStatsHtml(type,sec,q)):""}
   </article>`;
 }
 function footerHtml(){
@@ -350,9 +351,10 @@ function buildQuoteHtml(q){
     ["Email:",shop.email||""],
     ["Indirizzo:",shop.address||""]
   ]);
-  let offers="";
+  let offers="", bottomStats="";
   if(layout==="dual"){
     offers=offerHtml("light",sections.light,q,false)+offerHtml("gas",sections.gas,q,false);
+    bottomStats=statsHtml(offerStatsHtml("light",sections.light,q).concat(offerStatsHtml("gas",sections.gas,q)));
   }else{
     offers=offerHtml(layout==="light"?"light":"gas",layout==="light"?sections.light:sections.gas,q,true);
   }
@@ -360,6 +362,7 @@ function buildQuoteHtml(q){
     <div class="qhead"><div class="qtitle">PROMO ENERGIA</div><div class="qmeta">Preventivo n. <b>${escapeHtml(quoteNo)}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="qinfo">${cust}${shopC}</div>
     <div class="qoffers">${offers}</div>
+    ${bottomStats}
     ${footerHtml()}
   </div>`;
 }
