@@ -289,7 +289,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 </section>
 <section class="panel">
 <h2>Listini Fix e Flex</h2>
-<p class="note">Le promo Fix hanno i valori bloccati. Puoi modificare solo le promo Flex e gli indici PUN e PSV. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
+<p class="note">I valori delle promo Fix e Flex sono bloccati. Puoi modificare solo gli indici PUN e PSV. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
 <div class="grid">
 <label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
 <label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
@@ -925,8 +925,7 @@ async function makeCommodityPdf(){
   }
 }
 function fxRateInput(o,field,step){
-  const lock=o.kind==="fix"?" readonly tabindex=\"-1\"":"";
-  return `<input data-fx-id="${o.id}" data-fx-field="${field}" type="number" min="0" step="${step}" value="${o[field]}"${lock}>`;
+  return `<input data-fx-id="${o.id}" data-fx-field="${field}" type="number" min="0" step="${step}" value="${o[field]}" readonly tabindex="-1">`;
 }
 function renderCommodityRateTables(){
   let html="";
@@ -945,15 +944,6 @@ function renderCommodityRateTables(){
   $("fxPsvDefault").value=COMMODITY_INDEX.psv;
   $("fxLightPun").value=COMMODITY_INDEX.pun;
   $("fxGasPsv").value=COMMODITY_INDEX.psv;
-  document.querySelectorAll("[data-fx-id]").forEach(inp=>{
-    inp.addEventListener("change",()=>{
-      if(inp.hasAttribute("readonly"))return;
-      const n=Number(inp.value);
-      if(!Number.isFinite(n)||n<0)return;
-      const o=fxFindOffer(inp.getAttribute("data-fx-id"));
-      if(o&&o.kind!=="fix")o[inp.getAttribute("data-fx-field")]=n;
-    });
-  });
 }
 
 $("chooseFolder").addEventListener("click",chooseFolder);$("loadArchive").addEventListener("click",loadArchive);$("calculate").addEventListener("click",calculate);$("clear").addEventListener("click",clearForm);$("saveQuote").addEventListener("click",saveQuote);$("makePdf").addEventListener("click",makePdf);$("showHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});$("showTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});$("exportBackup").addEventListener("click",exportBackup);$("importBackup").addEventListener("click",()=>$("backupFile").click());$("backupFile").addEventListener("change",e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=""});
