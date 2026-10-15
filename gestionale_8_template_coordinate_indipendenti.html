@@ -82,6 +82,9 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qstat b{display:block;color:#111;font-size:13px;font-weight:800;margin:0;white-space:nowrap}
 .qstat i{display:block;font-style:normal;color:#666;font-size:8.5px;white-space:nowrap}
 .qpage > .qstats{margin-top:10px}
+.qcalc{margin-top:10px;background:#fff;border-radius:14px;padding:10px 16px 11px;font-size:11px;line-height:1.45;color:#333;position:relative;z-index:1}
+.qcalc p{margin:3px 0}
+.qpage.is-single .qcalc{font-size:12px;padding:12px 18px}
 .qfoot{margin-top:12px;background:#fff;border-radius:16px;display:grid;grid-template-columns:repeat(4,1fr);padding:14px 6px;position:relative;z-index:1}
 .qfootitem{display:flex;gap:10px;align-items:center;padding:4px 12px;border-right:1px solid #e0e0e0;font-size:9px;line-height:1.3;color:#555}
 .qfootitem:last-child{border:0}
@@ -266,7 +269,28 @@ function residencyExtra(res){return res==="nonresident"?12:0}
 function promoTitle(type,sec){const name=String(sec?.selectedPromo?.name||"PROMO").toUpperCase();return (type==="light"?"LUCE":"GAS")+" FLAT "+name}
 function hasSaving(sec){return !!sec && Number(sec.calculations?.saving||0)>0}
 function annualOf(sec){return Number(sec?.calculations?.annualCost||0)}
-function monthlyOf(sec){return Number(sec?.calculations?.displayMonthly??sec?.selectedPromo?.monthly??annualOf(sec)/12)}
+function monthlyOf(sec){return Number(sec?.selectedPromo?.monthly||0)}
+function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:3}).format(n)+" €/"+unit}
+function calcNoteLine(type,sec){
+  const p=sec?.selectedPromo; if(!p||!sec)return "";
+  const unit=type==="light"?"kWh":"Smc";
+  const servizio=type==="light"?"luce":"gas";
+  const diff=Number(sec.consumption||0)-Number(p.plafond||0);
+  const abs=Math.abs(diff);
+  if(abs<0.0005)return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso, senza conguaglio di consumo.`;
+  const segno=diff>0?"più":"meno";
+  const modo=diff>0?"eccesso":"difetto";
+  return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${unitPrice(p.price,unit)}.`;
+}
+function calcNotesHtml(q){
+  const layout=quoteLayout(q); if(!layout)return "";
+  const lines=[];
+  if(layout==="dual"||layout==="light")lines.push(calcNoteLine("light",q.sections.light));
+  if(layout==="dual"||layout==="gas")lines.push(calcNoteLine("gas",q.sections.gas));
+  const texts=lines.filter(Boolean);
+  if(!texts.length)return "";
+  return `<div class="qcalc">${texts.map(t=>`<p>${escapeHtml(t)}</p>`).join("")}</div>`;
+}
 function currentOf(sec){return Number(sec?.currentSpend||0)}
 function savingOf(sec){return Number(sec?.calculations?.saving||0)}
 function clip(s,n){s=String(s||"");return s.length>n?s.slice(0,n-1)+"…":s}
@@ -367,6 +391,7 @@ function buildQuoteHtml(q){
     <div class="qinfo">${cust}${shopC}</div>
     <div class="qoffers">${offers}</div>
     ${bottomStats}
+    ${calcNotesHtml(q)}
     ${footerHtml()}
   </div>`;
 }
