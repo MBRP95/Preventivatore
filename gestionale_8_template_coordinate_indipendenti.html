@@ -27,6 +27,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .mode-switch button.active{background:var(--fw-yellow)}
 .badge-draft{display:inline-block;background:#111;color:var(--fw-yellow);font-size:10px;font-weight:800;letter-spacing:.4px;padding:3px 7px;border-radius:4px;vertical-align:2px;margin-left:8px}
 .fx-rates input{max-width:120px;padding:7px 8px;margin-top:0}
+.fx-rates input[readonly]{background:#f4f4f4;color:#555;border-color:#e0e0e0;cursor:default}
 .fx-rates td{white-space:nowrap}
 #fxPreview{margin-top:16px}
 #fxPreview .quote-frame{background:#111;border-radius:12px;padding:10px;overflow:auto}
@@ -288,7 +289,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 </section>
 <section class="panel">
 <h2>Listini Fix e Flex</h2>
-<p class="note">Valori allineati alle offerte Fastweb Energia. Puoi modificarli e ricalcolare. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
+<p class="note">Le promo Fix hanno i valori bloccati. Puoi modificare solo le promo Flex e gli indici PUN e PSV. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
 <div class="grid">
 <label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
 <label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
@@ -923,15 +924,19 @@ async function makeCommodityPdf(){
     window.print();
   }
 }
+function fxRateInput(o,field,step){
+  const lock=o.kind==="fix"?" readonly tabindex=\"-1\"":"";
+  return `<input data-fx-id="${o.id}" data-fx-field="${field}" type="number" min="0" step="${step}" value="${o[field]}"${lock}>`;
+}
 function renderCommodityRateTables(){
   let html="";
   for(const [svc,svcL] of [["light","Luce"],["gas","Gas"]]){
     for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
       for(const o of COMMODITY_OFFERS[svc][seg]){
         const energy=o.kind==="fix"
-          ?`<input data-fx-id="${o.id}" data-fx-field="energy" type="number" min="0" step="0.001" value="${o.energy}"> €/${o.unit}`
-          :`spread <input data-fx-id="${o.id}" data-fx-field="spread" type="number" min="0" step="0.001" value="${o.spread}"> €/${o.unit}`;
-        html+=`<tr><td>${escapeHtml(o.name)}</td><td>${segL}</td><td>${o.kind==="fix"?"Fix":"Flex"}</td><td>${energy}</td><td><input data-fx-id="${o.id}" data-fx-field="comm" type="number" min="0" step="1" value="${o.comm}"> €/${o.point}/anno</td><td><input data-fx-id="${o.id}" data-fx-field="discountMonth" type="number" min="0" step="1" value="${o.discountMonth}"></td><td><input data-fx-id="${o.id}" data-fx-field="months" type="number" min="1" step="1" value="${o.months}"></td></tr>`;
+          ?`${fxRateInput(o,"energy","0.001")} €/${o.unit}`
+          :`spread ${fxRateInput(o,"spread","0.001")} €/${o.unit}`;
+        html+=`<tr><td>${escapeHtml(o.name)}</td><td>${segL}</td><td>${o.kind==="fix"?"Fix":"Flex"}</td><td>${energy}</td><td>${fxRateInput(o,"comm","1")} €/${o.point}/anno</td><td>${fxRateInput(o,"discountMonth","1")}</td><td>${fxRateInput(o,"months","1")}</td></tr>`;
       }
     }
   }
@@ -942,10 +947,11 @@ function renderCommodityRateTables(){
   $("fxGasPsv").value=COMMODITY_INDEX.psv;
   document.querySelectorAll("[data-fx-id]").forEach(inp=>{
     inp.addEventListener("change",()=>{
+      if(inp.hasAttribute("readonly"))return;
       const n=Number(inp.value);
       if(!Number.isFinite(n)||n<0)return;
       const o=fxFindOffer(inp.getAttribute("data-fx-id"));
-      if(o)o[inp.getAttribute("data-fx-field")]=n;
+      if(o&&o.kind!=="fix")o[inp.getAttribute("data-fx-field")]=n;
     });
   });
 }
