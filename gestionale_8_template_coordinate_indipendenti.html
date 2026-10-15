@@ -882,16 +882,6 @@ function buildCommodityHtml(q){
   const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
   const cards=keys.map(([k,title])=>fxServiceCard(q,k,title)).join("");
   const cust=q.customer||{}, shop=q.shop||{};
-  let sum="";
-  if(q.compare){
-    const sav=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.saving:0),0);
-    const totNew=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.newTotal:0),0);
-    const totOld=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.currentTotal:0),0);
-    sum=`<div class="csum"><div class="lbl">${sav>=0?"Risparmio stimato del mese":"Maggiore spesa stimata del mese"}</div><div class="val">${money(Math.abs(sav))} · attuale ${money(totOld)} → offerta ${money(totNew)}</div></div>`;
-  }
-  const formula=q.compare
-    ?"Paragone mensile: costo fisso e materia prima della bolletta attuale, contro (corrispettivo di commercializzazione / 12) + consumo del mese × prezzo energia. Per Flex il prezzo energia è indice del mese di riferimento + spread."
-    :"Senza paragone: si stampa l'offerta scelta. Fix = componente energia fissa per la durata indicata + corrispettivo di commercializzazione. Flex = indice PUN/PSV + spread, corrispettivo bloccato per la durata indicata.";
   return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
     <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="cflags">
@@ -904,9 +894,6 @@ function buildCommodityHtml(q){
       ${infoCardHtml("PUNTO VENDITA",ICO.shop,[["Negozio:",shop.name||""],["Consulente:",shop.consultant||""],["Telefono:",shop.phone||""],["Email:",shop.email||""]])}
     </div>
     <div class="ccards ${keys.length===1?"one":""}">${cards}</div>
-    ${sum}
-    <div class="cnote"><p>${formula}</p>
-    <p>Stima della sola materia prima e del corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p></div>
   </div>`;
 }
 function showCommodityPreview(q){
