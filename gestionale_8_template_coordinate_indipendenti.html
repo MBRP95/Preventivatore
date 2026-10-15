@@ -295,10 +295,12 @@ function calcNoteLine(type,sec){
   const {diff}=consumptionAdj(sec);
   const abs=Math.abs(diff);
   const px=unitPrice(p.price,unit);
-  if(abs<0.0005)return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso, senza ${unit} in eccesso o in difetto (prezzo ${px}).`;
+  const cons=num(Number(sec.consumption||0));
+  const base=`L'eccesso o il difetto sono calcolati in base al consumo annuo stimato (${cons} ${unit}).`;
+  if(abs<0.0005)return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso, senza ${unit} in eccesso o in difetto (prezzo ${px}). ${base}`;
   const segno=diff>0?"più":"meno";
   const modo=diff>0?"eccesso":"difetto";
-  return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${px}.`;
+  return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${px}. ${base}`;
 }
 function calcNotesHtml(q){
   const layout=quoteLayout(q); if(!layout)return "";
