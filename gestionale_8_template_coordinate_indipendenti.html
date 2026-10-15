@@ -69,12 +69,15 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qoffer.no-save .qcost .qfield{min-height:70px}
 .qoffer.no-save .qcost .val{font-size:28px}
 .qstats{display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;margin-top:8px;padding:12px 10px;background:#fff;border-radius:16px;min-height:72px;min-width:0;max-width:100%;width:100%;box-sizing:border-box}
-.qstats.n1{justify-content:center;padding:14px 18px}
+.qstats.n1{justify-content:center;align-items:center;padding:14px 18px}
 .qstat{text-align:left;font-size:11px;color:#222;border-right:0;padding:4px 12px;display:flex;flex-direction:row;align-items:center;gap:8px;flex:1 1 0%;width:0;min-width:0;position:relative;box-sizing:border-box}
 .qstat:not(:last-child):after{content:"";position:absolute;right:0;top:14%;bottom:14%;width:1.5px;background:#222}
 .qstat:first-child{padding-left:8px}
-.qstats.n1 .qstat{flex:1 1 auto;width:100%;max-width:560px;padding-left:0;padding-right:0}
+.qstats.n1 .qstat{flex:0 0 auto;width:auto;max-width:none;padding:4px 0;justify-content:center}
 .qstats.n1 .qstat:after{display:none}
+.qstats.n1 .qstat-txt{flex:0 0 auto;width:auto;min-width:200px;align-items:center;text-align:center}
+.qstats.n1 .qstat-field{width:auto;min-width:200px;text-align:center}
+.qstats.n1 .qstat b{text-align:center}
 .qstat-txt{display:flex;flex-direction:column;justify-content:center;gap:5px;flex:1 1 0%;width:0;min-width:0}
 .qstat svg{display:block;flex-shrink:0}
 .qstat .qstat-lab,.qstat span{font-size:10px;color:#222;font-weight:700;line-height:1.2;white-space:nowrap}
@@ -115,7 +118,10 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qpage.is-single .qstat-field{padding:12px 14px;min-height:48px;border-radius:10px;width:100%}
 .qpage.is-single .qstat b{font-size:15px}
 .qpage.is-single .qstat .qico{width:36px;height:36px}
-.qpage.is-single .qstats.n1 .qstat{max-width:560px;width:100%}
+.qpage.is-single .qstats.n1{justify-content:center;align-items:center}
+.qpage.is-single .qstats.n1 .qstat{flex:0 0 auto;width:auto;max-width:none;padding:4px 0;justify-content:center}
+.qpage.is-single .qstats.n1 .qstat-txt{flex:0 0 auto;width:auto;min-width:240px;align-items:center}
+.qpage.is-single .qstats.n1 .qstat-field{width:auto;min-width:240px;text-align:center}
 @media print{
   @page{size:A4 portrait;margin:0}
   html,body{margin:0!important;padding:0!important;background:#fff!important}
