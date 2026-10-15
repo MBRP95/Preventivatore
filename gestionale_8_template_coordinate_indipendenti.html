@@ -49,8 +49,8 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 <div id="lightInputs"><h3>Luce</h3><div class="grid3"><label>Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label>Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label>Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label>Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p></div>
 <div id="gasInputs" class="hidden"><h3>Gas</h3><div class="grid"><label>Consumo annuo attuale (Smc)<input id="gasConsumption" type="number" min="0" step="1" placeholder="Es. 595"></label><label>Spesa annua attuale gas (€)<input id="gasSpend" type="number" min="0" step="0.01" placeholder="Es. 867"></label></div></div>
 <div class="actions"><button id="calculate">Calcola tutte le promozioni</button><button class="secondary" id="clear">Nuovo preventivo / Pulisci</button></div><div id="result" class="result hidden" aria-live="polite"></div><div id="calcStatus" class="status hidden"></div></section>
-<section class="panel"><h2>4. Salvataggio, PDF e storico</h2><p class="note">Il PDF del preventivo usa il layout Promo Energia (luce+gas o solo servizio). Puoi scaricarlo o stamparlo dal browser. Non servono server Internet o installazioni.</p><div class="actions"><button id="saveQuote" disabled>Salva preventivo</button><button id="makePdf" disabled>Scarica PDF</button><button class="secondary" id="showHistory" disabled>Mostra storico</button><button class="secondary" id="showTrash" disabled>Apri cestino</button></div>
-<div id="quotePreview" class="hidden"><h3>Anteprima preventivo</h3><div class="quote-frame" id="quoteFrame"></div></div>
+<section class="panel"><h2>4. Salvataggio, PDF e storico</h2><p class="note">Ogni PDF è una sola pagina: offerta doppia se hai selezionato luce e gas, offerta singola se hai selezionato un solo servizio. I due layout non vengono mai messi insieme. Puoi scaricare il file o stamparlo dal browser.</p><div class="actions"><button id="saveQuote" disabled>Salva preventivo</button><button id="makePdf" disabled>Scarica PDF</button><button class="secondary" id="showHistory" disabled>Mostra storico</button><button class="secondary" id="showTrash" disabled>Apri cestino</button></div>
+<div id="quotePreview" class="hidden"><h3 id="quotePreviewTitle">Anteprima preventivo</h3><p class="note" id="quotePreviewNote"></p><div class="quote-frame" id="quoteFrame"></div></div>
 <div id="history" class="hidden"></div><div id="trash" class="hidden"></div><div id="saveStatus" class="status">Compila i dati e calcola le promozioni.</div></section>
 <section class="panel"><h2>Listini configurati</h2><h3>Luce</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/kWh</th></tr></thead><tbody id="lightPriceTable"></tbody></table><h3>Gas</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/Smc</th></tr></thead><tbody id="gasPriceTable"></tbody></table><p class="note">Controlla i listini prima dell'uso con clienti reali.</p></section>
 </main><footer>Gestionale offline — prototipo. Verifica i risultati e le condizioni commerciali prima di consegnare preventivi reali.</footer><div id="printArea"></div>
@@ -413,10 +413,25 @@ function footerBar(y){
   return out;
 }
 
+function quoteLayout(q){
+  const light=q?.sections?.light, gas=q?.sections?.gas;
+  if(light&&gas)return "dual";
+  if(light)return "light";
+  if(gas)return "gas";
+  return "";
+}
+function layoutLabel(layout){
+  if(layout==="dual")return "offerta doppia luce + gas";
+  if(layout==="light")return "offerta singola luce";
+  if(layout==="gas")return "offerta singola gas";
+  return "";
+}
 function buildQuoteSvg(q){
   const customer=q.customer||{}, shop=q.shop||{}, sections=q.sections||{};
-  const light=sections.light||null, gas=sections.gas||null;
-  if(!light&&!gas)return "";
+  const layout=quoteLayout(q);
+  const light=layout==="dual"||layout==="light"?sections.light:null;
+  const gas=layout==="dual"||layout==="gas"?sections.gas:null;
+  if(!layout)return "";
   const date=(customer.date||"").split("-").reverse().join("/")||dateLabel(new Date().toISOString().slice(0,10));
   const quoteNo=q.quoteNumber||"BOZZA";
   let body=rr(0,0,QW,QH,0,C.bg);
@@ -445,21 +460,24 @@ function buildQuoteSvg(q){
   ];
   body+=infoCard(40,126,452,196,"cliente",custRows);
   body+=infoCard(508,126,452,196,"negozio",shopRows);
-  if(light&&gas){
+  if(layout==="dual"){
     body+=dualOfferCard(40,344,452,700,"light",light,q);
     body+=dualOfferCard(508,344,452,700,"gas",gas,q);
     body+=footerBar(1070);
   }else{
-    body+=singleOffer(light?"light":"gas",light||gas,q);
+    body+=singleOffer(layout==="light"?"light":"gas",layout==="light"?light:gas,q);
     body+=footerBar(1120);
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${QW} ${QH}" width="${QW}" height="${QH}">${defs}${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${QW} ${QH}" width="${QW}" height="${QH}" data-layout="${layout}">${defs}${body}</svg>`;
 }
 
 function showQuotePreview(q){
   if(!q||!q.sections)return hideQuotePreview();
+  const layout=quoteLayout(q);
   const svg=buildQuoteSvg(q);
-  if(!svg)return hideQuotePreview();
+  if(!layout||!svg)return hideQuotePreview();
+  $("quotePreviewTitle").textContent="Anteprima · "+layoutLabel(layout);
+  $("quotePreviewNote").textContent="Il PDF avrà solo questa pagina ("+layoutLabel(layout)+"), non entrambe le varianti.";
   $("quoteFrame").innerHTML=svg;
   $("quotePreview").classList.remove("hidden");
   $("printArea").innerHTML=svg;
@@ -475,8 +493,9 @@ function pdfHtml(q){return buildQuoteSvg(q)}
 async function makePdf(){
  if(!currentQuote)return;
  for(const s of Object.values(currentQuote.sections||{})) if(!s.selectedPromo){alert("Seleziona una promozione per ogni servizio incluso.");return}
+ const layout=quoteLayout(currentQuote);
  const svg=buildQuoteSvg(currentQuote);
- if(!svg){alert("Modello PDF non disponibile.");return}
+ if(!layout||!svg){alert("Modello PDF non disponibile.");return}
  showQuotePreview(currentQuote);
  const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"});
  const url=URL.createObjectURL(blob);
