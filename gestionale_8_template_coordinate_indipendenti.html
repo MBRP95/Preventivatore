@@ -21,6 +21,38 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 #quotePreview{margin-top:16px}
 #quotePreview .quote-frame{background:#111;border-radius:12px;padding:10px;box-shadow:0 8px 24px #3e330d22;overflow:auto}
 #quotePreview .qpage{margin:0 auto}
+
+.mode-switch{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.mode-switch button{background:#fff7bf;border:1px solid var(--fw-ink);font-weight:800}
+.mode-switch button.active{background:var(--fw-yellow)}
+.badge-draft{display:inline-block;background:#111;color:var(--fw-yellow);font-size:10px;font-weight:800;letter-spacing:.4px;padding:3px 7px;border-radius:4px;vertical-align:2px;margin-left:8px}
+.fx-rates input{max-width:120px;padding:7px 8px;margin-top:0}
+.fx-rates td{white-space:nowrap}
+#fxPreview{margin-top:16px}
+#fxPreview .quote-frame{background:#111;border-radius:12px;padding:10px;overflow:auto}
+#fxPreview .cpage{margin:0 auto}
+.cpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 22px;position:relative;overflow:hidden;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;margin-bottom:14px}
+.ctitle{font-size:42px;font-weight:900;font-style:italic;letter-spacing:-1.5px;line-height:.95;margin:6px 0 0}
+.ctitle small{display:block;font-size:14px;font-style:normal;font-weight:800;letter-spacing:.4px;margin-bottom:4px}
+.cmeta{background:#fff;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.45;min-width:158px}
+.cflags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;position:relative;z-index:1}
+.cflag{background:#111;color:#FFD000;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800}
+.cflag.off{background:#fff;color:#111;border:2px solid #111}
+.cinfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;position:relative;z-index:1}
+.ccard{background:#fff;border-radius:16px;padding:14px 16px;position:relative;z-index:1;border:2px solid #111}
+.ccard h3{margin:0 0 10px;font-size:16px;font-weight:900}
+.ccards{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.ccards.one{grid-template-columns:1fr}
+.crow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid #eee4a4}
+.crow b{font-weight:800}
+.ctotal{background:#111;color:#FFD000;border-radius:12px;padding:12px 14px;margin-top:12px;display:flex;justify-content:space-between;align-items:baseline}
+.ctotal strong{font-size:22px}
+.cnote{margin-top:12px;background:#fff;border-radius:14px;padding:12px 16px;font-size:11px;line-height:1.45;color:#333;position:relative;z-index:1}
+.csum{margin-top:12px;background:#fff;border:2px solid #111;border-radius:16px;padding:14px 16px;position:relative;z-index:1}
+.csum .lbl{font-size:12px;font-weight:800;color:#555}
+.csum .val{font-size:28px;font-weight:900}
 #printArea{display:none}
 .qpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 20px;position:relative;overflow:hidden;box-sizing:border-box}
 .qpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
@@ -129,12 +161,17 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
   body>*:not(#printArea){display:none!important}
   #printArea{display:block!important;margin:0;padding:0}
   #printArea .qpage{width:210mm;min-height:297mm;padding:10mm}
+  #printArea .cpage{width:210mm;min-height:297mm;padding:10mm}
 }
 </style>
 </head>
 <body>
 <header><h1>Gestionale preventivi energia</h1><p>Offline · archivio locale nella cartella OneDrive condivisa · utilizzo sequenziale su un solo PC alla volta</p></header>
 <main>
+<div class="mode-switch" role="tablist">
+<button type="button" id="modeFlat" class="active">Promo Energia FLAT</button>
+<button type="button" id="modeCommodity">Fix e Flex</button>
+</div>
 <section class="panel"><h2>1. Archivio condiviso</h2><p class="note">Seleziona la cartella principale condivisa di OneDrive. I preventivi attivi sono in dati/preventivi e quelli cestinati in dati/cestino. Attendi la sincronizzazione prima di passare a un altro PC.</p>
 <div class="actions"><button id="chooseFolder">Seleziona cartella OneDrive</button><button class="secondary" id="loadArchive" disabled>Carica archivio</button><button class="secondary" id="exportBackup">Esporta backup JSON</button><button class="secondary" id="importBackup">Importa backup JSON</button><input id="backupFile" type="file" accept=".json,application/json" class="hidden"></div><div id="folderStatus" class="status">Nessuna cartella selezionata. Puoi comunque fare calcoli e stampare PDF.</div></section>
 <section class="panel"><h2>2. Dati del cliente e del negozio</h2><div class="grid">
@@ -147,6 +184,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 </div>
 <h3>Dati del negozio / consulente</h3><div class="grid3"><label>Nome punto vendita<input id="shopName" placeholder="Nome negozio"></label><label>Indirizzo punto vendita<input id="shopAddress" placeholder="Via, città"></label><label>Nome consulente<input id="consultant" placeholder="Nome Cognome"></label><label>Email negozio<input id="shopEmail" type="email" placeholder="negozio@example.com"></label><label>Telefono negozio<input id="shopPhone" type="tel" placeholder="059 123456"></label></div>
 </section>
+<div id="flatFlow">
 <section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label></div>
 <div id="lightInputs"><h3>Luce</h3><div class="grid3"><label>Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label>Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label>Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label>Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p></div>
 <div id="gasInputs" class="hidden"><h3>Gas</h3><div class="grid"><label>Consumo annuo attuale (Smc)<input id="gasConsumption" type="number" min="0" step="1" placeholder="Es. 595"></label><label>Spesa annua attuale gas (€)<input id="gasSpend" type="number" min="0" step="0.01" placeholder="Es. 867"></label></div></div>
@@ -155,6 +193,72 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <div id="quotePreview" class="hidden"><h3 id="quotePreviewTitle">Anteprima preventivo</h3><p class="note" id="quotePreviewNote"></p><div class="quote-frame" id="quoteFrame"></div></div>
 <div id="history" class="hidden"></div><div id="trash" class="hidden"></div><div id="saveStatus" class="status">Compila i dati e calcola le promozioni.</div></section>
 <section class="panel"><h2>Listini configurati</h2><h3>Luce</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/kWh</th></tr></thead><tbody id="lightPriceTable"></tbody></table><h3>Gas</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/Smc</th></tr></thead><tbody id="gasPriceTable"></tbody></table><p class="note">Controlla i listini prima dell'uso con clienti reali.</p></section>
+</div>
+
+<div id="commodityFlow" class="hidden">
+<section class="panel">
+<h2>Preventivi Fix e Flex <span class="badge-draft">BOZZA LISTINI</span></h2>
+<p class="note">Sezione separata dalle promo FLAT. Qui si stima solo la <b>materia prima</b>: per Fix quota fissa + corrispettivo €/kWh o €/Smc; per Flex PUN o PSV + spread. I prezzi cambiano se il cliente ha P.IVA e se è già cliente Fastweb. I valori di listino sono una bozza: puoi modificarli sotto e ricalcolare.</p>
+<div class="checks">
+<label><input type="radio" name="fxOffer" id="fxOfferFix" value="fix" checked> Fix</label>
+<label><input type="radio" name="fxOffer" id="fxOfferFlex" value="flex"> Flex</label>
+</div>
+<div class="checks">
+<label><input id="fxIncludeLight" type="checkbox" checked> Luce</label>
+<label><input id="fxIncludeGas" type="checkbox"> Gas</label>
+</div>
+<div class="checks">
+<label><input id="fxPiva" type="checkbox"> Cliente con P.IVA</label>
+<label><input id="fxFastweb" type="checkbox"> Già cliente Fastweb</label>
+</div>
+<div id="fxLightBox">
+<h3>Luce</h3>
+<div class="grid">
+<label>Consumo annuo stimato (kWh)<input id="fxLightConsumption" type="number" min="0" step="1" placeholder="Es. 2700"></label>
+<label>Spesa annua attuale luce (€), facoltativa<input id="fxLightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label>
+</div>
+</div>
+<div id="fxGasBox" class="hidden">
+<h3>Gas</h3>
+<div class="grid">
+<label>Consumo annuo stimato (Smc)<input id="fxGasConsumption" type="number" min="0" step="1" placeholder="Es. 900"></label>
+<label>Spesa annua attuale gas (€), facoltativa<input id="fxGasSpend" type="number" min="0" step="0.01" placeholder="Es. 1100"></label>
+</div>
+</div>
+<div id="fxIndexBox" class="hidden">
+<h3>Indici di mercato (Flex)</h3>
+<div class="grid">
+<label>PUN stimato (€/kWh)<input id="fxPun" type="number" min="0" step="0.001"></label>
+<label>PSV stimato (€/Smc)<input id="fxPsv" type="number" min="0" step="0.001"></label>
+</div>
+<p class="note">PUN e PSV sono indici variabili: inserisci la stima usata per il preventivo. Lo spread applicato è quello di listino (bozza), diverso per P.IVA e cliente Fastweb.</p>
+</div>
+<div class="actions">
+<button type="button" id="fxCalculate">Calcola preventivo Fix/Flex</button>
+<button type="button" class="secondary" id="fxPdf" disabled>Scarica PDF</button>
+</div>
+<div id="fxStatus" class="status hidden"></div>
+<div id="fxResult" class="result hidden"></div>
+<div id="fxPreview" class="hidden">
+<h3 id="fxPreviewTitle">Anteprima Fix/Flex</h3>
+<p class="note">Stima della sola materia prima. Non è il preventivo FLAT. I listini sono in bozza.</p>
+<div class="quote-frame" id="fxFrame"></div>
+</div>
+</section>
+<section class="panel">
+<h2>Listini Fix e Flex <span class="badge-draft">DA SISTEMARE</span></h2>
+<p class="note">Modifica i valori e ricalcola. Privato = senza P.IVA. Fastweb = già cliente Fastweb.</p>
+<h3>Fix — quota fissa + corrispettivo</h3>
+<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Quota fissa €/mese</th><th>Corrispettivo</th></tr></thead><tbody id="fxFixTable"></tbody></table></div>
+<h3>Flex — indice + spread</h3>
+<div class="grid">
+<label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
+<label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
+</div>
+<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Spread</th></tr></thead><tbody id="fxFlexTable"></tbody></table></div>
+</section>
+</div>
+
 </main><footer><span>Gestionale offline — prototipo. Verifica i risultati e le condizioni commerciali prima di consegnare preventivi reali.</span><span class="credit">Created by Maria Beatriz Ragucci Polato</span></footer><div id="printArea"></div>
 <script>/*!
  * html2canvas 1.4.1 <https://html2canvas.hertzen.com>
@@ -453,8 +557,9 @@ function downloadPdfFromCanvas(canvas){
   for(let i=1;i<=5;i++)x+=String(xref[i]).padStart(10,"0")+" 00000 n \n";
   x+=`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;push(enc(x));
   const pdf=new Blob(chunks,{type:"application/pdf"}),href=URL.createObjectURL(pdf),a=document.createElement("a");
-  const client=(currentQuote.customer?.name||"cliente").toString().trim().replace(/[^a-z0-9_-]+/gi,"_");
-  a.href=href;a.download=`Preventivo_${client}_${currentQuote.quoteNumber||"bozza"}.pdf`;
+  const src=currentQuote||currentCommodityQuote||{};
+  const client=(src.customer?.name||"cliente").toString().trim().replace(/[^a-z0-9_-]+/gi,"_");
+  a.href=href;a.download=`Preventivo_${client}_${src.quoteNumber||"bozza"}.pdf`;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),30000);
 }
 async function makePdf(){
@@ -483,7 +588,261 @@ function openQuote(q){currentQuote=JSON.parse(JSON.stringify(q));$("name").value
 function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni."}
 function exportBackup(){const blob=new Blob([JSON.stringify({schemaVersion:2,exportedAt:new Date().toISOString(),customers,quotes:quotes.map(q=>{delete q._filename;return q}),trashQuotes:trashQuotes.map(q=>{delete q._filename;return q})},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-preventivi-"+today.toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href)}
 function importBackupFile(file){const reader=new FileReader();reader.onload=async()=>{try{const obj=JSON.parse(reader.result);if(!Array.isArray(obj.quotes)||!Array.isArray(obj.customers))throw Error("Formato backup non riconosciuto");if(!folderHandle)throw Error("Seleziona prima la cartella OneDrive");if(!confirm(`Importare ${obj.quotes.length} preventivi e ${obj.customers.length} clienti?`))return;const d=await ensureDir(folderHandle,"dati"),qd=await ensureDir(d,"preventivi"),td=await ensureDir(d,"cestino");for(const q of obj.quotes)await writeJson(qd,quoteFilename(q),q);for(const q of (obj.trashQuotes||[]))await writeJson(td,quoteFilename(q),q);customers=obj.customers;await writeJson(d,"clienti.json",customers);await loadArchive()}catch(e){alert("Importazione non riuscita: "+e.message)}};reader.readAsText(file)}
+
+let currentCommodityQuote=null;
+const COMMODITY_RATES={
+  light:{
+    unit:"kWh",
+    fix:{
+      private:{no:{monthly:9.5,price:0.145},yes:{monthly:8.5,price:0.132}},
+      piva:{no:{monthly:11,price:0.138},yes:{monthly:10,price:0.128}}
+    },
+    flex:{
+      index:0.110,
+      private:{no:{spread:0.028},yes:{spread:0.018}},
+      piva:{no:{spread:0.024},yes:{spread:0.016}}
+    }
+  },
+  gas:{
+    unit:"Smc",
+    fix:{
+      private:{no:{monthly:10,price:0.55},yes:{monthly:9,price:0.50}},
+      piva:{no:{monthly:12,price:0.52},yes:{monthly:11,price:0.48}}
+    },
+    flex:{
+      index:0.40,
+      private:{no:{spread:0.090},yes:{spread:0.070}},
+      piva:{no:{spread:0.080},yes:{spread:0.065}}
+    }
+  }
+};
+function setToolMode(mode){
+  const commodity=mode==="commodity";
+  $("modeFlat").classList.toggle("active",!commodity);
+  $("modeCommodity").classList.toggle("active",commodity);
+  $("flatFlow").classList.toggle("hidden",commodity);
+  $("commodityFlow").classList.toggle("hidden",!commodity);
+  if(commodity)hideQuotePreview();
+  else{
+    hideCommodityPreview();
+    if(currentQuote)showQuotePreview(currentQuote);
+  }
+}
+function fxOffer(){return $("fxOfferFlex").checked?"flex":"fix"}
+function fxToggleBoxes(){
+  $("fxLightBox").classList.toggle("hidden",!$("fxIncludeLight").checked);
+  $("fxGasBox").classList.toggle("hidden",!$("fxIncludeGas").checked);
+  $("fxIndexBox").classList.toggle("hidden",fxOffer()!=="flex");
+}
+function fxRate(service,offer,isPiva,isFw){
+  const seg=isPiva?"piva":"private";
+  const fw=isFw?"yes":"no";
+  return COMMODITY_RATES[service][offer][seg][fw];
+}
+function calcCommodityService(service,offer,consumption,spend,isPiva,isFw,indexValue){
+  const unit=COMMODITY_RATES[service].unit;
+  const rate=fxRate(service,offer,isPiva,isFw);
+  let monthly=0, unitP=0, annual=0, indexUsed=null, spread=null;
+  if(offer==="fix"){
+    monthly=Number(rate.monthly||0);
+    unitP=Number(rate.price||0);
+    annual=monthly*12+consumption*unitP;
+  }else{
+    indexUsed=Number(indexValue);
+    spread=Number(rate.spread||0);
+    unitP=indexUsed+spread;
+    annual=consumption*unitP;
+  }
+  const saving=(Number.isFinite(spend)&&spend>0)?spend-annual:null;
+  return {service,unit,consumption,currentSpend:spend,monthly,unitPrice:unitP,indexUsed,spread,annual,saving};
+}
+function fxError(msg){
+  $("fxStatus").classList.remove("hidden");
+  $("fxStatus").textContent=msg;
+  $("fxResult").classList.add("hidden");
+  $("fxPdf").disabled=true;
+  hideCommodityPreview();
+}
+function calculateCommodity(){
+  const data=readForm();
+  if(!data.customer.name||!data.customer.date||!data.customer.email||!data.customer.phone){
+    fxError("Compila nome, data, email e cellulare del cliente (sezione 2).");return
+  }
+  const includeLight=$("fxIncludeLight").checked, includeGas=$("fxIncludeGas").checked;
+  if(!includeLight&&!includeGas){fxError("Seleziona almeno un servizio: luce, gas o entrambi.");return}
+  const offer=fxOffer(), isPiva=$("fxPiva").checked, isFw=$("fxFastweb").checked;
+  const sections={};
+  for(const [on,key] of [[includeLight,"light"],[includeGas,"gas"]]){
+    if(!on)continue;
+    const prefix=key==="light"?"fxLight":"fxGas";
+    const cr=$(prefix+"Consumption").value, sr=$(prefix+"Spend").value;
+    const c=Number(cr), sp=sr===""?NaN:Number(sr);
+    if(cr===""||!Number.isFinite(c)||c<=0){fxError("Inserisci un consumo annuo stimato maggiore di zero per "+(key==="light"?"la luce":"il gas")+".");return}
+    if(sr!==""&&(!Number.isFinite(sp)||sp<0)){fxError("La spesa attuale deve essere vuota oppure un numero non negativo.");return}
+    const idx=key==="light"?Number($("fxPun").value):Number($("fxPsv").value);
+    if(offer==="flex"&&(!Number.isFinite(idx)||idx<0)){fxError("Inserisci PUN e PSV stimati validi.");return}
+    sections[key]=calcCommodityService(key,offer,c,sp,isPiva,isFw,idx);
+  }
+  currentCommodityQuote={
+    kind:"commodity", offer, isPiva, isFastweb:isFw,
+    pun:Number($("fxPun").value||COMMODITY_RATES.light.flex.index),
+    psv:Number($("fxPsv").value||COMMODITY_RATES.gas.flex.index),
+    id:makeId(), quoteNumber:null, createdAt:new Date().toISOString(),
+    customer:data.customer, shop:data.shop, sections, status:"bozza"
+  };
+  $("fxStatus").classList.add("hidden");
+  renderCommodityResult(currentCommodityQuote);
+  showCommodityPreview(currentCommodityQuote);
+  $("fxPdf").disabled=false;
+}
+function renderCommodityResult(q){
+  const host=$("fxResult");
+  const offerLabel=q.offer==="fix"?"Fix":"Flex";
+  const who=(q.isPiva?"P.IVA":"Privato")+" · "+(q.isFastweb?"cliente Fastweb":"non Fastweb");
+  let html=`<p class="note">Materia prima ${offerLabel} · ${who}. Valori di listino in bozza.</p><table><thead><tr><th>Servizio</th><th>Consumo</th><th>Dettaglio</th><th>Costo annuo</th><th>Risparmio</th></tr></thead><tbody>`;
+  for(const [key,title] of [["light","Luce"],["gas","Gas"]]){
+    const s=q.sections[key]; if(!s)continue;
+    let det="";
+    if(q.offer==="fix")det=`Fisso ${money(s.monthly)}/mese + ${unitPrice(s.unitPrice,s.unit)}`;
+    else det=`${key==="light"?"PUN":"PSV"} ${unitPrice(s.indexUsed,s.unit)} + spread ${unitPrice(s.spread,s.unit)} = ${unitPrice(s.unitPrice,s.unit)}`;
+    const sav=s.saving==null?"—":money(s.saving);
+    html+=`<tr><td><b>${title}</b></td><td>${num(s.consumption)} ${s.unit}</td><td>${det}</td><td>${money(s.annual)}</td><td>${sav}</td></tr>`;
+  }
+  const tot=Object.values(q.sections).reduce((a,s)=>a+s.annual,0);
+  html+=`</tbody></table><p><b>Totale materia prima: ${money(tot)} / anno</b> (${money(tot/12)} / mese)</p>`;
+  host.innerHTML=html;
+  host.classList.remove("hidden");
+}
+function buildCommodityHtml(q){
+  const offerLabel=q.offer==="fix"?"FIX":"FLEX";
+  const date=(q.customer?.date||"").split("-").reverse().join("/")||"";
+  const keys=[["light","Luce","kWh"],["gas","Gas","Smc"]].filter(([k])=>q.sections[k]);
+  const cards=keys.map(([k,title])=>{
+    const s=q.sections[k];
+    let rows="";
+    if(q.offer==="fix"){
+      rows+=`<div class="crow"><span>Quota fissa</span><b>${money(s.monthly)} / mese</b></div>`;
+      rows+=`<div class="crow"><span>Corrispettivo</span><b>${unitPrice(s.unitPrice,s.unit)}</b></div>`;
+    }else{
+      rows+=`<div class="crow"><span>${k==="light"?"PUN stimato":"PSV stimato"}</span><b>${unitPrice(s.indexUsed,s.unit)}</b></div>`;
+      rows+=`<div class="crow"><span>Spread</span><b>${unitPrice(s.spread,s.unit)}</b></div>`;
+      rows+=`<div class="crow"><span>Prezzo energia</span><b>${unitPrice(s.unitPrice,s.unit)}</b></div>`;
+    }
+    rows+=`<div class="crow"><span>Consumo annuo stimato</span><b>${num(s.consumption)} ${s.unit}</b></div>`;
+    if(s.saving!=null)rows+=`<div class="crow"><span>Risparmio vs spesa attuale</span><b>${money(s.saving)}</b></div>`;
+    return `<article class="ccard"><h3>${title} · ${offerLabel}</h3>${rows}<div class="ctotal"><span>Materia prima</span><strong>${money(s.annual)} / anno</strong></div></article>`;
+  }).join("");
+  const tot=Object.values(q.sections).reduce((a,s)=>a+s.annual,0);
+  const formula=q.offer==="fix"
+    ?"Fix: quota fissa annuale + consumo × corrispettivo unitario."
+    :"Flex: consumo × (indice PUN/PSV + spread).";
+  const cust=q.customer||{}, shop=q.shop||{};
+  return `<div class="cpage" data-offer="${q.offer}">
+    <div class="chead"><div class="ctitle"><small>PROMO ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
+    <div class="cflags">
+      <span class="cflag ${q.isPiva?"":"off"}">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
+      <span class="cflag ${q.isFastweb?"":"off"}">${q.isFastweb?"Già cliente Fastweb":"Non cliente Fastweb"}</span>
+      <span class="cflag">Solo materia prima</span>
+    </div>
+    <div class="cinfo">
+      ${infoCardHtml("DATI CLIENTE",ICO.user,[["Nome e Cognome:",cust.name||""],["Telefono:",cust.phone||""],["Email:",cust.email||""],["Indirizzo:",cust.address||""]])}
+      ${infoCardHtml("PUNTO VENDITA",ICO.shop,[["Negozio:",shop.name||""],["Consulente:",shop.consultant||""],["Telefono:",shop.phone||""],["Email:",shop.email||""]])}
+    </div>
+    <div class="ccards ${keys.length===1?"one":""}">${cards}</div>
+    <div class="csum"><div class="lbl">Totale materia prima stimata</div><div class="val">${money(tot)} all'anno · ${money(tot/12)} al mese</div></div>
+    <div class="cnote"><p>${formula}</p>
+    <p>Stima della sola materia prima (luce e/o gas). Non comprende rete, oneri di sistema, imposte e IVA. Listini in bozza, da confermare.</p></div>
+  </div>`;
+}
+function showCommodityPreview(q){
+  if(!q||q.kind!=="commodity")return hideCommodityPreview();
+  const html=buildCommodityHtml(q);
+  $("fxPreviewTitle").textContent="Anteprima · Promo "+(q.offer==="fix"?"Fix":"Flex");
+  $("fxFrame").innerHTML=html;
+  $("fxPreview").classList.remove("hidden");
+  $("printArea").innerHTML=html;
+}
+function hideCommodityPreview(){
+  const box=$("fxPreview"); if(!box)return;
+  box.classList.add("hidden");
+  $("fxFrame").innerHTML="";
+  if(!currentQuote)$("printArea").innerHTML="";
+}
+async function makeCommodityPdf(){
+  if(!currentCommodityQuote){alert("Calcola prima il preventivo Fix/Flex.");return}
+  showCommodityPreview(currentCommodityQuote);
+  const node=$("fxFrame").querySelector(".cpage");
+  if(!node){alert("Anteprima non disponibile.");return}
+  try{
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:"#FFD000",useCORS:true,logging:false});
+    downloadPdfFromCanvas(canvas);
+  }catch(e){
+    alert("Impossibile rasterizzare il preventivo. Uso la stampa del browser.");
+    window.print();
+  }
+}
+function fxPathSet(path,value){
+  const parts=path.split(".");
+  let obj=COMMODITY_RATES;
+  for(let i=0;i<parts.length-1;i++)obj=obj[parts[i]];
+  obj[parts[parts.length-1]]=value;
+}
+function renderCommodityRateTables(){
+    let html="";
+  for(const [svc,label] of [["light","Luce"],["gas","Gas"]]){
+    for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
+      for(const [fw,fwL] of [["no","No"],["yes","Sì"]]){
+        const r=COMMODITY_RATES[svc].fix[seg][fw];
+        const unit=COMMODITY_RATES[svc].unit;
+        html+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.fix.${seg}.${fw}.monthly" type="number" min="0" step="0.01" value="${r.monthly}"></td><td><input data-fx="${svc}.fix.${seg}.${fw}.price" type="number" min="0" step="0.001" value="${r.price}"> €/${unit}</td></tr>`;
+      }
+    }
+  }
+  $("fxFixTable").innerHTML=html;
+  let flex="";
+  for(const [svc,label] of [["light","Luce"],["gas","Gas"]]){
+    for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
+      for(const [fw,fwL] of [["no","No"],["yes","Sì"]]){
+        const r=COMMODITY_RATES[svc].flex[seg][fw];
+        const unit=COMMODITY_RATES[svc].unit;
+        flex+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.flex.${seg}.${fw}.spread" type="number" min="0" step="0.001" value="${r.spread}"> €/${unit}</td></tr>`;
+      }
+    }
+  }
+  $("fxFlexTable").innerHTML=flex;
+  $("fxPunDefault").value=COMMODITY_RATES.light.flex.index;
+  $("fxPsvDefault").value=COMMODITY_RATES.gas.flex.index;
+  $("fxPun").value=COMMODITY_RATES.light.flex.index;
+  $("fxPsv").value=COMMODITY_RATES.gas.flex.index;
+  document.querySelectorAll("[data-fx]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      const n=Number(inp.value);
+      if(!Number.isFinite(n)||n<0)return;
+      fxPathSet(inp.getAttribute("data-fx"),n);
+    });
+  });
+  $("fxPunDefault").addEventListener("change",()=>{
+    const n=Number($("fxPunDefault").value);
+    if(Number.isFinite(n)&&n>=0){COMMODITY_RATES.light.flex.index=n;$("fxPun").value=n;}
+  });
+  $("fxPsvDefault").addEventListener("change",()=>{
+    const n=Number($("fxPsvDefault").value);
+    if(Number.isFinite(n)&&n>=0){COMMODITY_RATES.gas.flex.index=n;$("fxPsv").value=n;}
+  });
+}
+
 $("chooseFolder").addEventListener("click",chooseFolder);$("loadArchive").addEventListener("click",loadArchive);$("calculate").addEventListener("click",calculate);$("clear").addEventListener("click",clearForm);$("saveQuote").addEventListener("click",saveQuote);$("makePdf").addEventListener("click",makePdf);$("showHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});$("showTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});$("exportBackup").addEventListener("click",exportBackup);$("importBackup").addEventListener("click",()=>$("backupFile").click());$("backupFile").addEventListener("change",e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=""});
 $("includeLight").addEventListener("change",()=>{$("lightInputs").classList.toggle("hidden",!$("includeLight").checked)});$("includeGas").addEventListener("change",()=>{$("gasInputs").classList.toggle("hidden",!$("includeGas").checked)});
 $("lightPriceTable").innerHTML=LIGHT_PROMOS.map(p=>`<tr><td>${p.name}</td><td>${num(p.plafond)} kWh</td><td>${money(p.monthly)}</td><td>${money(p.annual)}</td><td>${money(p.price)}</td></tr>`).join("");$("gasPriceTable").innerHTML=GAS_PROMOS.map(p=>`<tr><td>${p.name}</td><td>${num(p.plafond)} Smc</td><td>${money(p.monthly)}</td><td>${money(p.annual)}</td><td>${money(p.price)}</td></tr>`).join("");
+$("modeFlat").addEventListener("click",()=>setToolMode("flat"));
+$("modeCommodity").addEventListener("click",()=>setToolMode("commodity"));
+$("fxIncludeLight").addEventListener("change",fxToggleBoxes);
+$("fxIncludeGas").addEventListener("change",fxToggleBoxes);
+$("fxOfferFix").addEventListener("change",fxToggleBoxes);
+$("fxOfferFlex").addEventListener("change",fxToggleBoxes);
+$("fxCalculate").addEventListener("click",calculateCommodity);
+$("fxPdf").addEventListener("click",makeCommodityPdf);
+renderCommodityRateTables();
+fxToggleBoxes();
+
 </script></body></html>
