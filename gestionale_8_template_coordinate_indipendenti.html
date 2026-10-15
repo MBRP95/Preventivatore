@@ -188,7 +188,7 @@ const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).
 const num=n=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(n);
 const today=new Date();$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 function readForm(){return {lightOptions:{meterPower:Number($("meterPower").value||3),residency:$("residency").value||"resident"},customer:{name:$("name").value.trim(),fiscalCode:$("fiscalCode").value.trim().toUpperCase(),date:$("date").value,email:$("email").value.trim(),phone:$("phone").value.trim(),address:$("customerAddress").value.trim()},shop:{name:$("shopName").value.trim(),address:$("shopAddress").value.trim(),consultant:$("consultant").value.trim(),email:$("shopEmail").value.trim(),phone:$("shopPhone").value.trim()}}}
-function calcPromo(p,consumption,spend){let delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=p.annual-refund-bonus+excessCost;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.5+1e-10}}
+function calcPromo(p,consumption,spend){let delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=p.monthly*12+(consumption-p.plafond)*p.price;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.5+1e-10}}
 function calculate(){
  const includeLight=$("includeLight").checked,includeGas=$("includeGas").checked;
  if(!includeLight&&!includeGas){error("Seleziona almeno un servizio: luce, gas o entrambi.");return}
@@ -267,20 +267,32 @@ function layoutLabel(layout){
 function powerExtra(power){return power===4.5?5:power===6?10:0}
 function residencyExtra(res){return res==="nonresident"?12:0}
 function promoTitle(type,sec){const name=String(sec?.selectedPromo?.name||"PROMO").toUpperCase();return (type==="light"?"LUCE":"GAS")+" FLAT "+name}
-function hasSaving(sec){return !!sec && Number(sec.calculations?.saving||0)>0}
-function annualOf(sec){return Number(sec?.calculations?.annualCost||0)}
 function monthlyOf(sec){return Number(sec?.selectedPromo?.monthly||0)}
+function extraMonthlyOf(type,q){
+  if(type!=="light")return 0;
+  return powerExtra(Number(q?.lightOptions?.meterPower||3))+residencyExtra(q?.lightOptions?.residency||"resident");
+}
+function consumptionAdj(sec){
+  const p=sec?.selectedPromo; if(!p)return {diff:0,cost:0};
+  const diff=Number(sec.consumption||0)-Number(p.plafond||0);
+  return {diff,cost:diff*Number(p.price||0)};
+}
+function quoteAnnual(type,sec,q){return monthlyOf(sec)*12+consumptionAdj(sec).cost+extraMonthlyOf(type,q)*12}
+function quoteSaving(type,sec,q){return currentOf(sec)-quoteAnnual(type,sec,q)}
+function hasSaving(type,sec,q){return quoteSaving(type,sec,q)>0.005}
+function annualOf(sec){return Number(sec?.calculations?.annualCost||0)}
 function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:3}).format(n)+" €/"+unit}
 function calcNoteLine(type,sec){
   const p=sec?.selectedPromo; if(!p||!sec)return "";
   const unit=type==="light"?"kWh":"Smc";
   const servizio=type==="light"?"luce":"gas";
-  const diff=Number(sec.consumption||0)-Number(p.plafond||0);
+  const {diff}=consumptionAdj(sec);
   const abs=Math.abs(diff);
-  if(abs<0.0005)return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso, senza conguaglio di consumo.`;
+  const px=unitPrice(p.price,unit);
+  if(abs<0.0005)return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso, senza ${unit} in eccesso o in difetto (prezzo ${px}).`;
   const segno=diff>0?"più":"meno";
   const modo=diff>0?"eccesso":"difetto";
-  return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${unitPrice(p.price,unit)}.`;
+  return `La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${px}.`;
 }
 function calcNotesHtml(q){
   const layout=quoteLayout(q); if(!layout)return "";
@@ -331,12 +343,13 @@ function statsHtml(items){
   return `<div class="qstats n${items.length}">${items.map(([ico,lab,val,sub])=>`<div class="qstat">${ico}<div class="qstat-txt"><span class="qstat-lab">${escapeHtml(lab)}</span><div class="qstat-field"><b>${escapeHtml(val)}</b>${sub?`<i>${escapeHtml(sub)}</i>`:""}</div></div></div>`).join("")}</div>`;
 }
 function offerHtml(type,sec,q,single){
-  const save=hasSaving(sec);
+  const annual=quoteAnnual(type,sec,q);
+  const save=hasSaving(type,sec,q);
   const title=promoTitle(type,sec);
   const img=single?(type==="light"?ILL.womanLg:ILL.manLg):(type==="light"?ILL.woman:ILL.man);
   const metrics=save?`<div class="qmetrics">
     <div class="qbox current"><div class="lbl">La tua spesa attuale</div><div class="qfield"><div class="val">${money(currentOf(sec))}</div><div class="u">all'anno</div></div></div>
-    <div class="qbox saving"><div class="lbl">Risparmio annuo</div><div class="qfield"><div class="val">${money(savingOf(sec))}</div><div class="u">all'anno</div></div></div>
+    <div class="qbox saving"><div class="lbl">Risparmio annuo</div><div class="qfield"><div class="val">${money(quoteSaving(type,sec,q))}</div><div class="u">all'anno</div></div></div>
   </div>`:"";
   return `<article class="qoffer ${save?"":"no-save"}">
     <div class="qoffer-main">
@@ -344,7 +357,7 @@ function offerHtml(type,sec,q,single){
       <div class="qbody">
         <div class="qban"><small>PROMO ENERGIA</small><b>${escapeHtml(title)}</b></div>
         ${metrics}
-        <div class="qcost"><div class="lbl">Il nostro costo</div><div class="qfield"><div class="val">${money(annualOf(sec))}</div><div class="u">all'anno</div></div></div>
+        <div class="qcost"><div class="lbl">Il nostro costo</div><div class="qfield"><div class="val">${money(annual)}</div><div class="u">all'anno</div></div></div>
         <div class="qmonth"><span>Canone mensile</span><b>${money(monthlyOf(sec))} al mese</b></div>
       </div>
     </div>
