@@ -451,7 +451,7 @@ function calcNotesHtml(q){
   if(layout==="dual"||layout==="light")lines.push(calcNoteLine("light",q.sections.light));
   if(layout==="dual"||layout==="gas")lines.push(calcNoteLine("gas",q.sections.gas));
   const texts=lines.filter(Boolean);
-  if(!texts.length)return "";
+  texts.push("Non comprende rete, oneri di sistema, imposte e IVA.");
   return `<div class="qcalc">${texts.map(t=>`<p>${escapeHtml(t)}</p>`).join("")}</div>`;
 }
 function currentOf(sec){return Number(sec?.currentSpend||0)}
@@ -886,8 +886,6 @@ function buildCommodityHtml(q){
     <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="cflags">
       <span class="cflag">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
-      <span class="cflag ${q.isFastweb?"":"off"}">${q.isFastweb?"Già cliente Fastweb o Vodafone":"Non cliente Fastweb/Vodafone"}</span>
-      <span class="cflag ${q.compare?"":"off"}">${q.compare?"Con paragone bolletta":"Solo offerta"}</span>
     </div>
     <div class="cinfo">
       ${infoCardHtml("DATI CLIENTE",ICO.user,[["Nome e Cognome:",cust.name||""],["Telefono:",cust.phone||""],["Email:",cust.email||""],["Indirizzo:",cust.address||""]])}
