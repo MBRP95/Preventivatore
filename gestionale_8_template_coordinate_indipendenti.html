@@ -451,7 +451,7 @@ function calcNotesHtml(q){
   if(layout==="dual"||layout==="light")lines.push(calcNoteLine("light",q.sections.light));
   if(layout==="dual"||layout==="gas")lines.push(calcNoteLine("gas",q.sections.gas));
   const texts=lines.filter(Boolean);
-  texts.push("Non comprende rete, oneri di sistema, imposte e IVA.");
+  if(!texts.length)return "";
   return `<div class="qcalc">${texts.map(t=>`<p>${escapeHtml(t)}</p>`).join("")}</div>`;
 }
 function currentOf(sec){return Number(sec?.currentSpend||0)}
