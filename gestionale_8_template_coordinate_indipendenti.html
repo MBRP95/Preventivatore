@@ -68,18 +68,17 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qoffer.no-save .qmetrics{display:none}
 .qoffer.no-save .qcost .qfield{min-height:70px}
 .qoffer.no-save .qcost .val{font-size:28px}
-.qstats{display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;margin-top:8px;padding:12px 8px;background:#fff;border-radius:16px;min-height:72px;min-width:0;max-width:100%;box-sizing:border-box}
+.qstats{display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;margin-top:8px;padding:12px 10px;background:#fff;border-radius:16px;min-height:72px;min-width:0;max-width:100%;width:100%;box-sizing:border-box}
 .qstats.n1{justify-content:center;padding:14px 18px}
-.qstats.n2{justify-content:space-evenly}
-.qstat{text-align:left;font-size:11px;color:#222;border-right:0;padding:4px 10px;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:8px;flex:1 1 0;min-width:0;position:relative}
+.qstat{text-align:left;font-size:11px;color:#222;border-right:0;padding:4px 12px;display:flex;flex-direction:row;align-items:center;gap:8px;flex:1 1 0%;width:0;min-width:0;position:relative;box-sizing:border-box}
 .qstat:not(:last-child):after{content:"";position:absolute;right:0;top:14%;bottom:14%;width:1.5px;background:#222}
 .qstat:first-child{padding-left:8px}
-.qstats.n1 .qstat{flex:1 1 auto;max-width:420px;padding-left:0;padding-right:0;width:100%}
+.qstats.n1 .qstat{flex:1 1 auto;width:100%;max-width:560px;padding-left:0;padding-right:0}
 .qstats.n1 .qstat:after{display:none}
-.qstat-txt{display:flex;flex-direction:column;gap:5px;min-width:0;width:100%;grid-column:2}
+.qstat-txt{display:flex;flex-direction:column;justify-content:center;gap:5px;flex:1 1 0%;width:0;min-width:0}
 .qstat svg{display:block;flex-shrink:0}
-.qstat span{font-size:10px;color:#222;font-weight:700;line-height:1.2;white-space:nowrap}
-.qstat-field{background:#F3F3F3;border-radius:12px;padding:8px 10px;min-height:38px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.qstat .qstat-lab,.qstat span{font-size:10px;color:#222;font-weight:700;line-height:1.2;white-space:nowrap}
+.qstat-field{background:#F3F3F3;border-radius:8px;padding:10px 12px;min-height:42px;width:100%;box-sizing:border-box;display:block;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .qstat b{display:block;color:#111;font-size:13px;font-weight:800;margin:0;white-space:nowrap}
 .qstat i{display:block;font-style:normal;color:#666;font-size:8.5px;white-space:nowrap}
 .qpage > .qstats{margin-top:10px}
@@ -88,7 +87,7 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qfootitem:last-child{border:0}
 .qico{width:30px;height:30px;object-fit:contain;object-position:center;display:block;flex-shrink:0;overflow:visible}
 .qstats,.qstat{overflow:visible}
-.qstat .qico{width:28px;height:28px;padding:0;flex-shrink:0;grid-row:1/-1}
+.qstat .qico{width:28px;height:28px;padding:0;flex:0 0 auto}
 .qfootitem .qico{flex:0 0 42px;width:42px;height:42px}
 .qfootitem b{display:block;color:#111;font-size:10px;margin-bottom:2px;letter-spacing:.2px}
 .qpage.is-single .qoffer{background:#FFF9DF;min-height:0;padding:14px 14px 12px}
@@ -108,12 +107,12 @@ footer{font-size:12px;color:#756f58;text-align:center;padding:14px}
 .qpage.is-single .qmonth{justify-content:space-between;gap:14px;padding:8px 8px 8px 18px;font-size:13px;width:100%;max-width:100%;margin:0;border-radius:16px}
 .qpage.is-single .qmonth b{font-size:16px;padding:12px 18px;border-radius:12px}
 .qpage.is-single .qstats{padding:16px 18px;margin-top:12px;min-height:84px}
-.qpage.is-single .qstat{padding:4px 16px;column-gap:12px}
-.qpage.is-single .qstat span{font-size:12px}
-.qpage.is-single .qstat-field{padding:12px 14px;min-height:44px;border-radius:12px;width:100%}
+.qpage.is-single .qstat{padding:4px 10px;gap:12px}
+.qpage.is-single .qstat .qstat-lab,.qpage.is-single .qstat span{font-size:12px}
+.qpage.is-single .qstat-field{padding:12px 14px;min-height:48px;border-radius:10px;width:100%}
 .qpage.is-single .qstat b{font-size:15px}
 .qpage.is-single .qstat .qico{width:36px;height:36px}
-.qpage.is-single .qstats.n1 .qstat{flex:1 1 auto;max-width:480px;width:100%}
+.qpage.is-single .qstats.n1 .qstat{max-width:560px;width:100%}
 @media print{
   @page{size:A4 portrait;margin:0}
   html,body{margin:0!important;padding:0!important;background:#fff!important}
@@ -305,7 +304,7 @@ function offerStatsHtml(type,sec,q){
   ];
 }
 function statsHtml(items){
-  return `<div class="qstats n${items.length}">${items.map(([ico,lab,val,sub])=>`<div class="qstat">${ico}<div class="qstat-txt"><span>${escapeHtml(lab)}</span><div class="qstat-field"><b>${escapeHtml(val)}</b>${sub?`<i>${escapeHtml(sub)}</i>`:""}</div></div></div>`).join("")}</div>`;
+  return `<div class="qstats n${items.length}">${items.map(([ico,lab,val,sub])=>`<div class="qstat">${ico}<div class="qstat-txt"><span class="qstat-lab">${escapeHtml(lab)}</span><div class="qstat-field"><b>${escapeHtml(val)}</b>${sub?`<i>${escapeHtml(sub)}</i>`:""}</div></div></div>`).join("")}</div>`;
 }
 function offerHtml(type,sec,q,single){
   const save=hasSaving(sec);
