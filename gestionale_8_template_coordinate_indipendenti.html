@@ -53,6 +53,27 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .csum{margin-top:12px;background:#fff;border:2px solid #111;border-radius:16px;padding:14px 16px;position:relative;z-index:1}
 .csum .lbl{font-size:12px;font-weight:800;color:#555}
 .csum .val{font-size:28px;font-weight:900}
+.fx-compare{background:#fff8bf;border:1px solid #eadf83;border-radius:10px;padding:12px;margin-top:10px}
+.fx-compare h4{margin:0 0 10px;font-size:13px;color:#39352b}
+.cdisc{background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;margin:0 0 10px;text-align:center}
+.cdisc b{display:block;font-size:22px;font-style:italic;font-weight:900;letter-spacing:-.4px}
+.cdisc span{display:block;font-size:11px;color:#fff;font-weight:700;margin-top:3px}
+.cstrikethrough{text-decoration:line-through;color:#888;font-weight:700;margin-right:8px}
+.cchecks{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
+.cchecks li{padding:4px 0;font-weight:700}
+.ccmp{margin-top:12px;background:#FFF9DF;border:2px solid #111;border-radius:14px;padding:12px;position:relative;z-index:1}
+.ccmp h4{margin:0 0 8px;font-size:13px;font-weight:900}
+.ccmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ccmpbox{background:#E4E4E6;border-radius:12px;padding:8px 10px}
+.ccmpbox.new{background:#FFF3B0}
+.ccmpbox.save{background:#B7E4B0;margin-top:8px}
+.ccmpbox .lbl{font-size:11px;font-weight:800;color:#555}
+.ccmpbox .val{font-size:18px;font-weight:900;margin-top:4px}
+.ccmpbox.save .val{color:#0F6B28}
+.ccmpbox.save .lbl{color:#1B6B32}
+.ccmp .meta{font-size:11px;margin-top:8px;color:#333;line-height:1.4}
+.cpage.has-cmp .ccard{padding:12px 14px}
+@media(max-width:700px){.ccmpgrid{grid-template-columns:1fr}}
 #printArea{display:none}
 .qpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 20px;position:relative;overflow:hidden;box-sizing:border-box}
 .qpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
@@ -197,41 +218,56 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 
 <div id="commodityFlow" class="hidden">
 <section class="panel">
-<h2>Preventivi Fix e Flex <span class="badge-draft">BOZZA LISTINI</span></h2>
-<p class="note">Sezione separata dalle promo FLAT. Qui si stima solo la <b>materia prima</b>: per Fix quota fissa + corrispettivo €/kWh o €/Smc; per Flex quota fissa + PUN o PSV + spread. I prezzi cambiano se il cliente ha P.IVA e se è già cliente Fastweb. I valori di listino sono una bozza: puoi modificarli sotto e ricalcolare.</p>
+<h2>Preventivi Fix e Flex</h2>
+<p class="note">Sezione separata dalle promo FLAT. Stima <b>materia prima</b> e <b>corrispettivo di commercializzazione</b> delle offerte Fastweb Energia. Sconto Fastweb o Vodafone su tutte tranne <b>Luce Fix per Te</b>. Se scegli il paragone, il seller inserisce i costi della bolletta attuale e il consumo del mese.</p>
 <div class="checks">
-<label><input type="radio" name="fxOffer" id="fxOfferFix" value="fix" checked> Fix</label>
-<label><input type="radio" name="fxOffer" id="fxOfferFlex" value="flex"> Flex</label>
+<label><input type="radio" name="fxSeg" id="fxSegPrivate" value="private" checked> Privato</label>
+<label><input type="radio" name="fxSeg" id="fxSegPiva" value="piva"> P.IVA</label>
 </div>
 <div class="checks">
 <label><input id="fxIncludeLight" type="checkbox" checked> Luce</label>
 <label><input id="fxIncludeGas" type="checkbox"> Gas</label>
 </div>
 <div class="checks">
-<label><input id="fxPiva" type="checkbox"> Cliente con P.IVA</label>
-<label><input id="fxFastweb" type="checkbox"> Già cliente Fastweb</label>
+<label><input id="fxFastweb" type="checkbox"> Già cliente Fastweb o Vodafone</label>
 </div>
+<div class="checks">
+<label><input type="radio" name="fxCompare" id="fxCompareNo" value="no" checked> Senza paragone</label>
+<label><input type="radio" name="fxCompare" id="fxCompareYes" value="yes"> Con paragone bolletta</label>
+</div>
+<p class="note" id="fxNoCompareHint">Senza paragone si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
+<p class="note hidden" id="fxCompareHint">Con paragone il seller inserisce costo fisso attuale, costo materia prima, consumo del mese e, se l'offerta è Flex, il mese di riferimento con PUN o PSV.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
-<div class="grid">
-<label>Consumo annuo stimato (kWh)<input id="fxLightConsumption" type="number" min="0" step="1" placeholder="Es. 2700"></label>
-<label>Spesa annua attuale luce (€), facoltativa<input id="fxLightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label>
+<label>Offerta luce<select id="fxLightOffer"></select></label>
+<div id="fxLightCompare" class="hidden fx-compare">
+<h4>Paragone bolletta luce</h4>
+<div class="grid3">
+<label>Costo fisso attuale (€/mese)<input id="fxLightFixedNow" type="number" min="0" step="0.01" placeholder="Es. 18"></label>
+<label>Costo materia prima attuale (€/mese)<input id="fxLightEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 45"></label>
+<label>Consumo del mese (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
+</div>
+<div id="fxLightFlexRef" class="grid hidden" style="margin-top:10px">
+<label>Mese di riferimento<select id="fxLightRefMonth"></select></label>
+<label>PUN del mese (€/kWh)<input id="fxLightPun" type="number" min="0" step="0.001" placeholder="Es. 0,110"></label>
+</div>
 </div>
 </div>
 <div id="fxGasBox" class="hidden">
 <h3>Gas</h3>
-<div class="grid">
-<label>Consumo annuo stimato (Smc)<input id="fxGasConsumption" type="number" min="0" step="1" placeholder="Es. 900"></label>
-<label>Spesa annua attuale gas (€), facoltativa<input id="fxGasSpend" type="number" min="0" step="0.01" placeholder="Es. 1100"></label>
+<label>Offerta gas<select id="fxGasOffer"></select></label>
+<div id="fxGasCompare" class="hidden fx-compare">
+<h4>Paragone bolletta gas</h4>
+<div class="grid3">
+<label>Costo fisso attuale (€/mese)<input id="fxGasFixedNow" type="number" min="0" step="0.01" placeholder="Es. 16"></label>
+<label>Costo materia prima attuale (€/mese)<input id="fxGasEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 55"></label>
+<label>Consumo del mese (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
+</div>
+<div id="fxGasFlexRef" class="grid hidden" style="margin-top:10px">
+<label>Mese di riferimento<select id="fxGasRefMonth"></select></label>
+<label>PSV del mese (€/Smc)<input id="fxGasPsv" type="number" min="0" step="0.001" placeholder="Es. 0,400"></label>
 </div>
 </div>
-<div id="fxIndexBox" class="hidden">
-<h3>Indici di mercato (Flex)</h3>
-<div class="grid">
-<label>PUN stimato (€/kWh)<input id="fxPun" type="number" min="0" step="0.001"></label>
-<label>PSV stimato (€/Smc)<input id="fxPsv" type="number" min="0" step="0.001"></label>
-</div>
-<p class="note">PUN e PSV sono indici variabili: inserisci la stima usata per il preventivo. Quota fissa e spread sono di listino (bozza) e cambiano per P.IVA e cliente Fastweb.</p>
 </div>
 <div class="actions">
 <button type="button" id="fxCalculate">Calcola preventivo Fix/Flex</button>
@@ -241,21 +277,18 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <div id="fxResult" class="result hidden"></div>
 <div id="fxPreview" class="hidden">
 <h3 id="fxPreviewTitle">Anteprima Fix/Flex</h3>
-<p class="note">Stima della sola materia prima. Non è il preventivo FLAT. I listini sono in bozza.</p>
+<p class="note" id="fxPreviewNote">Offerta scelta. I prezzi si intendono imposte escluse.</p>
 <div class="quote-frame" id="fxFrame"></div>
 </div>
 </section>
 <section class="panel">
-<h2>Listini Fix e Flex <span class="badge-draft">DA SISTEMARE</span></h2>
-<p class="note">Modifica i valori e ricalcola. Privato = senza P.IVA. Fastweb = già cliente Fastweb.</p>
-<h3>Fix — quota fissa + corrispettivo</h3>
-<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Quota fissa €/mese</th><th>Corrispettivo</th></tr></thead><tbody id="fxFixTable"></tbody></table></div>
-<h3>Flex — quota fissa + indice + spread</h3>
+<h2>Listini Fix e Flex</h2>
+<p class="note">Valori allineati alle offerte Fastweb Energia. Puoi modificarli e ricalcolare. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
 <div class="grid">
 <label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
 <label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
 </div>
-<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Servizio</th><th>Cliente</th><th>Fastweb</th><th>Quota fissa €/mese</th><th>Spread</th></tr></thead><tbody id="fxFlexTable"></tbody></table></div>
+<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Comm. €/anno</th><th>Sconto €/mese</th><th>Mesi</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
 </section>
 </div>
 
@@ -590,32 +623,54 @@ function exportBackup(){const blob=new Blob([JSON.stringify({schemaVersion:2,exp
 function importBackupFile(file){const reader=new FileReader();reader.onload=async()=>{try{const obj=JSON.parse(reader.result);if(!Array.isArray(obj.quotes)||!Array.isArray(obj.customers))throw Error("Formato backup non riconosciuto");if(!folderHandle)throw Error("Seleziona prima la cartella OneDrive");if(!confirm(`Importare ${obj.quotes.length} preventivi e ${obj.customers.length} clienti?`))return;const d=await ensureDir(folderHandle,"dati"),qd=await ensureDir(d,"preventivi"),td=await ensureDir(d,"cestino");for(const q of obj.quotes)await writeJson(qd,quoteFilename(q),q);for(const q of (obj.trashQuotes||[]))await writeJson(td,quoteFilename(q),q);customers=obj.customers;await writeJson(d,"clienti.json",customers);await loadArchive()}catch(e){alert("Importazione non riuscita: "+e.message)}};reader.readAsText(file)}
 
 let currentCommodityQuote=null;
-const COMMODITY_RATES={
+const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const COMMODITY_INDEX={pun:0.110,psv:0.400};
+const COMMODITY_OFFERS={
   light:{
-    unit:"kWh",
-    fix:{
-      private:{no:{monthly:9.5,price:0.145},yes:{monthly:8.5,price:0.132}},
-      piva:{no:{monthly:11,price:0.138},yes:{monthly:10,price:0.128}}
-    },
-    flex:{
-      index:0.110,
-      private:{no:{monthly:8.5,spread:0.028},yes:{monthly:7.5,spread:0.018}},
-      piva:{no:{monthly:10,spread:0.024},yes:{monthly:9,spread:0.016}}
-    }
+    private:[
+      {id:"luce-fix",name:"Luce Fix",kind:"fix",energy:0.198,comm:156,discountMonth:5,months:12,unit:"kWh",point:"POD"},
+      {id:"luce-fix-te",name:"Luce Fix per Te",kind:"fix",energy:0.119,comm:144,discountMonth:0,months:12,unit:"kWh",point:"POD"},
+      {id:"luce-flex",name:"Luce Flex",kind:"flex",spread:0.026,comm:156,discountMonth:5,months:12,unit:"kWh",point:"POD",index:"PUN"}
+    ],
+    piva:[
+      {id:"luce-biz-fix",name:"Luce Business Fix",kind:"fix",energy:0.180,comm:240,discountMonth:10,months:24,unit:"kWh",point:"POD"},
+      {id:"luce-biz-flex",name:"Luce Business Flex",kind:"flex",spread:0.030,comm:240,discountMonth:10,months:24,unit:"kWh",point:"POD",index:"PUN"}
+    ]
   },
   gas:{
-    unit:"Smc",
-    fix:{
-      private:{no:{monthly:10,price:0.55},yes:{monthly:9,price:0.50}},
-      piva:{no:{monthly:12,price:0.52},yes:{monthly:11,price:0.48}}
-    },
-    flex:{
-      index:0.40,
-      private:{no:{monthly:9,spread:0.090},yes:{monthly:8,spread:0.070}},
-      piva:{no:{monthly:11,spread:0.080},yes:{monthly:10,spread:0.065}}
-    }
+    private:[
+      {id:"gas-flex",name:"Gas Flex",kind:"flex",spread:0.12,comm:180,discountMonth:5,months:12,unit:"Smc",point:"PDR",index:"PSV"}
+    ],
+    piva:[
+      {id:"gas-biz-fix",name:"Gas Fix Business",kind:"fix",energy:0.80,comm:240,discountMonth:10,months:24,unit:"Smc",point:"PDR"},
+      {id:"gas-biz-flex",name:"Gas Flex Business",kind:"flex",spread:0.13,comm:240,discountMonth:10,months:12,unit:"Smc",point:"PDR",index:"PSV"}
+    ]
   }
 };
+function fxAllOffers(){
+  return [...COMMODITY_OFFERS.light.private,...COMMODITY_OFFERS.light.piva,...COMMODITY_OFFERS.gas.private,...COMMODITY_OFFERS.gas.piva];
+}
+function fxFindOffer(id){return fxAllOffers().find(o=>o.id===id)}
+function fxSeg(){return $("fxSegPiva").checked?"piva":"private"}
+function fxCompareOn(){return $("fxCompareYes").checked}
+function fxIsFw(){return $("fxFastweb").checked}
+function fxOffersFor(service){return COMMODITY_OFFERS[service][fxSeg()]}
+function fxSelectedOffer(service){
+  const sel=$(service==="light"?"fxLightOffer":"fxGasOffer");
+  return fxOffersFor(service).find(o=>o.id===sel.value)||fxOffersFor(service)[0];
+}
+function fxCommAfter(offer,isFw){
+  const disc=(isFw && Number(offer.discountMonth)>0)?Number(offer.discountMonth)*12:0;
+  return Math.max(0,Number(offer.comm)-disc);
+}
+function fxEnergyTitle(service){return service==="light"?"Componente Energia":"Corrispettivo al consumo"}
+function fxEnergyText(offer,indexUsed){
+  if(offer.kind==="fix")return unitPrice(offer.energy,offer.unit);
+  const idxName=offer.index==="PUN"?"PUN Index GME":"PSV";
+  const spreadTxt=unitPrice(offer.spread,offer.unit);
+  if(indexUsed==null)return idxName+" + "+spreadTxt;
+  return idxName+" "+unitPrice(indexUsed,offer.unit)+" + "+spreadTxt;
+}
 function setToolMode(mode){
   const commodity=mode==="commodity";
   $("modeFlat").classList.toggle("active",!commodity);
@@ -628,33 +683,71 @@ function setToolMode(mode){
     if(currentQuote)showQuotePreview(currentQuote);
   }
 }
-function fxOffer(){return $("fxOfferFlex").checked?"flex":"fix"}
-function fxToggleBoxes(){
-  $("fxLightBox").classList.toggle("hidden",!$("fxIncludeLight").checked);
-  $("fxGasBox").classList.toggle("hidden",!$("fxIncludeGas").checked);
-  $("fxIndexBox").classList.toggle("hidden",fxOffer()!=="flex");
-}
-function fxRate(service,offer,isPiva,isFw){
-  const seg=isPiva?"piva":"private";
-  const fw=isFw?"yes":"no";
-  return COMMODITY_RATES[service][offer][seg][fw];
-}
-function calcCommodityService(service,offer,consumption,spend,isPiva,isFw,indexValue){
-  const unit=COMMODITY_RATES[service].unit;
-  const rate=fxRate(service,offer,isPiva,isFw);
-  let monthly=0, unitP=0, annual=0, indexUsed=null, spread=null;
-  monthly=Number(rate.monthly||0);
-  if(offer==="fix"){
-    unitP=Number(rate.price||0);
-    annual=monthly*12+consumption*unitP;
-  }else{
-    indexUsed=Number(indexValue);
-    spread=Number(rate.spread||0);
-    unitP=indexUsed+spread;
-    annual=monthly*12+consumption*unitP;
+function fxFillOfferSelects(){
+  for(const [svc,id] of [["light","fxLightOffer"],["gas","fxGasOffer"]]){
+    const sel=$(id); if(!sel)continue;
+    const prev=sel.value;
+    const list=fxOffersFor(svc);
+    sel.innerHTML=list.map(o=>`<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join("");
+    if(list.some(o=>o.id===prev))sel.value=prev;
   }
-  const saving=(Number.isFinite(spend)&&spend>0)?spend-annual:null;
-  return {service,unit,consumption,currentSpend:spend,monthly,unitPrice:unitP,indexUsed,spread,annual,saving};
+  fxToggleBoxes();
+}
+function fxFillMonthSelects(){
+  const now=new Date();
+  const prevM=(now.getMonth()+11)%12;
+  for(const id of ["fxLightRefMonth","fxGasRefMonth"]){
+    const sel=$(id); if(!sel)continue;
+    if(!sel.options.length){
+      sel.innerHTML=MONTHS_IT.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+      sel.value=String(prevM);
+    }
+  }
+}
+function fxToggleBoxes(){
+  const light=$("fxIncludeLight").checked, gas=$("fxIncludeGas").checked, cmp=fxCompareOn();
+  $("fxLightBox").classList.toggle("hidden",!light);
+  $("fxGasBox").classList.toggle("hidden",!gas);
+  $("fxLightCompare").classList.toggle("hidden",!light||!cmp);
+  $("fxGasCompare").classList.toggle("hidden",!gas||!cmp);
+  $("fxNoCompareHint").classList.toggle("hidden",cmp);
+  $("fxCompareHint").classList.toggle("hidden",!cmp);
+  if(light){
+    const o=fxSelectedOffer("light");
+    $("fxLightFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
+  }
+  if(gas){
+    const o=fxSelectedOffer("gas");
+    $("fxGasFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
+  }
+}
+function calcCommodityService(service,offer,isFw,compare){
+  const commList=Number(offer.comm);
+  const comm=fxCommAfter(offer,isFw);
+  const monthly=comm/12;
+  const discountApplied=(isFw && Number(offer.discountMonth)>0)?Number(offer.discountMonth):0;
+  const out={
+    service,unit:offer.unit,point:offer.point,offer,
+    commList,comm,monthly,discountApplied,
+    indexUsed:null,spread:offer.kind==="flex"?Number(offer.spread):null,
+    unitPrice:offer.kind==="fix"?Number(offer.energy):null,
+    compare:null
+  };
+  if(compare){
+    if(offer.kind==="flex"){
+      out.indexUsed=Number(compare.indexValue);
+      out.unitPrice=out.indexUsed+Number(offer.spread);
+    }
+    const newEnergy=compare.consumption*out.unitPrice;
+    const newTotal=monthly+newEnergy;
+    const currentTotal=compare.fixedNow+compare.energyNow;
+    out.compare={
+      fixedNow:compare.fixedNow,energyNow:compare.energyNow,consumption:compare.consumption,
+      indexValue:compare.indexValue,refMonth:compare.refMonth,
+      newEnergy,newFixed:monthly,newTotal,currentTotal,saving:currentTotal-newTotal
+    };
+  }
+  return out;
 }
 function fxError(msg){
   $("fxStatus").classList.remove("hidden");
@@ -670,23 +763,35 @@ function calculateCommodity(){
   }
   const includeLight=$("fxIncludeLight").checked, includeGas=$("fxIncludeGas").checked;
   if(!includeLight&&!includeGas){fxError("Seleziona almeno un servizio: luce, gas o entrambi.");return}
-  const offer=fxOffer(), isPiva=$("fxPiva").checked, isFw=$("fxFastweb").checked;
+  const isPiva=fxSeg()==="piva", isFw=fxIsFw(), compareOn=fxCompareOn();
   const sections={};
   for(const [on,key] of [[includeLight,"light"],[includeGas,"gas"]]){
     if(!on)continue;
-    const prefix=key==="light"?"fxLight":"fxGas";
-    const cr=$(prefix+"Consumption").value, sr=$(prefix+"Spend").value;
-    const c=Number(cr), sp=sr===""?NaN:Number(sr);
-    if(cr===""||!Number.isFinite(c)||c<=0){fxError("Inserisci un consumo annuo stimato maggiore di zero per "+(key==="light"?"la luce":"il gas")+".");return}
-    if(sr!==""&&(!Number.isFinite(sp)||sp<0)){fxError("La spesa attuale deve essere vuota oppure un numero non negativo.");return}
-    const idx=key==="light"?Number($("fxPun").value):Number($("fxPsv").value);
-    if(offer==="flex"&&(!Number.isFinite(idx)||idx<0)){fxError("Inserisci PUN e PSV stimati validi.");return}
-    sections[key]=calcCommodityService(key,offer,c,sp,isPiva,isFw,idx);
+    const offer=fxSelectedOffer(key);
+    if(!offer){fxError("Seleziona un'offerta per "+(key==="light"?"la luce":"il gas")+".");return}
+    let compare=null;
+    if(compareOn){
+      const prefix=key==="light"?"fxLight":"fxGas";
+      const fixedNow=Number($(prefix+"FixedNow").value);
+      const energyNow=Number($(prefix+"EnergyNow").value);
+      const cons=Number($(key==="light"?"fxLightMonthKwh":"fxGasMonthSmc").value);
+      if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci il costo fisso attuale della bolletta per "+(key==="light"?"la luce":"il gas")+".");return}
+      if(!Number.isFinite(energyNow)||energyNow<0){fxError("Inserisci il costo della materia prima attuale per "+(key==="light"?"la luce":"il gas")+".");return}
+      if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci il consumo del mese maggiore di zero per "+(key==="light"?"la luce":"il gas")+".");return}
+      let indexValue=null, refMonth=null;
+      if(offer.kind==="flex"){
+        const idx=Number($(key==="light"?"fxLightPun":"fxGasPsv").value);
+        if(!Number.isFinite(idx)||idx<0){fxError("Inserisci "+(key==="light"?"il PUN":"il PSV")+" del mese di riferimento.");return}
+        indexValue=idx;
+        refMonth=Number($(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value);
+      }
+      compare={fixedNow,energyNow,consumption:cons,indexValue,refMonth};
+    }
+    sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
   currentCommodityQuote={
-    kind:"commodity", offer, isPiva, isFastweb:isFw,
-    pun:Number($("fxPun").value||COMMODITY_RATES.light.flex.index),
-    psv:Number($("fxPsv").value||COMMODITY_RATES.gas.flex.index),
+    kind:"commodity", isPiva, isFastweb:isFw, compare:compareOn,
+    pun:COMMODITY_INDEX.pun, psv:COMMODITY_INDEX.psv,
     id:makeId(), quoteNumber:null, createdAt:new Date().toISOString(),
     customer:data.customer, shop:data.shop, sections, status:"bozza"
   };
@@ -697,67 +802,112 @@ function calculateCommodity(){
 }
 function renderCommodityResult(q){
   const host=$("fxResult");
-  const offerLabel=q.offer==="fix"?"Fix":"Flex";
-  const who=(q.isPiva?"P.IVA":"Privato")+" · "+(q.isFastweb?"cliente Fastweb":"non Fastweb");
-  let html=`<p class="note">Materia prima ${offerLabel} · ${who}. Valori di listino in bozza.</p><table><thead><tr><th>Servizio</th><th>Consumo</th><th>Dettaglio</th><th>Costo annuo</th><th>Risparmio</th></tr></thead><tbody>`;
+  const who=(q.isPiva?"P.IVA":"Privato")+" · "+(q.isFastweb?"cliente Fastweb o Vodafone":"non Fastweb/Vodafone");
+  const mode=q.compare?"con paragone bolletta":"solo offerta";
+  let html=`<p class="note">${who} · ${mode}.</p><table><thead><tr><th>Servizio</th><th>Offerta</th><th>Energia</th><th>Commercializzazione</th>${q.compare?"<th>Mese attuale</th><th>Mese offerta</th><th>Diff.</th>":""}</tr></thead><tbody>`;
   for(const [key,title] of [["light","Luce"],["gas","Gas"]]){
     const s=q.sections[key]; if(!s)continue;
-    let det="";
-    if(q.offer==="fix")det=`Fisso ${money(s.monthly)}/mese + ${unitPrice(s.unitPrice,s.unit)}`;
-    else det=`Fisso ${money(s.monthly)}/mese + ${key==="light"?"PUN":"PSV"} ${unitPrice(s.indexUsed,s.unit)} + spread ${unitPrice(s.spread,s.unit)}`;
-    const sav=s.saving==null?"—":money(s.saving);
-    html+=`<tr><td><b>${title}</b></td><td>${num(s.consumption)} ${s.unit}</td><td>${det}</td><td>${money(s.annual)}</td><td>${sav}</td></tr>`;
+    const o=s.offer;
+    const commTxt=(s.discountApplied?`<s>${num(s.commList)}</s> `:"")+`${num(s.comm)} €/${o.point}/anno`;
+    html+=`<tr><td><b>${title}</b></td><td>${escapeHtml(o.name)}</td><td>${fxEnergyText(o,s.indexUsed)}</td><td>${commTxt}</td>`;
+    if(q.compare&&s.compare){
+      const d=s.compare;
+      html+=`<td>${money(d.currentTotal)}</td><td>${money(d.newTotal)}</td><td>${money(d.saving)}</td>`;
+    }
+    html+="</tr>";
   }
-  const tot=Object.values(q.sections).reduce((a,s)=>a+s.annual,0);
-  html+=`</tbody></table><p><b>Totale materia prima: ${money(tot)} / anno</b> (${money(tot/12)} / mese)</p>`;
+  html+="</tbody></table>";
+  if(q.compare){
+    const sav=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.saving:0),0);
+    html+=`<p><b>${sav>=0?"Risparmio del mese: ":"Maggiore spesa del mese: "}${money(Math.abs(sav))}</b></p>`;
+  }
   host.innerHTML=html;
   host.classList.remove("hidden");
 }
+function fxCommHtml(s){
+  const o=s.offer;
+  const after=`${num(s.comm)} €/${o.point}/anno`;
+  if(!s.discountApplied)return `<b>${after}</b>`;
+  return `<b><span class="cstrikethrough">${num(s.commList)} €/${o.point}/anno</span>${after}</b>`;
+}
+function fxCompareCard(s){
+  const d=s.compare; if(!d)return "";
+  const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
+  const save=d.saving>=0;
+  let meta=`Consumo del mese: ${num(d.consumption)} ${s.unit}.`;
+  if(s.offer.kind==="flex"){
+    meta+=` ${s.offer.index} di ${month}: ${unitPrice(d.indexValue,s.unit)}.`;
+  }
+  return `<div class="ccmp">
+    <h4>Paragone del mese${month?" · "+month:""}</h4>
+    <div class="ccmpgrid">
+      <div class="ccmpbox"><div class="lbl">Bolletta attuale</div><div class="meta">Fisso ${money(d.fixedNow)} + materia ${money(d.energyNow)}</div><div class="val">${money(d.currentTotal)}</div></div>
+      <div class="ccmpbox new"><div class="lbl">Offerta Fastweb</div><div class="meta">Fisso ${money(d.newFixed)} + materia ${money(d.newEnergy)}</div><div class="val">${money(d.newTotal)}</div></div>
+    </div>
+    <div class="ccmpbox save"><div class="lbl">${save?"Risparmio del mese":"Maggiore spesa del mese"}</div><div class="val">${money(Math.abs(d.saving))}</div></div>
+    <p class="meta">${meta} Nuovo fisso = corrispettivo / 12. Nuova materia = consumo × prezzo energia.</p>
+  </div>`;
+}
+function fxServiceCard(q,key,title){
+  const s=q.sections[key]; if(!s)return "";
+  const o=s.offer;
+  let disc="";
+  if(s.discountApplied){
+    disc=`<div class="cdisc"><b>−${num(s.discountApplied)} €/mese</b><span>sul corrispettivo di commercializzazione per i clienti Fastweb o Vodafone</span></div>`;
+  }
+  return `<article class="ccard">
+    <h3>${escapeHtml(o.name)}</h3>
+    ${disc}
+    <div class="crow"><span>${fxEnergyTitle(key)}</span><b>${fxEnergyText(o,q.compare?s.indexUsed:null)}</b></div>
+    <div class="crow"><span>Corrispettivo di commercializzazione</span>${fxCommHtml(s)}</div>
+    <div class="crow"><span>Durata condizioni</span><b>${o.months} mesi</b></div>
+    <div class="crow"><span>Bolletta digitale</span><b>Inclusa</b></div>
+    ${q.compare?fxCompareCard(s):""}
+  </article>`;
+}
+function fxPageKindLabel(q){
+  const kinds=[...new Set(Object.values(q.sections).map(s=>s.offer.kind))];
+  if(kinds.length===1)return kinds[0]==="fix"?"FIX":"FLEX";
+  return "FIX E FLEX";
+}
 function buildCommodityHtml(q){
-  const offerLabel=q.offer==="fix"?"FIX":"FLEX";
+  const offerLabel=fxPageKindLabel(q);
   const date=(q.customer?.date||"").split("-").reverse().join("/")||"";
-  const keys=[["light","Luce","kWh"],["gas","Gas","Smc"]].filter(([k])=>q.sections[k]);
-  const cards=keys.map(([k,title])=>{
-    const s=q.sections[k];
-    let rows="";
-    rows+=`<div class="crow"><span>Quota fissa</span><b>${money(s.monthly)} / mese</b></div>`;
-    if(q.offer==="fix"){
-      rows+=`<div class="crow"><span>Corrispettivo</span><b>${unitPrice(s.unitPrice,s.unit)}</b></div>`;
-    }else{
-      rows+=`<div class="crow"><span>${k==="light"?"PUN stimato":"PSV stimato"}</span><b>${unitPrice(s.indexUsed,s.unit)}</b></div>`;
-      rows+=`<div class="crow"><span>Spread</span><b>${unitPrice(s.spread,s.unit)}</b></div>`;
-      rows+=`<div class="crow"><span>Prezzo energia</span><b>${unitPrice(s.unitPrice,s.unit)}</b></div>`;
-    }
-    rows+=`<div class="crow"><span>Consumo annuo stimato</span><b>${num(s.consumption)} ${s.unit}</b></div>`;
-    if(s.saving!=null)rows+=`<div class="crow"><span>Risparmio vs spesa attuale</span><b>${money(s.saving)}</b></div>`;
-    return `<article class="ccard"><h3>${title} · ${offerLabel}</h3>${rows}<div class="ctotal"><span>Materia prima</span><strong>${money(s.annual)} / anno</strong></div></article>`;
-  }).join("");
-  const tot=Object.values(q.sections).reduce((a,s)=>a+s.annual,0);
-  const formula=q.offer==="fix"
-    ?"Fix: quota fissa annuale + consumo × corrispettivo unitario."
-    :"Flex: quota fissa annuale + consumo × (indice PUN/PSV + spread).";
+  const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
+  const cards=keys.map(([k,title])=>fxServiceCard(q,k,title)).join("");
   const cust=q.customer||{}, shop=q.shop||{};
-  return `<div class="cpage" data-offer="${q.offer}">
-    <div class="chead"><div class="ctitle"><small>PROMO ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
+  let sum="";
+  if(q.compare){
+    const sav=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.saving:0),0);
+    const totNew=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.newTotal:0),0);
+    const totOld=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.currentTotal:0),0);
+    sum=`<div class="csum"><div class="lbl">${sav>=0?"Risparmio stimato del mese":"Maggiore spesa stimata del mese"}</div><div class="val">${money(Math.abs(sav))} · attuale ${money(totOld)} → offerta ${money(totNew)}</div></div>`;
+  }
+  const formula=q.compare
+    ?"Paragone mensile: costo fisso e materia prima della bolletta attuale, contro (corrispettivo di commercializzazione / 12) + consumo del mese × prezzo energia. Per Flex il prezzo energia è indice del mese di riferimento + spread."
+    :"Senza paragone: si stampa l'offerta scelta. Fix = componente energia fissa per la durata indicata + corrispettivo di commercializzazione. Flex = indice PUN/PSV + spread, corrispettivo bloccato per la durata indicata.";
+  return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
+    <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="cflags">
       <span class="cflag ${q.isPiva?"":"off"}">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
-      <span class="cflag ${q.isFastweb?"":"off"}">${q.isFastweb?"Già cliente Fastweb":"Non cliente Fastweb"}</span>
-      <span class="cflag">Solo materia prima</span>
+      <span class="cflag ${q.isFastweb?"":"off"}">${q.isFastweb?"Già cliente Fastweb o Vodafone":"Non cliente Fastweb/Vodafone"}</span>
+      <span class="cflag ${q.compare?"":"off"}">${q.compare?"Con paragone bolletta":"Solo offerta"}</span>
     </div>
     <div class="cinfo">
       ${infoCardHtml("DATI CLIENTE",ICO.user,[["Nome e Cognome:",cust.name||""],["Telefono:",cust.phone||""],["Email:",cust.email||""],["Indirizzo:",cust.address||""]])}
       ${infoCardHtml("PUNTO VENDITA",ICO.shop,[["Negozio:",shop.name||""],["Consulente:",shop.consultant||""],["Telefono:",shop.phone||""],["Email:",shop.email||""]])}
     </div>
     <div class="ccards ${keys.length===1?"one":""}">${cards}</div>
-    <div class="csum"><div class="lbl">Totale materia prima stimata</div><div class="val">${money(tot)} all'anno · ${money(tot/12)} al mese</div></div>
+    ${sum}
     <div class="cnote"><p>${formula}</p>
-    <p>Stima della sola materia prima (luce e/o gas). Non comprende rete, oneri di sistema, imposte e IVA. Listini in bozza, da confermare.</p></div>
+    <p>Stima della sola materia prima e del corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p></div>
   </div>`;
 }
 function showCommodityPreview(q){
   if(!q||q.kind!=="commodity")return hideCommodityPreview();
   const html=buildCommodityHtml(q);
-  $("fxPreviewTitle").textContent="Anteprima · Promo "+(q.offer==="fix"?"Fix":"Flex");
+  $("fxPreviewTitle").textContent="Anteprima · "+Object.values(q.sections).map(s=>s.offer.name).join(" + ");
+  $("fxPreviewNote").textContent=q.compare?"Offerta scelta con paragone della bolletta attuale (imposte escluse).":"Si stampa solo l'offerta scelta (imposte escluse).";
   $("fxFrame").innerHTML=html;
   $("fxPreview").classList.remove("hidden");
   $("printArea").innerHTML=html;
@@ -781,53 +931,30 @@ async function makeCommodityPdf(){
     window.print();
   }
 }
-function fxPathSet(path,value){
-  const parts=path.split(".");
-  let obj=COMMODITY_RATES;
-  for(let i=0;i<parts.length-1;i++)obj=obj[parts[i]];
-  obj[parts[parts.length-1]]=value;
-}
 function renderCommodityRateTables(){
-    let html="";
-  for(const [svc,label] of [["light","Luce"],["gas","Gas"]]){
+  let html="";
+  for(const [svc,svcL] of [["light","Luce"],["gas","Gas"]]){
     for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
-      for(const [fw,fwL] of [["no","No"],["yes","Sì"]]){
-        const r=COMMODITY_RATES[svc].fix[seg][fw];
-        const unit=COMMODITY_RATES[svc].unit;
-        html+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.fix.${seg}.${fw}.monthly" type="number" min="0" step="0.01" value="${r.monthly}"></td><td><input data-fx="${svc}.fix.${seg}.${fw}.price" type="number" min="0" step="0.001" value="${r.price}"> €/${unit}</td></tr>`;
+      for(const o of COMMODITY_OFFERS[svc][seg]){
+        const energy=o.kind==="fix"
+          ?`<input data-fx-id="${o.id}" data-fx-field="energy" type="number" min="0" step="0.001" value="${o.energy}"> €/${o.unit}`
+          :`spread <input data-fx-id="${o.id}" data-fx-field="spread" type="number" min="0" step="0.001" value="${o.spread}"> €/${o.unit}`;
+        html+=`<tr><td>${escapeHtml(o.name)}</td><td>${segL}</td><td>${o.kind==="fix"?"Fix":"Flex"}</td><td>${energy}</td><td><input data-fx-id="${o.id}" data-fx-field="comm" type="number" min="0" step="1" value="${o.comm}"> €/${o.point}/anno</td><td><input data-fx-id="${o.id}" data-fx-field="discountMonth" type="number" min="0" step="1" value="${o.discountMonth}"></td><td><input data-fx-id="${o.id}" data-fx-field="months" type="number" min="1" step="1" value="${o.months}"></td></tr>`;
       }
     }
   }
-  $("fxFixTable").innerHTML=html;
-  let flex="";
-  for(const [svc,label] of [["light","Luce"],["gas","Gas"]]){
-    for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
-      for(const [fw,fwL] of [["no","No"],["yes","Sì"]]){
-        const r=COMMODITY_RATES[svc].flex[seg][fw];
-        const unit=COMMODITY_RATES[svc].unit;
-        flex+=`<tr><td>${label}</td><td>${segL}</td><td>${fwL}</td><td><input data-fx="${svc}.flex.${seg}.${fw}.monthly" type="number" min="0" step="0.01" value="${r.monthly}"></td><td><input data-fx="${svc}.flex.${seg}.${fw}.spread" type="number" min="0" step="0.001" value="${r.spread}"> €/${unit}</td></tr>`;
-      }
-    }
-  }
-  $("fxFlexTable").innerHTML=flex;
-  $("fxPunDefault").value=COMMODITY_RATES.light.flex.index;
-  $("fxPsvDefault").value=COMMODITY_RATES.gas.flex.index;
-  $("fxPun").value=COMMODITY_RATES.light.flex.index;
-  $("fxPsv").value=COMMODITY_RATES.gas.flex.index;
-  document.querySelectorAll("[data-fx]").forEach(inp=>{
+  $("fxOfferTable").innerHTML=html;
+  $("fxPunDefault").value=COMMODITY_INDEX.pun;
+  $("fxPsvDefault").value=COMMODITY_INDEX.psv;
+  $("fxLightPun").value=COMMODITY_INDEX.pun;
+  $("fxGasPsv").value=COMMODITY_INDEX.psv;
+  document.querySelectorAll("[data-fx-id]").forEach(inp=>{
     inp.addEventListener("change",()=>{
       const n=Number(inp.value);
       if(!Number.isFinite(n)||n<0)return;
-      fxPathSet(inp.getAttribute("data-fx"),n);
+      const o=fxFindOffer(inp.getAttribute("data-fx-id"));
+      if(o)o[inp.getAttribute("data-fx-field")]=n;
     });
-  });
-  $("fxPunDefault").addEventListener("change",()=>{
-    const n=Number($("fxPunDefault").value);
-    if(Number.isFinite(n)&&n>=0){COMMODITY_RATES.light.flex.index=n;$("fxPun").value=n;}
-  });
-  $("fxPsvDefault").addEventListener("change",()=>{
-    const n=Number($("fxPsvDefault").value);
-    if(Number.isFinite(n)&&n>=0){COMMODITY_RATES.gas.flex.index=n;$("fxPsv").value=n;}
   });
 }
 
@@ -838,10 +965,24 @@ $("modeFlat").addEventListener("click",()=>setToolMode("flat"));
 $("modeCommodity").addEventListener("click",()=>setToolMode("commodity"));
 $("fxIncludeLight").addEventListener("change",fxToggleBoxes);
 $("fxIncludeGas").addEventListener("change",fxToggleBoxes);
-$("fxOfferFix").addEventListener("change",fxToggleBoxes);
-$("fxOfferFlex").addEventListener("change",fxToggleBoxes);
+$("fxSegPrivate").addEventListener("change",fxFillOfferSelects);
+$("fxSegPiva").addEventListener("change",fxFillOfferSelects);
+$("fxCompareNo").addEventListener("change",fxToggleBoxes);
+$("fxCompareYes").addEventListener("change",fxToggleBoxes);
+$("fxLightOffer").addEventListener("change",fxToggleBoxes);
+$("fxGasOffer").addEventListener("change",fxToggleBoxes);
 $("fxCalculate").addEventListener("click",calculateCommodity);
 $("fxPdf").addEventListener("click",makeCommodityPdf);
+$("fxPunDefault").addEventListener("change",()=>{
+  const n=Number($("fxPunDefault").value);
+  if(Number.isFinite(n)&&n>=0){COMMODITY_INDEX.pun=n;$("fxLightPun").value=n;}
+});
+$("fxPsvDefault").addEventListener("change",()=>{
+  const n=Number($("fxPsvDefault").value);
+  if(Number.isFinite(n)&&n>=0){COMMODITY_INDEX.psv=n;$("fxGasPsv").value=n;}
+});
+fxFillMonthSelects();
+fxFillOfferSelects();
 renderCommodityRateTables();
 fxToggleBoxes();
 
