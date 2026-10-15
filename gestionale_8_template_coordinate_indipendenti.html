@@ -45,8 +45,8 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .ccard h3{margin:0 0 10px;font-size:16px;font-weight:900}
 .ccards{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
 .ccards.one{grid-template-columns:1fr}
-.crow{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid #eee4a4}
-.crow b{font-weight:800}
+.crow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid #eee4a4}
+.crow b{font-weight:800;text-align:right;max-width:62%}
 .ctotal{background:#111;color:#FFD000;border-radius:12px;padding:12px 14px;margin-top:12px;display:flex;justify-content:space-between;align-items:baseline}
 .ctotal strong{font-size:22px}
 .cnote{margin-top:12px;background:#fff;border-radius:14px;padding:12px 16px;font-size:11px;line-height:1.45;color:#333;position:relative;z-index:1}
@@ -58,7 +58,11 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .cdisc{background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;margin:0 0 10px;text-align:center}
 .cdisc b{display:block;font-size:22px;font-style:italic;font-weight:900;letter-spacing:-.4px}
 .cdisc span{display:block;font-size:11px;color:#fff;font-weight:700;margin-top:3px}
-.cstrikethrough{text-decoration:line-through;color:#888;font-weight:700;margin-right:8px}
+.cstrikethrough{text-decoration:line-through;color:#888;font-weight:700}
+.ccomm{display:flex;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.25}
+.ccards:not(.one) .cdisc{padding:8px 10px;margin-bottom:8px}
+.ccards:not(.one) .cdisc b{font-size:18px}
+.ccards:not(.one) .cdisc span{font-size:10px}
 .cchecks{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
 .cchecks li{padding:4px 0;font-weight:700}
 .ccmp{margin-top:12px;background:#FFF9DF;border:2px solid #111;border-radius:14px;padding:12px;position:relative;z-index:1}
@@ -240,6 +244,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
+<p class="note hidden" id="fxLightTeNote">Luce Fix per Te non prevede sconto Fastweb o Vodafone.</p>
 <div id="fxLightCompare" class="hidden fx-compare">
 <h4>Paragone bolletta luce</h4>
 <div class="grid3">
@@ -715,7 +720,8 @@ function fxToggleBoxes(){
   if(light){
     const o=fxSelectedOffer("light");
     $("fxLightFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
-  }
+    $("fxLightTeNote").classList.toggle("hidden",!o||o.id!=="luce-fix-te");
+  }else $("fxLightTeNote").classList.add("hidden");
   if(gas){
     const o=fxSelectedOffer("gas");
     $("fxGasFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
@@ -828,7 +834,7 @@ function fxCommHtml(s){
   const o=s.offer;
   const after=`${num(s.comm)} €/${o.point}/anno`;
   if(!s.discountApplied)return `<b>${after}</b>`;
-  return `<b><span class="cstrikethrough">${num(s.commList)} €/${o.point}/anno</span>${after}</b>`;
+  return `<b class="ccomm"><span class="cstrikethrough">${num(s.commList)} €/${o.point}/anno</span><span>${after}</span></b>`;
 }
 function fxCompareCard(s){
   const d=s.compare; if(!d)return "";
@@ -889,7 +895,7 @@ function buildCommodityHtml(q){
   return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
     <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="cflags">
-      <span class="cflag ${q.isPiva?"":"off"}">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
+      <span class="cflag">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
       <span class="cflag ${q.isFastweb?"":"off"}">${q.isFastweb?"Già cliente Fastweb o Vodafone":"Non cliente Fastweb/Vodafone"}</span>
       <span class="cflag ${q.compare?"":"off"}">${q.compare?"Con paragone bolletta":"Solo offerta"}</span>
     </div>
