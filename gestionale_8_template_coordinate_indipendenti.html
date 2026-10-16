@@ -935,7 +935,7 @@ function fxOriginNote(service){
     ?` Con noi: fisso + quantità × (${idx} + spread).`
     :" Con noi: fisso + quantità × prezzo unitario.";
   const bi=$(service==="light"?"fxLightBimonthly":"fxGasBimonthly");
-  const extra=bi&&bi.checked?" Fattura bimensile: si contano due quote fisse e il risparmio mostrato è al mese.":"";
+  const extra=bi&&bi.checked?" Fattura bimensile: si toglie una quota fissa e i kWh o Smc restano tutti nel mese del paragone.":"";
   return origin+ours+extra;
 }
 function fxToggleBoxes(){
@@ -978,14 +978,13 @@ function calcCommodityService(service,offer,isFw,compare){
       out.unitPrice=out.indexUsed+Number(offer.spread);
     }
     const currentEnergy=Number(compare.consumptionQuota);
-    const months=compare.bimonthly?2:1;
     const newEnergy=compare.consumption*out.unitPrice;
-    const currentTotal=(compare.fixedNow*months+currentEnergy)/months;
-    const newTotal=(monthly*months+newEnergy)/months;
+    const currentTotal=compare.fixedNow+currentEnergy;
+    const newTotal=monthly+newEnergy;
     out.compare={
       fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,
       consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,
-      bimonthly:!!compare.bimonthly,fixedCount:months,
+      bimonthly:!!compare.bimonthly,
       currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,
       saving:currentTotal-newTotal
     };
@@ -1089,13 +1088,13 @@ function fxCompareCard(s){
   const bi=!!d.bimonthly;
   const flex=s.offer.kind==="flex";
   const energyBit=flex?`${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`:`${qty} × ${unitPrice(d.newUnit,s.unit)}`;
-  const originMeta=bi?`(2 × fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}) / 2`:`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
-  const newMeta=bi?`(2 × fisso ${money(d.newFixed)} + ${energyBit}) / 2`:`Fisso ${money(d.newFixed)} + ${energyBit}`;
+  const originMeta=bi?"":`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
+  const newMeta=bi?"":`Fisso ${money(d.newFixed)} + ${energyBit}`;
   return `<div class="ccmp">
     <h4>Paragone${month?" · "+month:""}${bi?" · bimensile":""}</h4>
     <div class="ccmpgrid">
-      <div class="ccmpbox"><div class="lbl">Contratto attuale</div><div class="meta">${originMeta}</div><div class="val">${money(d.currentTotal)}<span class="u">al mese</span></div></div>
-      <div class="ccmpbox new"><div class="lbl">Con noi</div><div class="meta">${newMeta}</div><div class="val">${money(d.newTotal)}<span class="u">al mese</span></div></div>
+      <div class="ccmpbox"><div class="lbl">Contratto attuale</div>${originMeta?`<div class="meta">${originMeta}</div>`:""}<div class="val">${money(d.currentTotal)}<span class="u">al mese</span></div></div>
+      <div class="ccmpbox new"><div class="lbl">Con noi</div>${newMeta?`<div class="meta">${newMeta}</div>`:""}<div class="val">${money(d.newTotal)}<span class="u">al mese</span></div></div>
     </div>
     <div class="ccmpbox save"><div class="lbl">${save?"Risparmio":"Maggiore spesa"}</div><div class="val">${money(Math.abs(d.saving))}<span class="u">al mese</span></div></div>
   </div>`;
