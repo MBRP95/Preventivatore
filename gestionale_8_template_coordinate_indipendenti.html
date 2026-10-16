@@ -229,7 +229,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <button type="button" id="modeCommodity">Fix e Flex</button>
 </div>
 <div id="flatFlow">
-<section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label></div>
+<section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label><label><input id="flatFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label></div>
 <div id="lightInputs"><h3>Luce</h3><div class="grid3"><label>Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label>Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label>Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label>Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p></div>
 <div id="gasInputs" class="hidden"><h3>Gas</h3><div class="grid"><label>Consumo annuo attuale (Smc)<input id="gasConsumption" type="number" min="0" step="1" placeholder="Es. 595"></label><label>Spesa annua attuale gas (€)<input id="gasSpend" type="number" min="0" step="0.01" placeholder="Es. 867"></label></div></div>
 <div class="actions"><button id="calculate">Calcola tutte le promozioni</button><button class="secondary" id="clear">Nuovo preventivo / Pulisci</button></div><div id="result" class="result hidden" aria-live="polite"></div><div id="calcStatus" class="status hidden"></div></section>
@@ -347,18 +347,18 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 {
   "flat": {
     "light": [
-      {"name": "START", "plafond": 800, "monthly": 37, "price": 0.3, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "LIGHT", "plafond": 1500, "monthly": 54, "price": 0.283, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "PRO", "plafond": 2500, "monthly": 77, "price": 0.269, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "MAXI", "plafond": 3500, "monthly": 99, "price": 0.259, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "ULTRA", "plafond": 4500, "monthly": 120, "price": 0.245, "convergence": 0, "expires": "2026-10-25"}
+      {"name": "START", "plafond": 800, "monthly": 47, "price": 0.3, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "LIGHT", "plafond": 1500, "monthly": 64, "price": 0.283, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "PRO", "plafond": 2500, "monthly": 87, "price": 0.269, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "MAXI", "plafond": 3500, "monthly": 109, "price": 0.259, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "ULTRA", "plafond": 4500, "monthly": 130, "price": 0.245, "convergence": 10, "expires": "2026-10-25"}
     ],
     "gas": [
-      {"name": "START", "plafond": 150, "monthly": 26, "price": 1.6, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "LIGHT", "plafond": 300, "monthly": 45, "price": 1.5, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "PRO", "plafond": 600, "monthly": 82, "price": 1.46, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "MAXI", "plafond": 900, "monthly": 118, "price": 1.42, "convergence": 0, "expires": "2026-10-25"},
-      {"name": "ULTRA", "plafond": 1200, "monthly": 153, "price": 1.38, "convergence": 0, "expires": "2026-10-25"}
+      {"name": "START", "plafond": 150, "monthly": 36, "price": 1.6, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "LIGHT", "plafond": 300, "monthly": 55, "price": 1.5, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "PRO", "plafond": 600, "monthly": 92, "price": 1.46, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "MAXI", "plafond": 900, "monthly": 128, "price": 1.42, "convergence": 10, "expires": "2026-10-25"},
+      {"name": "ULTRA", "plafond": 1200, "monthly": 163, "price": 1.38, "convergence": 10, "expires": "2026-10-25"}
     ]
   },
   "commodity": {
@@ -388,7 +388,8 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <script>
 "use strict";
 const PROMO_CATALOG=JSON.parse(document.getElementById("promo-catalog").textContent);
-function promoMonthly(p){return Math.max(0,Number(p&&p.monthly||0)-Number(p&&p.convergence||0))}
+function flatIsFw(){const el=$("flatFastweb");return !el||el.checked}
+function promoMonthly(p,apply){const gross=Number(p&&p.monthly||0),on=apply===undefined?flatIsFw():!!apply,disc=on?Number(p&&p.convergence||0):0;return Math.max(0,gross-disc)}
 function promoExpiryLabel(iso){const p=String(iso||"").split("-");if(p.length!==3||p.some(x=>!x))return "";return `${p[2]}/${p[1]}/${p[0]}`}
 const LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
 const GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
@@ -410,7 +411,7 @@ function calculate(){
   if(cr===""||sr===""||!Number.isFinite(c)||!Number.isFinite(sp)||c<=0||sp<0){error(`Inserisci consumo annuo maggiore di zero e spesa annua non negativa per ${prefix==="light"?"la luce":"il gas"}.`);return}
   sections[prefix]={unit,consumption:c,currentSpend:sp,evaluatedPromos:list.map(p=>{const r=calcPromo(p,c,sp);if(prefix==="light"){r.baseAnnualCost=r.annualCost;r.baseSaving=r.saving;r.extraMonthly=lightExtraMonthly;r.annualCost+=lightExtraMonthly*12;r.saving=sp-r.annualCost;}return {promo:p,...r,displayMonthly:promoMonthly(p)+(prefix==="light"?lightExtraMonthly:0),displayAnnual:promoMonthly(p)*12+(prefix==="light"?lightExtraMonthly*12:0)}}),selectedPromo:null,calculations:null};
  }
- currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,blank:!customerReady(data.customer),lightOptions:data.lightOptions,sections,status:"bozza",version:4};
+ currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,blank:!customerReady(data.customer),lightOptions:data.lightOptions,isFastweb:flatIsFw(),sections,status:"bozza",version:4};
  $("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();renderComparisons();$("saveStatus").textContent="Scegli una promozione per ogni servizio incluso, poi salva o genera il PDF.";
 }
 function error(msg){$("calcStatus").classList.remove("hidden");$("calcStatus").textContent=msg;$("result").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview()}
@@ -492,7 +493,7 @@ function layoutLabel(layout){
 function powerExtra(power){return power===4.5?5:power===6?10:0}
 function residencyExtra(res){return res==="nonresident"?12:0}
 function promoTitle(type,sec){const name=String(sec?.selectedPromo?.name||"PROMO").toUpperCase();return (type==="light"?"LUCE":"GAS")+" FLAT "+name}
-function monthlyOf(sec){return promoMonthly(sec?.selectedPromo)}
+function monthlyOf(sec){const apply=currentQuote&&typeof currentQuote.isFastweb==="boolean"?currentQuote.isFastweb:undefined;return promoMonthly(sec?.selectedPromo,apply)}
 function extraMonthlyOf(type,q){
   if(type!=="light")return 0;
   return powerExtra(Number(q?.lightOptions?.meterPower||3))+residencyExtra(q?.lightOptions?.residency||"resident");
@@ -527,7 +528,7 @@ function calcNoteLine(type,sec){
   const quale=diff>0?"L'eccesso è calcolato":"Il difetto è calcolato";
   let line=`La spesa annua ${servizio} è calcolata sommando il canone mensile fisso ${segno} ${num(abs)} ${unit} in ${modo} a ${px}. ${quale} in base al consumo annuo stimato (${cons} ${unit}).`;
   if(smartBonus(sec)>0.0005)line+=` Poiché il consumo è inferiore al 70% del plafond, vengono restituiti anche 0,020 € per ogni ${unit} non usato.`;
-  if(Number(p.convergence)>0)line+=` Il canone è al netto dello sconto convergenza di ${money(Number(p.convergence))} al mese.`;
+  if((currentQuote&&typeof currentQuote.isFastweb==="boolean"?currentQuote.isFastweb:flatIsFw())&&Number(p.convergence)>0)line+=` Il canone è al netto dello sconto convergenza di ${money(Number(p.convergence))} al mese.`;
   return line;
 }
 function calcNotesHtml(q){
@@ -596,6 +597,7 @@ function offerHtml(type,sec,q,single){
         ${metrics}
         <div class="qcost"><div class="lbl">Il nostro costo</div><div class="qfield"><div class="val">${money(annual)}</div><div class="u">all'anno</div></div></div>
         <div class="qmonth"><span>Canone mensile</span><b>${money(monthlyOf(sec))} al mese</b></div>
+        ${(currentQuote&&currentQuote.isFastweb!==false&&Number(sec?.selectedPromo?.convergence)>0)?`<div class="qexp">Canone ${money(Number(sec.selectedPromo.monthly))} − sconto convergenza ${money(Number(sec.selectedPromo.convergence))}</div>`:""}
       </div>
     </div>
     ${single?statsHtml(offerStatsHtml(type,sec,q)):""}
@@ -786,8 +788,8 @@ async function saveCommodityQuote(){
     $("fxPdf").disabled=false;
   }catch(e){$("fxSaveStatus").textContent="Errore nel salvataggio: "+e.message}
 }
-function openQuote(q){if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("shopName").value=q.shop?.name||q.shop?.store||q.shop?.shopName||"";$("shopAddress").value=q.shop?.address||"";$("consultant").value=q.shop?.consultant||"";$("shopEmail").value=q.shop?.email||"";$("shopPhone").value=q.shop?.phone||"";$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption;$("lightSpend").value=q.sections.light.currentSpend}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption;$("gasSpend").value=q.sections.gas.currentSpend}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
-function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni."}
+function openQuote(q){if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("shopName").value=q.shop?.name||q.shop?.store||q.shop?.shopName||"";$("shopAddress").value=q.shop?.address||"";$("consultant").value=q.shop?.consultant||"";$("shopEmail").value=q.shop?.email||"";$("shopPhone").value=q.shop?.phone||"";$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("flatFastweb").checked=q.isFastweb!==false;$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption;$("lightSpend").value=q.sections.light.currentSpend}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption;$("gasSpend").value=q.sections.gas.currentSpend}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
+function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("flatFastweb").checked=true;$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni."}
 function exportBackup(){const blob=new Blob([JSON.stringify({schemaVersion:2,exportedAt:new Date().toISOString(),customers,quotes:quotes.map(q=>{delete q._filename;return q}),trashQuotes:trashQuotes.map(q=>{delete q._filename;return q})},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-preventivi-"+today.toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href)}
 function importBackupFile(file){const reader=new FileReader();reader.onload=async()=>{try{const obj=JSON.parse(reader.result);if(!Array.isArray(obj.quotes)||!Array.isArray(obj.customers))throw Error("Formato backup non riconosciuto");if(!folderHandle)throw Error("Seleziona prima la cartella OneDrive");if(!confirm(`Importare ${obj.quotes.length} preventivi e ${obj.customers.length} clienti?`))return;const d=await ensureDir(folderHandle,"dati"),qd=await ensureDir(d,"preventivi"),td=await ensureDir(d,"cestino");for(const q of obj.quotes)await writeJson(qd,quoteFilename(q),q);for(const q of (obj.trashQuotes||[]))await writeJson(td,quoteFilename(q),q);customers=obj.customers;await writeJson(d,"clienti.json",customers);await loadArchive()}catch(e){alert("Importazione non riuscita: "+e.message)}};reader.readAsText(file)}
 
