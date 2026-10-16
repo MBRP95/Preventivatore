@@ -5,7 +5,7 @@
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fff7a8 0,#fffbea 230px,#fffbea 100%)}header{background:var(--fw-yellow);color:var(--fw-ink);padding:22px 24px;border-bottom:4px solid var(--fw-ink)}header h1{font-size:24px;margin:0 0 5px;font-weight:900;letter-spacing:-.4px}header h1:before{content:"FASTWEB";display:inline-block;background:var(--fw-ink);color:var(--fw-yellow);padding:5px 9px;margin-right:11px;border-radius:4px;font-size:13px;letter-spacing:.5px;vertical-align:3px}header p{margin:0;color:#403c27;font-size:14px}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fff7a8 0,#fffbea 230px,#fffbea 100%)}header{background:var(--fw-yellow);color:var(--fw-ink);padding:22px 24px;border-bottom:4px solid var(--fw-ink)}header h1{font-size:24px;margin:0 0 5px;font-weight:900;letter-spacing:-.4px}header p{margin:0;color:#403c27;font-size:14px}
 main{max-width:1100px;margin:22px auto;padding:0 16px 40px}.panel{background:#fff;border:1px solid var(--fw-border);border-top:4px solid var(--fw-yellow);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 12px #3e330d0a}
 h2{font-size:17px;margin:0 0 14px;color:var(--fw-ink)}h3{color:#49432a}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 label{display:block;font-size:13px;font-weight:700;color:#39352b}input,select{display:block;width:100%;margin-top:6px;padding:10px 11px;border:1px solid #d4c86a;border-radius:7px;font:inherit;background:#fffef5}input:focus,select:focus{outline:2px solid #f2d900;outline-offset:1px;border-color:#b9a800}
@@ -205,10 +205,6 @@ table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
 <body>
 <header><h1>Gestionale preventivi energia</h1><p>Offline · archivio locale nella cartella OneDrive condivisa · utilizzo sequenziale su un solo PC alla volta</p></header>
 <main>
-<div class="mode-switch" role="tablist">
-<button type="button" id="modeFlat" class="active">Promo Energia FLAT</button>
-<button type="button" id="modeCommodity">Fix e Flex</button>
-</div>
 <section class="panel"><h2>1. Archivio condiviso</h2><p class="note">Seleziona la cartella principale condivisa di OneDrive. I preventivi attivi sono in dati/preventivi e quelli cestinati in dati/cestino. Attendi la sincronizzazione prima di passare a un altro PC.</p>
 <div class="actions"><button id="chooseFolder">Seleziona cartella OneDrive</button><button class="secondary" id="loadArchive" disabled>Carica archivio</button><button class="secondary" id="exportBackup">Esporta backup JSON</button><button class="secondary" id="importBackup">Importa backup JSON</button><input id="backupFile" type="file" accept=".json,application/json" class="hidden"></div><div id="folderStatus" class="status">Nessuna cartella selezionata. Puoi comunque fare calcoli e stampare PDF.</div></section>
 <section class="panel"><h2>2. Dati del cliente e del negozio</h2><div class="grid">
@@ -220,7 +216,12 @@ table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
 <label>Indirizzo cliente<input id="customerAddress" placeholder="Via, città"></label>
 </div>
 <h3>Dati del negozio / consulente</h3><div class="grid3"><label>Nome punto vendita<input id="shopName" placeholder="Nome negozio"></label><label>Indirizzo punto vendita<input id="shopAddress" placeholder="Via, città"></label><label>Nome consulente<input id="consultant" placeholder="Nome Cognome"></label><label>Email negozio<input id="shopEmail" type="email" placeholder="negozio@example.com"></label><label>Telefono negozio<input id="shopPhone" type="tel" placeholder="059 123456"></label></div>
+<p class="note">Questi dati sono facoltativi. Senza nome, email e cellulare del cliente puoi generare il PDF con i campi vuoti, ma non salvare il preventivo.</p>
 </section>
+<div class="mode-switch" role="tablist">
+<button type="button" id="modeFlat" class="active">Promo Energia FLAT</button>
+<button type="button" id="modeCommodity">Fix e Flex</button>
+</div>
 <div id="flatFlow">
 <section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label></div>
 <div id="lightInputs"><h3>Luce</h3><div class="grid3"><label>Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label>Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label>Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label>Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p></div>
@@ -359,18 +360,20 @@ const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).
 const num=n=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(n);
 const today=new Date();$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 function readForm(){return {lightOptions:{meterPower:Number($("meterPower").value||3),residency:$("residency").value||"resident"},customer:{name:$("name").value.trim(),fiscalCode:$("fiscalCode").value.trim().toUpperCase(),date:$("date").value,email:$("email").value.trim(),phone:$("phone").value.trim(),address:$("customerAddress").value.trim()},shop:{name:$("shopName").value.trim(),address:$("shopAddress").value.trim(),consultant:$("consultant").value.trim(),email:$("shopEmail").value.trim(),phone:$("shopPhone").value.trim()}}}
+function customerReady(c){c=c||{};return !!(String(c.name||"").trim()&&String(c.email||"").trim()&&String(c.phone||"").trim())}
+function applyFormIdentity(q){if(!q)return q;const data=readForm();q.customer=data.customer;q.shop=data.shop;q.blank=!customerReady(data.customer);return q}
 function calcPromo(p,consumption,spend){const delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=p.monthly*12+(consumption-p.plafond)*p.price-bonus;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.5+1e-10}}
 function calculate(){
  const includeLight=$("includeLight").checked,includeGas=$("includeGas").checked;
  if(!includeLight&&!includeGas){error("Seleziona almeno un servizio: luce, gas o entrambi.");return}
- const data=readForm();const lightExtraMonthly=(data.lightOptions.meterPower===4.5?5:data.lightOptions.meterPower===6?10:0)+(data.lightOptions.residency==="nonresident"?12:0);if(!data.customer.name||!data.customer.date||!data.customer.email||!data.customer.phone){error("Compila nome, data, email e cellulare del cliente.");return}
+ const data=readForm();const lightExtraMonthly=(data.lightOptions.meterPower===4.5?5:data.lightOptions.meterPower===6?10:0)+(data.lightOptions.residency==="nonresident"?12:0);
  const sections={};
  for(const [on,prefix,list,unit] of [[includeLight,"light",LIGHT_PROMOS,"kWh"],[includeGas,"gas",GAS_PROMOS,"Smc"]]){
   if(!on)continue;const cr=$(prefix+"Consumption").value,sr=$(prefix+"Spend").value,c=Number(cr),sp=Number(sr);
   if(cr===""||sr===""||!Number.isFinite(c)||!Number.isFinite(sp)||c<=0||sp<0){error(`Inserisci consumo annuo maggiore di zero e spesa annua non negativa per ${prefix==="light"?"la luce":"il gas"}.`);return}
   sections[prefix]={unit,consumption:c,currentSpend:sp,evaluatedPromos:list.map(p=>{const r=calcPromo(p,c,sp);if(prefix==="light"){r.baseAnnualCost=r.annualCost;r.baseSaving=r.saving;r.extraMonthly=lightExtraMonthly;r.annualCost+=lightExtraMonthly*12;r.saving=sp-r.annualCost;}return {promo:p,...r,displayMonthly:p.monthly+(prefix==="light"?lightExtraMonthly:0),displayAnnual:p.annual+(prefix==="light"?lightExtraMonthly*12:0)}}),selectedPromo:null,calculations:null};
  }
- currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,lightOptions:data.lightOptions,sections,status:"bozza",version:4};
+ currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,blank:!customerReady(data.customer),lightOptions:data.lightOptions,sections,status:"bozza",version:4};
  $("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();renderComparisons();$("saveStatus").textContent="Scegli una promozione per ogni servizio incluso, poi salva o genera il PDF.";
 }
 function error(msg){$("calcStatus").classList.remove("hidden");$("calcStatus").textContent=msg;$("result").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview()}
@@ -388,8 +391,10 @@ function renderComparisons(){
   let missing=[];
   for(const key of Object.keys(currentQuote.sections)){const choice=$(`result`).querySelector(`input[name="pick_${key}"]:checked`);if(!choice){missing.push(key==="light"?"luce":"gas");continue}const sec=currentQuote.sections[key],x=sec.evaluatedPromos.find(a=>a.promo.name===choice.value);sec.selectedPromo=x.promo;sec.calculations={delta:x.delta,refund:x.refund,bonus:x.bonus,excessCost:x.excessCost,annualCost:x.annualCost,saving:x.saving,extraMonthly:x.extraMonthly||0,baseAnnualCost:x.baseAnnualCost??x.annualCost,baseSaving:x.baseSaving??x.saving,displayMonthly:x.displayMonthly??x.promo.monthly,displayAnnual:x.displayAnnual??x.promo.annual};}
   if(missing.length){alert("Seleziona una promozione per: "+missing.join(", "));return}
-  $("saveQuote").disabled=false;$("makePdf").disabled=false;
-  renderSelected();$("saveStatus").textContent="Promozioni selezionate. Puoi salvare il preventivo o generare il PDF.";
+  applyFormIdentity(currentQuote);
+  const canSave=customerReady(currentQuote.customer);
+  $("saveQuote").disabled=!canSave;$("makePdf").disabled=false;
+  renderSelected();$("saveStatus").textContent=canSave?"Promozioni selezionate. Puoi salvare il preventivo o generare il PDF.":"Preventivo senza dati del cliente: puoi generare il PDF, ma non salvarlo.";
  });
 }
 function renderSelected(){
@@ -417,7 +422,7 @@ function normalizeQuote(q){
  return q;
 }
 async function loadArchive(){if(!folderHandle)return;try{const d=await ensureDir(folderHandle,"dati"),qdir=await ensureDir(d,"preventivi"),tdir=await ensureDir(d,"cestino");customers=await readJson(d,"clienti.json",[]);quotes=(await readJsonFiles(qdir)).map(x=>({...normalizeQuote(x.data),_filename:x.name}));trashQuotes=(await readJsonFiles(tdir)).map(x=>({...normalizeQuote(x.data),_filename:x.name}));quotes.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));trashQuotes.sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));$("folderStatus").textContent=`Archivio caricato. Clienti: ${customers.length}; attivi: ${quotes.length}; nel cestino: ${trashQuotes.length}.`;renderHistory();renderTrash()}catch(e){$("folderStatus").textContent="Errore lettura archivio: "+e.message}}
-async function saveQuote(){if(!currentQuote)return;for(const [k,s] of Object.entries(currentQuote.sections))if(!s.selectedPromo||!s.calculations){alert("Seleziona una promozione per ogni servizio incluso.");return}if(!folderHandle){alert("Seleziona la cartella OneDrive condivisa.");return}
+async function saveQuote(){if(!currentQuote)return;applyFormIdentity(currentQuote);if(!customerReady(currentQuote.customer)){alert("Senza nome, email e cellulare del cliente il preventivo non si può salvare. Puoi comunque scaricare il PDF.");$("saveQuote").disabled=true;return}for(const [k,s] of Object.entries(currentQuote.sections))if(!s.selectedPromo||!s.calculations){alert("Seleziona una promozione per ogni servizio incluso.");return}if(!folderHandle){alert("Seleziona la cartella OneDrive condivisa.");return}
  try{const d=await ensureDir(folderHandle,"dati"),qdir=await ensureDir(d,"preventivi"),existing=await readJsonFiles(qdir),year=currentQuote.customer.date.slice(0,4),nums=existing.map(x=>x.data.quoteNumber).filter(n=>n&&n.startsWith("PREV-"+year+"-")).map(n=>Number(n.split("-").pop())).filter(Number.isFinite);currentQuote.quoteNumber=currentQuote.quoteNumber||`PREV-${year}-${String(Math.max(0,...nums)+1).padStart(3,"0")}`;currentQuote.status="salvato";currentQuote.savedAt=new Date().toISOString();const filename=quoteFilename(currentQuote);await writeJson(qdir,filename,currentQuote);const ci=customers.findIndex(c=>c.email.toLowerCase()===currentQuote.customer.email.toLowerCase());const cust={...currentQuote.customer,shop:currentQuote.shop};if(ci>=0)customers[ci]=cust;else customers.push(cust);await writeJson(d,"clienti.json",customers);await loadArchive();showQuotePreview(currentQuote);$("saveStatus").textContent=`Salvato ${currentQuote.quoteNumber}. Attendi la sincronizzazione OneDrive prima di usare un altro PC.`;$("makePdf").disabled=false}catch(e){$("saveStatus").textContent="Errore nel salvataggio: "+e.message}}
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 
@@ -503,7 +508,7 @@ const ICO={
 };
 
 function infoCardHtml(title, icon, rows){
-  return `<section class="qicard"><h4>${icon}${escapeHtml(title)}</h4><dl>${rows.map(r=>`<dt>${escapeHtml(r[0])}</dt><dd>${escapeHtml(clip(r[1]||"—",42))}</dd>`).join("")}</dl></section>`;
+  return `<section class="qicard"><h4>${icon}${escapeHtml(title)}</h4><dl>${rows.map(r=>`<dt>${escapeHtml(r[0])}</dt><dd>${escapeHtml(clip(r[1],42))}</dd>`).join("")}</dl></section>`;
 }
 function offerStatsHtml(type,sec,q){
   if(type==="light"){
@@ -632,6 +637,7 @@ function downloadPdfFromCanvas(canvas){
 }
 async function makePdf(){
  if(!currentQuote)return;
+ applyFormIdentity(currentQuote);
  for(const s of Object.values(currentQuote.sections||{})) if(!s.selectedPromo){alert("Seleziona una promozione per ogni servizio incluso.");return}
  const layout=quoteLayout(currentQuote);
  if(!layout){alert("Modello PDF non disponibile.");return}
@@ -811,9 +817,6 @@ function fxError(msg){
 }
 function calculateCommodity(){
   const data=readForm();
-  if(!data.customer.name||!data.customer.date||!data.customer.email||!data.customer.phone){
-    fxError("Compila nome, data, email e cellulare del cliente (sezione 2).");return
-  }
   const includeLight=$("fxIncludeLight").checked, includeGas=$("fxIncludeGas").checked;
   if(!includeLight&&!includeGas){fxError("Seleziona almeno un servizio: luce, gas o entrambi.");return}
   const isPiva=fxSeg()==="piva", isFw=fxIsFw(), compareOn=fxCompareOn();
@@ -848,7 +851,7 @@ function calculateCommodity(){
     kind:"commodity", isPiva, isFastweb:isFw, compare:compareOn,
     pun:COMMODITY_INDEX.pun, psv:COMMODITY_INDEX.psv,
     id:makeId(), quoteNumber:null, createdAt:new Date().toISOString(),
-    customer:data.customer, shop:data.shop, sections, status:"bozza"
+    customer:data.customer, shop:data.shop, blank:!customerReady(data.customer), sections, status:"bozza"
   };
   $("fxStatus").classList.add("hidden");
   renderCommodityResult(currentCommodityQuote);
@@ -965,6 +968,7 @@ function hideCommodityPreview(){
 }
 async function makeCommodityPdf(){
   if(!currentCommodityQuote){alert("Calcola prima il preventivo Fix/Flex.");return}
+  applyFormIdentity(currentCommodityQuote);
   showCommodityPreview(currentCommodityQuote);
   const node=$("fxFrame").querySelector(".cpage");
   if(!node){alert("Anteprima non disponibile.");return}
