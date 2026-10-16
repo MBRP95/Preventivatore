@@ -256,16 +256,13 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <div class="checks">
 <label><input id="fxFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label>
 </div>
-<div class="checks">
-<label><input type="radio" name="fxCompare" id="fxCompareNo" value="no" checked> Senza paragone</label>
-<label><input type="radio" name="fxCompare" id="fxCompareYes" value="yes"> Con paragone bolletta</label>
-</div>
-<p class="note" id="fxNoCompareHint">Senza paragone si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
+<p class="note" id="fxNoCompareHint">Senza paragone, per quel servizio, si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
 <p class="note hidden" id="fxCompareHint">La spesa attuale è quota fissa + quota consumi: in quel totale il PUN o il PSV è già incluso. La quantità serve a calcolare la spesa con noi. Il mese di riferimento e il PUN o il PSV si chiedono solo se la nuova offerta è Flex.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
 <p class="note hidden" id="fxLightTeNote">Luce Fix per Te non prevede sconto Fastweb o Vodafone.</p>
+<label class="checks"><input id="fxLightCompareOn" type="checkbox"> Con paragone bolletta</label>
 <div id="fxLightCompare" class="hidden fx-compare">
 <h4>Contratto attuale luce</h4>
 <div class="grid3">
@@ -283,6 +280,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <div id="fxGasBox" class="hidden">
 <h3>Gas</h3>
 <label>Offerta gas<select id="fxGasOffer"></select></label>
+<label class="checks"><input id="fxGasCompareOn" type="checkbox"> Con paragone bolletta</label>
 <div id="fxGasCompare" class="hidden fx-compare">
 <h4>Contratto attuale gas</h4>
 <div class="grid3">
@@ -790,8 +788,8 @@ function openCommodityQuote(q){
   $("fxFastweb").checked=!!q.isFastweb;
   $("fxIncludeLight").checked=!!q.sections?.light;
   $("fxIncludeGas").checked=!!q.sections?.gas;
-  $("fxCompareYes").checked=!!q.compare;
-  $("fxCompareNo").checked=!q.compare;
+  $("fxLightCompareOn").checked=!!q.sections?.light?.compare;
+  $("fxGasCompareOn").checked=!!q.sections?.gas?.compare;
   fxFillOfferSelects();
   for(const [key,prefix,qtyId] of [["light","fxLight","fxLightMonthKwh"],["gas","fxGas","fxGasMonthSmc"]]){
     const s=q.sections?.[key]; if(!s)continue;
@@ -864,7 +862,7 @@ function fxAllOffers(){
 }
 function fxFindOffer(id){return fxAllOffers().find(o=>o.id===id)}
 function fxSeg(){return $("fxSegPiva").checked?"piva":"private"}
-function fxCompareOn(){return $("fxCompareYes").checked}
+function fxServiceCompareOn(service){const el=$(service==="light"?"fxLightCompareOn":"fxGasCompareOn");return !!(el&&el.checked)}
 function fxIsFw(){return $("fxFastweb").checked}
 function fxOffersFor(service){return COMMODITY_OFFERS[service][fxSeg()]}
 function fxSelectedOffer(service){
@@ -931,21 +929,24 @@ function fxOriginNote(service){
   return origin+ours;
 }
 function fxToggleBoxes(){
-  const light=$("fxIncludeLight").checked, gas=$("fxIncludeGas").checked, cmp=fxCompareOn();
+  const light=$("fxIncludeLight").checked, gas=$("fxIncludeGas").checked;
+  const lightCmp=light&&fxServiceCompareOn("light"), gasCmp=gas&&fxServiceCompareOn("gas");
   $("fxLightBox").classList.toggle("hidden",!light);
   $("fxGasBox").classList.toggle("hidden",!gas);
-  $("fxLightCompare").classList.toggle("hidden",!light||!cmp);
-  $("fxGasCompare").classList.toggle("hidden",!gas||!cmp);
-  $("fxNoCompareHint").classList.toggle("hidden",cmp);
-  $("fxCompareHint").classList.toggle("hidden",!cmp);
+  $("fxLightCompare").classList.toggle("hidden",!lightCmp);
+  $("fxGasCompare").classList.toggle("hidden",!gasCmp);
+  const any=lightCmp||gasCmp;
+  const bare=(light&&!lightCmp)||(gas&&!gasCmp);
+  $("fxNoCompareHint").classList.toggle("hidden",!bare);
+  $("fxCompareHint").classList.toggle("hidden",!any);
   if(light){
     const o=fxSelectedOffer("light");
-    $("fxLightFlexRef").classList.toggle("hidden",!cmp||!fxIndexNeeded("light"));
+    $("fxLightFlexRef").classList.toggle("hidden",!lightCmp||!fxIndexNeeded("light"));
     $("fxLightTeNote").classList.toggle("hidden",!o||o.id!=="luce-fix-te");
     $("fxLightOriginNote").textContent=fxOriginNote("light");
   }else $("fxLightTeNote").classList.add("hidden");
   if(gas){
-    $("fxGasFlexRef").classList.toggle("hidden",!cmp||!fxIndexNeeded("gas"));
+    $("fxGasFlexRef").classList.toggle("hidden",!gasCmp||!fxIndexNeeded("gas"));
     $("fxGasOriginNote").textContent=fxOriginNote("gas");
   }
 }
@@ -990,14 +991,14 @@ function calculateCommodity(){
   const data=readForm();
   const includeLight=$("fxIncludeLight").checked, includeGas=$("fxIncludeGas").checked;
   if(!includeLight&&!includeGas){fxError("Seleziona almeno un servizio: luce, gas o entrambi.");return}
-  const isPiva=fxSeg()==="piva", isFw=fxIsFw(), compareOn=fxCompareOn();
+  const isPiva=fxSeg()==="piva", isFw=fxIsFw();
   const sections={};
   for(const [on,key] of [[includeLight,"light"],[includeGas,"gas"]]){
     if(!on)continue;
     const offer=fxSelectedOffer(key);
     if(!offer){fxError("Seleziona un'offerta per "+(key==="light"?"la luce":"il gas")+".");return}
     let compare=null;
-    if(compareOn){
+    if(fxServiceCompareOn(key)){
       const prefix=key==="light"?"fxLight":"fxGas";
       const svcLabel=key==="light"?"la luce":"il gas";
       const fixedNow=Number($(prefix+"FixedNow").value);
@@ -1018,7 +1019,7 @@ function calculateCommodity(){
     sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
   currentCommodityQuote={
-    kind:"commodity", isPiva, isFastweb:isFw, compare:compareOn,
+    kind:"commodity", isPiva, isFastweb:isFw, compare:Object.values(sections).some(s=>s.compare),
     pun:COMMODITY_INDEX.pun, psv:COMMODITY_INDEX.psv,
     id:makeId(), quoteNumber:null, createdAt:new Date().toISOString(),
     customer:data.customer, shop:data.shop, blank:!customerReady(data.customer), sections, status:"bozza"
@@ -1031,26 +1032,31 @@ function calculateCommodity(){
   $("fxSave").disabled=!canSave;
   $("fxSaveStatus").textContent=canSave?"Puoi salvare il preventivo o scaricare il PDF.":"Senza nome, email e cellulare puoi scaricare il PDF, ma non salvarlo.";
 }
+function fxComparedKeys(q){return [["light","luce"],["gas","gas"]].filter(([k])=>q.sections?.[k]?.compare)}
 function renderCommodityResult(q){
   const host=$("fxResult");
   const who=(q.isPiva?"P.IVA":"Privato")+" · "+(q.isFastweb?"cliente Fastweb o Vodafone":"non Fastweb/Vodafone");
-  const mode=q.compare?"con paragone bolletta":"solo offerta";
-  let html=`<p class="note">${who} · ${mode}.</p><table><thead><tr><th>Servizio</th><th>Offerta</th><th>Energia</th><th>Commercializzazione</th>${q.compare?"<th>Mese attuale</th><th>Mese offerta</th><th>Diff.</th>":""}</tr></thead><tbody>`;
+  const compared=fxComparedKeys(q);
+  const mode=!compared.length?"solo offerta":compared.length===Object.keys(q.sections).length?"con paragone bolletta":"paragone bolletta solo "+compared.map(([,l])=>l).join(" e ");
+  let html=`<p class="note">${who} · ${mode}.</p><table><thead><tr><th>Servizio</th><th>Offerta</th><th>Energia</th><th>Commercializzazione</th>${compared.length?"<th>Mese attuale</th><th>Mese offerta</th><th>Diff.</th>":""}</tr></thead><tbody>`;
   for(const [key,title] of [["light","Luce"],["gas","Gas"]]){
     const s=q.sections[key]; if(!s)continue;
     const o=s.offer;
     const commTxt=(s.discountApplied?`<s>${num(s.commList)}</s> `:"")+`${num(s.comm)} €/${o.point}/anno`;
     html+=`<tr><td><b>${title}</b></td><td>${escapeHtml(o.name)}</td><td>${fxEnergyText(o,s.indexUsed)}</td><td>${commTxt}</td>`;
-    if(q.compare&&s.compare){
-      const d=s.compare;
-      html+=`<td>${money(d.currentTotal)}</td><td>${money(d.newTotal)}</td><td>${money(d.saving)}</td>`;
+    if(compared.length){
+      if(s.compare){
+        const d=s.compare;
+        html+=`<td>${money(d.currentTotal)}</td><td>${money(d.newTotal)}</td><td>${money(d.saving)}</td>`;
+      }else html+="<td>—</td><td>—</td><td>—</td>";
     }
     html+="</tr>";
   }
   html+="</tbody></table>";
-  if(q.compare){
-    const sav=Object.values(q.sections).reduce((a,s)=>a+(s.compare?s.compare.saving:0),0);
-    html+=`<p><b>${sav>=0?"Risparmio del mese: ":"Maggiore spesa del mese: "}${money(Math.abs(sav))}</b></p>`;
+  if(compared.length){
+    const sav=compared.reduce((a,[k])=>a+q.sections[k].compare.saving,0);
+    const scope=compared.length===1?" "+compared[0][1]:"";
+    html+=`<p><b>${sav>=0?"Risparmio del mese"+scope+": ":"Maggiore spesa del mese"+scope+": "}${money(Math.abs(sav))}</b></p>`;
   }
   host.innerHTML=html;
   host.classList.remove("hidden");
@@ -1090,7 +1096,7 @@ function fxServiceCard(q,key,title,withCompare){
   }
   const inner=`<h3>${escapeHtml(o.name)}</h3>
     ${disc}
-    <div class="crow"><span>${fxEnergyTitle(key)}</span><b>${fxEnergyText(o,q.compare?s.indexUsed:null)}</b></div>
+    <div class="crow"><span>${fxEnergyTitle(key)}</span><b>${fxEnergyText(o,s.compare?s.indexUsed:null)}</b></div>
     <div class="crow"><span>Corrispettivo di commercializzazione</span>${fxCommHtml(s)}</div>
     <div class="crow"><span>Durata condizioni</span><b>${o.months} mesi</b></div>
     ${promoExpiryLabel(o.expires)?`<div class="crow"><span>Scadenza promo</span><b>${escapeHtml(promoExpiryLabel(o.expires))}</b></div>`:""}
@@ -1139,7 +1145,8 @@ function showCommodityPreview(q){
   if(!q||q.kind!=="commodity")return hideCommodityPreview();
   const html=buildCommodityHtml(q);
   $("fxPreviewTitle").textContent="Anteprima · "+Object.values(q.sections).map(s=>s.offer.name).join(" + ");
-  $("fxPreviewNote").textContent=q.compare?"Offerta scelta con paragone della bolletta attuale (imposte escluse).":"Si stampa solo l'offerta scelta (imposte escluse).";
+  const compared=fxComparedKeys(q);
+  $("fxPreviewNote").textContent=!compared.length?"Si stampa solo l'offerta scelta (imposte escluse).":compared.length===Object.keys(q.sections).length?"Offerta scelta con paragone della bolletta attuale (imposte escluse).":"Paragone bolletta solo per "+compared.map(([,l])=>l==="luce"?"la luce":"il gas").join(" e ")+". L'altro servizio stampa solo l'offerta.";
   $("fxFrame").innerHTML=html;
   $("fxPreview").classList.remove("hidden");
   $("printArea").innerHTML=html;
@@ -1200,8 +1207,8 @@ $("fxIncludeLight").addEventListener("change",fxToggleBoxes);
 $("fxIncludeGas").addEventListener("change",fxToggleBoxes);
 $("fxSegPrivate").addEventListener("change",fxFillOfferSelects);
 $("fxSegPiva").addEventListener("change",fxFillOfferSelects);
-$("fxCompareNo").addEventListener("change",fxToggleBoxes);
-$("fxCompareYes").addEventListener("change",fxToggleBoxes);
+$("fxLightCompareOn").addEventListener("change",fxToggleBoxes);
+$("fxGasCompareOn").addEventListener("change",fxToggleBoxes);
 $("fxLightOffer").addEventListener("change",fxToggleBoxes);
 $("fxGasOffer").addEventListener("change",fxToggleBoxes);
 $("fxCalculate").addEventListener("click",calculateCommodity);
