@@ -241,7 +241,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label><input type="radio" name="fxCompare" id="fxCompareYes" value="yes"> Con paragone bolletta</label>
 </div>
 <p class="note" id="fxNoCompareHint">Senza paragone si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
-<p class="note hidden" id="fxCompareHint">Il contratto attuale può essere Fix o Flex, anche se l'offerta nuova è diversa. La quota consumi del gestore attuale è il totale pagato per tutti i kWh o Smc, non il prezzo unitario. La quantità serve a calcolare la spesa con noi. Se il contratto attuale o l'offerta nuova è Flex, si aggiungono il mese di riferimento e il PUN o il PSV.</p>
+<p class="note hidden" id="fxCompareHint">Il contratto attuale può essere Fix o Flex, anche se l'offerta nuova è diversa. La spesa attuale è quota fissa + quota consumi: in quel totale il PUN o il PSV è già incluso. La quantità serve a calcolare la spesa con noi. Il mese di riferimento e il PUN o il PSV si chiedono solo se la nuova offerta è Flex.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
@@ -728,12 +728,9 @@ function fxFillMonthSelects(){
     }
   }
 }
-function fxOriginFlex(service){
-  return $(service==="light"?"fxLightOriginFlex":"fxGasOriginFlex").checked;
-}
 function fxIndexNeeded(service){
   const offer=fxSelectedOffer(service);
-  return fxOriginFlex(service)||!!(offer&&offer.kind==="flex");
+  return !!(offer&&offer.kind==="flex");
 }
 function fxOriginNote(service){
   const idx=service==="light"?"PUN":"PSV";
@@ -826,7 +823,7 @@ function calculateCommodity(){
       if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi totale del contratto attuale per "+svcLabel+".");return}
       if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".");return}
       let indexValue=null, refMonth=null;
-      if(originKind==="flex"||offer.kind==="flex"){
+      if(offer.kind==="flex"){
         const idx=Number($(key==="light"?"fxLightPun":"fxGasPsv").value);
         if(!Number.isFinite(idx)||idx<0){fxError("Inserisci "+(key==="light"?"il PUN":"il PSV")+" del mese di riferimento.");return}
         indexValue=idx;
@@ -883,9 +880,7 @@ function fxCompareCard(s){
   const save=d.saving>=0;
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
-  const originBits=[`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`];
-  if(d.originKind==="flex"&&d.indexValue!=null)originBits.push(`${idx}${month?" "+month:""} ${unitPrice(d.indexValue,s.unit)}`);
-  const originMeta=originBits.join(" · ");
+  const originMeta=`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
   const newMeta=s.offer.kind==="flex"
     ?`Fisso ${money(d.newFixed)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`
     :`Fisso ${money(d.newFixed)} + ${qty} × ${unitPrice(d.newUnit,s.unit)}`;
