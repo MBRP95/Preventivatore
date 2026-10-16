@@ -68,16 +68,27 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .cchecks li{padding:4px 0;font-weight:700}
 .ccmp{margin-top:12px;background:#FFF9DF;border:2px solid #111;border-radius:14px;padding:12px;position:relative;z-index:1}
 .ccmp h4{margin:0 0 8px;font-size:13px;font-weight:900}
-.ccmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ccmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
 .ccmpbox{background:#E4E4E6;border-radius:12px;padding:8px 10px}
+.ccmpgrid .ccmpbox{display:flex;flex-direction:column}
 .ccmpbox.new{background:#FFF3B0}
 .ccmpbox.save{background:#B7E4B0;margin-top:8px}
 .ccmpbox .lbl{font-size:11px;font-weight:800;color:#555}
 .ccmpbox .val{font-size:18px;font-weight:900;margin-top:4px}
+.ccmpgrid .ccmpbox .val{margin-top:auto}
 .ccmpbox.save .val{color:#0F6B28}
 .ccmpbox.save .lbl{color:#1B6B32}
 .ccmp .meta{font-size:11px;margin-top:8px;color:#333;line-height:1.4}
+.cpair .ccmp .meta{min-height:4.4em}
 .cpage.has-cmp .ccard{padding:12px 14px}
+table.cpair{width:100%;border-collapse:collapse;margin:0;position:relative;z-index:1;table-layout:fixed}
+table.cpair td{width:auto;vertical-align:top;background:#fff;border:2px solid #111;white-space:normal;color:#111;font-size:13px;text-align:left}
+table.cpair td.top{border-bottom:none;border-radius:16px 16px 0 0;padding:12px 14px 6px}
+table.cpair td.bot{border-top:none;border-radius:0 0 16px 16px;padding:0 14px 14px}
+table.cpair td.gap{width:12px;min-width:12px;max-width:12px;padding:0;border:none;background:transparent}
+table.cpair .ccmp{margin-top:6px}
+table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
+.ccards.one .ccmpbox.save{text-align:center;width:280px;max-width:72%;margin-left:auto;margin-right:auto}
 @media(max-width:700px){.ccmpgrid{grid-template-columns:1fr}}
 #printArea{display:none}
 .qpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 20px;position:relative;overflow:hidden;box-sizing:border-box}
@@ -893,22 +904,22 @@ function fxCompareCard(s){
     <div class="ccmpbox save"><div class="lbl">${save?"Risparmio":"Maggiore spesa"}</div><div class="val">${money(Math.abs(d.saving))}</div></div>
   </div>`;
 }
-function fxServiceCard(q,key,title){
+function fxServiceCard(q,key,title,withCompare){
   const s=q.sections[key]; if(!s)return "";
   const o=s.offer;
   let disc="";
   if(s.discountApplied){
     disc=`<div class="cdisc"><b>−${num(s.discountApplied)} €/mese</b><span>sul corrispettivo di commercializzazione per i clienti Fastweb o Vodafone</span></div>`;
   }
-  return `<article class="ccard">
-    <h3>${escapeHtml(o.name)}</h3>
+  const inner=`<h3>${escapeHtml(o.name)}</h3>
     ${disc}
     <div class="crow"><span>${fxEnergyTitle(key)}</span><b>${fxEnergyText(o,q.compare?s.indexUsed:null)}</b></div>
     <div class="crow"><span>Corrispettivo di commercializzazione</span>${fxCommHtml(s)}</div>
     <div class="crow"><span>Durata condizioni</span><b>${o.months} mesi</b></div>
-    <div class="crow"><span>Bolletta digitale</span><b>Inclusa</b></div>
-    ${q.compare?fxCompareCard(s):""}
-  </article>`;
+    <div class="crow"><span>Bolletta digitale</span><b>Inclusa</b></div>`;
+  if(withCompare==="inner")return inner;
+  const showCompare=withCompare!==false && q.compare;
+  return `<article class="ccard">${inner}${showCompare?fxCompareCard(s):""}</article>`;
 }
 function fxPageKindLabel(q){
   const kinds=[...new Set(Object.values(q.sections).map(s=>s.offer.kind))];
@@ -919,7 +930,10 @@ function buildCommodityHtml(q){
   const offerLabel=fxPageKindLabel(q);
   const date=(q.customer?.date||"").split("-").reverse().join("/")||"";
   const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
-  const cards=keys.map(([k,title])=>fxServiceCard(q,k,title)).join("");
+  const dual=keys.length===2 && !!q.compare;
+  const cards=dual
+    ? `<table class="cpair"><tbody><tr>${keys.map(([k,title])=>`<td class="top">${fxServiceCard(q,k,title,"inner")}</td>`).join('<td class="gap" rowspan="2"></td>')}</tr><tr>${keys.map(([k])=>`<td class="bot">${fxCompareCard(q.sections[k])}</td>`).join("")}</tr></tbody></table>`
+    : keys.map(([k,title])=>fxServiceCard(q,k,title,true)).join("");
   const cust=q.customer||{}, shop=q.shop||{};
   return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
     <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
@@ -930,7 +944,7 @@ function buildCommodityHtml(q){
       ${infoCardHtml("DATI CLIENTE",ICO.user,[["Nome e Cognome:",cust.name||""],["Telefono:",cust.phone||""],["Email:",cust.email||""],["Indirizzo:",cust.address||""]])}
       ${infoCardHtml("PUNTO VENDITA",ICO.shop,[["Negozio:",shop.name||""],["Consulente:",shop.consultant||""],["Telefono:",shop.phone||""],["Email:",shop.email||""]])}
     </div>
-    <div class="ccards ${keys.length===1?"one":""}">${cards}</div>
+    ${dual?cards:`<div class="ccards ${keys.length===1?"one":""}">${cards}</div>`}
     <div class="cnote"><p>Stima della sola materia prima e del corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p></div>
   </div>`;
 }
