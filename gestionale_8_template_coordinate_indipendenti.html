@@ -41,8 +41,12 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .cflag.off{background:#fff;color:#111;border:2px solid #111}
 .cinfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;position:relative;z-index:1}
 .ccard{background:#fff;border-radius:16px;padding:14px 16px;position:relative;z-index:1;border:2px solid #111}
-.ccard h3{margin:0 0 10px;font-size:16px;font-weight:900}
-.ccards{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.in-range{color:#0c7a32;background:#dff5e6;border-radius:6px;padding:2px 7px}
+.ccard h3{margin:0 0 10px;background:#111;color:#FFD000;border-radius:12px;text-align:center;padding:11px 10px;font-size:22px;font-weight:900;font-style:italic;letter-spacing:-.3px}
+.ccards:not(.one) h3,.cpair .ccard h3{font-size:18px;padding:10px 8px}
+.ccmpbox .u{display:block;font-size:10px;font-weight:700;color:#666;margin-top:2px}
+.ccmpbox.save .u{color:#1B6B32}
+.ccards{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1;align-items:start}
 .ccards.one{grid-template-columns:1fr}
 .crow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid #eee4a4}
 .crow b{font-weight:800;text-align:right;max-width:62%}
@@ -395,7 +399,7 @@ const today=new Date();$("date").value=`${today.getFullYear()}-${String(today.ge
 function readForm(){return {lightOptions:{meterPower:Number($("meterPower").value||3),residency:$("residency").value||"resident"},customer:{name:$("name").value.trim(),fiscalCode:$("fiscalCode").value.trim().toUpperCase(),date:$("date").value,email:$("email").value.trim(),phone:$("phone").value.trim(),address:$("customerAddress").value.trim()},shop:{name:$("shopName").value.trim(),address:$("shopAddress").value.trim(),consultant:$("consultant").value.trim(),email:$("shopEmail").value.trim(),phone:$("shopPhone").value.trim()}}}
 function customerReady(c){c=c||{};return !!(String(c.name||"").trim()&&String(c.email||"").trim()&&String(c.phone||"").trim())}
 function applyFormIdentity(q){if(!q)return q;const data=readForm();q.customer=data.customer;q.shop=data.shop;q.blank=!customerReady(data.customer);return q}
-function calcPromo(p,consumption,spend){const monthly=promoMonthly(p),delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=monthly*12+(consumption-p.plafond)*p.price-bonus;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.5+1e-10}}
+function calcPromo(p,consumption,spend){const monthly=promoMonthly(p),delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=monthly*12+(consumption-p.plafond)*p.price-bonus;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.3+1e-10}}
 function calculate(){
  const includeLight=$("includeLight").checked,includeGas=$("includeGas").checked;
  if(!includeLight&&!includeGas){error("Seleziona almeno un servizio: luce, gas o entrambi.");return}
@@ -414,8 +418,8 @@ function renderComparisons(){
  const result=$("result");result.classList.remove("hidden");$("calcStatus").classList.add("hidden");let html="";
  for(const [key,title] of [["light","Confronto promozioni luce"],["gas","Confronto promozioni gas"]]){
   const sec=currentQuote.sections[key];if(!sec)continue;
-  html+=`<h2>${title}</h2><p class="note">Scostamento massimo consigliato: 50%. Le offerte fuori dal range restano selezionabili manualmente.</p><table><thead><tr><th>Seleziona</th><th>Promo</th><th>Plafond</th><th>Scostamento</th><th>Canone/mese</th><th>Mensile percepito</th><th>Costo annuo</th><th>Risparmio annuo</th><th>Range</th></tr></thead><tbody>`;
-  html+=sec.evaluatedPromos.map((x,i)=>`<tr><td><input type="radio" name="pick_${key}" value="${x.promo.name}" style="width:auto;margin:0"></td><td><b>${x.promo.name}</b></td><td>${num(x.promo.plafond)} ${sec.unit}</td><td>${num(x.deviation*100)}%</td><td>${money(x.displayMonthly??x.promo.monthly)}</td><td>${money(x.annualCost/12)}</td><td>${money(x.annualCost)}</td><td>${money(x.saving)}</td><td style="color:${x.eligible?"#167345":"#a13b35"};font-weight:bold">${x.eligible?"Entro il 50%":"Fuori dal 50%"}</td></tr>`).join("");
+  html+=`<h2>${title}</h2><table><thead><tr><th>Seleziona</th><th>Promo</th><th>Plafond</th><th>Scostamento</th><th>Canone/mese</th><th>Mensile percepito</th><th>Costo annuo</th><th>Risparmio annuo</th></tr></thead><tbody>`;
+  html+=sec.evaluatedPromos.map((x,i)=>`<tr><td><input type="radio" name="pick_${key}" value="${x.promo.name}" style="width:auto;margin:0"></td><td><b class="${x.eligible?"in-range":""}">${x.promo.name}</b></td><td>${num(x.promo.plafond)} ${sec.unit}</td><td>${num(x.deviation*100)}%</td><td>${money(x.displayMonthly??x.promo.monthly)}</td><td>${money(x.annualCost/12)}</td><td>${money(x.annualCost)}</td><td>${money(x.saving)}</td></tr>`).join("");
   html+="</tbody></table>";
  }
  html+='<div class="actions"><button id="confirmSelections">Conferma promozioni selezionate</button></div>';
@@ -562,13 +566,13 @@ function offerStatsHtml(type,sec,q){
     const res=q.lightOptions?.residency==="nonresident";
     const pExtra=powerExtra(power), rExtra=residencyExtra(res?"nonresident":"resident");
     return [
-      [ICO.bolt,"Consumo annuo",num(sec.consumption)+" kWh",""],
+      [ICO.bolt,"Consumo annuo luce",num(sec.consumption)+" kWh",""],
       [ICO.gear,"Potenza contatore",String(power).replace(".",",")+" kW",pExtra?`(+${pExtra} €/mese)`:""],
       [ICO.home,"Residenza",res?"Non residente":"Residente",rExtra?`(+${rExtra} €/mese)`:""]
     ];
   }
   return [
-    [ICO.flame,"Consumo annuo",num(sec.consumption)+" Smc",""]
+    [ICO.flame,"Consumo annuo gas",num(sec.consumption)+" Smc",""]
   ];
 }
 function statsHtml(items){
@@ -997,10 +1001,11 @@ function fxCommHtml(s){
   if(!s.discountApplied)return `<b>${after}</b>`;
   return `<b class="ccomm"><span class="cstrikethrough">${num(s.commList)} €/${o.point}/anno</span><span>${after}</span></b>`;
 }
+function fxCompareVisible(s){return !!(s&&s.compare&&Number(s.compare.saving)>=0)}
 function fxCompareCard(s){
-  const d=s.compare; if(!d)return "";
+  const d=s&&s.compare; if(!fxCompareVisible(s))return "";
   const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
-  const save=d.saving>=0;
+  const save=true;
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
   const originMeta=`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
@@ -1010,10 +1015,10 @@ function fxCompareCard(s){
   return `<div class="ccmp">
     <h4>Paragone${month?" · "+month:""}</h4>
     <div class="ccmpgrid">
-      <div class="ccmpbox"><div class="lbl">Contratto attuale</div><div class="meta">${originMeta}</div><div class="val">${money(d.currentTotal)}</div></div>
-      <div class="ccmpbox new"><div class="lbl">Con noi</div><div class="meta">${newMeta}</div><div class="val">${money(d.newTotal)}</div></div>
+      <div class="ccmpbox"><div class="lbl">Contratto attuale</div><div class="meta">${originMeta}</div><div class="val">${money(d.currentTotal)}<span class="u">al mese</span></div></div>
+      <div class="ccmpbox new"><div class="lbl">Con noi</div><div class="meta">${newMeta}</div><div class="val">${money(d.newTotal)}<span class="u">al mese</span></div></div>
     </div>
-    <div class="ccmpbox save"><div class="lbl">${save?"Risparmio":"Maggiore spesa"}</div><div class="val">${money(Math.abs(d.saving))}</div></div>
+    <div class="ccmpbox save"><div class="lbl">${save?"Risparmio":"Maggiore spesa"}</div><div class="val">${money(Math.abs(d.saving))}<span class="u">al mese</span></div></div>
   </div>`;
 }
 function fxServiceCard(q,key,title,withCompare){
@@ -1031,7 +1036,7 @@ function fxServiceCard(q,key,title,withCompare){
     ${promoExpiryLabel(o.expires)?`<div class="crow"><span>Scadenza promo</span><b>${escapeHtml(promoExpiryLabel(o.expires))}</b></div>`:""}
     <div class="crow"><span>Bolletta digitale</span><b>Inclusa</b></div>`;
   if(withCompare==="inner")return inner;
-  const showCompare=withCompare!==false && q.compare;
+  const showCompare=withCompare!==false && fxCompareVisible(s);
   return `<article class="ccard">${inner}${showCompare?fxCompareCard(s):""}</article>`;
 }
 function fxPageKindLabel(q){
@@ -1043,13 +1048,14 @@ function buildCommodityHtml(q){
   const offerLabel=fxPageKindLabel(q);
   const date=(q.customer?.date||"").split("-").reverse().join("/")||"";
   const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
-  const dual=keys.length===2 && !!q.compare;
+  const dual=keys.length===2 && keys.every(([k])=>fxCompareVisible(q.sections[k]));
+  const hasCmp=keys.some(([k])=>fxCompareVisible(q.sections[k]));
   const cards=dual
     ? `<div class="cpair">${keys.map(([k,title])=>`<article class="ccard ccard-top">${fxServiceCard(q,k,title,"inner")}</article>`).join("")}${keys.map(([k])=>`<article class="ccard ccard-bot">${fxCompareCard(q.sections[k])}</article>`).join("")}</div>`
     : keys.map(([k,title])=>fxServiceCard(q,k,title,true)).join("");
   const cust=q.customer||{}, shop=q.shop||{};
-  return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
-    <div class="chead"><div class="ctitle"><small>FASTWEB ENERGIA</small>PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
+  return `<div class="cpage${hasCmp?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
+    <div class="chead"><div class="ctitle">PROMO ${offerLabel}</div><div class="cmeta">Preventivo n. <b>${escapeHtml(q.quoteNumber||"BOZZA")}</b><br>Data: ${escapeHtml(date)}</div></div>
     <div class="cflags">
       <span class="cflag">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span>
     </div>
