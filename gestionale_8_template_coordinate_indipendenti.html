@@ -317,7 +317,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
 <label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
 </div>
-<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Contributo fisso annuo</th><th>Sconto convergenza</th><th>Durata</th><th>Scadenza</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
+<div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Contributo fisso annuo</th><th>Contributo fisso mensile</th><th>Sconto convergenza</th><th>Durata</th><th>Scadenza</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
 </section>
 </div>
 <section class="panel hidden" id="archiveLists"><h2>Storico preventivi</h2><div id="history" class="hidden"></div><div id="trash" class="hidden"></div></section>
@@ -1119,7 +1119,7 @@ function renderCommodityRateTables(){
         const energy=o.kind==="fix"
           ?`${fxRateText(o,"energy")} €/${o.unit}`
           :`spread ${fxRateText(o,"spread")} €/${o.unit}`;
-        html+=`<tr><td>${escapeHtml(o.name)}</td><td>${segL}</td><td>${o.kind==="fix"?"Fix":"Flex"}</td><td>${energy}</td><td>${fxRateText(o,"comm")} €/${o.point}/anno</td><td>${fxRateText(o,"discountMonth")} €/mese</td><td>${fxRateText(o,"months")} mesi</td><td>${escapeHtml(promoExpiryLabel(o.expires))}</td></tr>`;
+        html+=`<tr><td>${escapeHtml(o.name)}</td><td>${segL}</td><td>${o.kind==="fix"?"Fix":"Flex"}</td><td>${energy}</td><td>${fxRateText(o,"comm")} €/${o.point}/anno</td><td>${fxRateText({comm:Number(o.comm)/12},"comm")} €/mese</td><td>${fxRateText(o,"discountMonth")} €/mese</td><td>${fxRateText(o,"months")} mesi</td><td>${escapeHtml(promoExpiryLabel(o.expires))}</td></tr>`;
       }
     }
   }
