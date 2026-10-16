@@ -265,6 +265,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label class="checks"><input id="fxLightCompareOn" type="checkbox"> Con paragone bolletta</label>
 <div id="fxLightCompare" class="hidden fx-compare">
 <h4>Contratto attuale luce</h4>
+<label class="checks"><input id="fxLightBimonthly" type="checkbox"> Fattura bimensile</label>
 <div class="grid3">
 <label>Quota fissa (€/mese)<input id="fxLightFixedNow" type="number" min="0" step="0.01" placeholder="Es. 13"></label>
 <label>Quota consumi totale (€)<input id="fxLightEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 36"></label>
@@ -283,6 +284,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label class="checks"><input id="fxGasCompareOn" type="checkbox"> Con paragone bolletta</label>
 <div id="fxGasCompare" class="hidden fx-compare">
 <h4>Contratto attuale gas</h4>
+<label class="checks"><input id="fxGasBimonthly" type="checkbox"> Fattura bimensile</label>
 <div class="grid3">
 <label>Quota fissa (€/mese)<input id="fxGasFixedNow" type="number" min="0" step="0.01" placeholder="Es. 12"></label>
 <label>Quota consumi totale (€)<input id="fxGasEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 72"></label>
@@ -804,6 +806,8 @@ function openCommodityQuote(q){
     $(prefix+"FixedNow").value=c.fixedNow;
     $(prefix+"EnergyNow").value=c.consumptionQuota;
     $(qtyId).value=c.consumption;
+    const bi=$(prefix+"Bimonthly");
+    if(bi)bi.checked=!!c.bimonthly;
     if(c.indexValue!=null){
       const idx=$(key==="light"?"fxLightPun":"fxGasPsv");
       if(idx)idx.value=c.indexValue;
@@ -930,7 +934,9 @@ function fxOriginNote(service){
   const ours=neu
     ?` Con noi: fisso + quantità × (${idx} + spread).`
     :" Con noi: fisso + quantità × prezzo unitario.";
-  return origin+ours;
+  const bi=$(service==="light"?"fxLightBimonthly":"fxGasBimonthly");
+  const extra=bi&&bi.checked?" Fattura bimensile: si contano due quote fisse e il risparmio mostrato è al mese.":"";
+  return origin+ours+extra;
 }
 function fxToggleBoxes(){
   const light=$("fxIncludeLight").checked, gas=$("fxIncludeGas").checked;
@@ -972,12 +978,14 @@ function calcCommodityService(service,offer,isFw,compare){
       out.unitPrice=out.indexUsed+Number(offer.spread);
     }
     const currentEnergy=Number(compare.consumptionQuota);
-    const currentTotal=compare.fixedNow+currentEnergy;
+    const months=compare.bimonthly?2:1;
     const newEnergy=compare.consumption*out.unitPrice;
-    const newTotal=monthly+newEnergy;
+    const currentTotal=(compare.fixedNow*months+currentEnergy)/months;
+    const newTotal=(monthly*months+newEnergy)/months;
     out.compare={
       fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,
       consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,
+      bimonthly:!!compare.bimonthly,fixedCount:months,
       currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,
       saving:currentTotal-newTotal
     };
@@ -1018,7 +1026,7 @@ function calculateCommodity(){
         indexValue=idx;
         refMonth=Number($(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value);
       }
-      compare={fixedNow,consumptionQuota:unitNow,consumption:cons,indexValue,refMonth};
+      compare={fixedNow,consumptionQuota:unitNow,consumption:cons,indexValue,refMonth,bimonthly:!!$(prefix+"Bimonthly").checked};
     }
     sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
@@ -1078,12 +1086,13 @@ function fxCompareCard(s){
   const save=true;
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
-  const originMeta=`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
-  const newMeta=s.offer.kind==="flex"
-    ?`Fisso ${money(d.newFixed)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`
-    :`Fisso ${money(d.newFixed)} + ${qty} × ${unitPrice(d.newUnit,s.unit)}`;
+  const bi=!!d.bimonthly;
+  const flex=s.offer.kind==="flex";
+  const energyBit=flex?`${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`:`${qty} × ${unitPrice(d.newUnit,s.unit)}`;
+  const originMeta=bi?`(2 × fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}) / 2`:`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
+  const newMeta=bi?`(2 × fisso ${money(d.newFixed)} + ${energyBit}) / 2`:`Fisso ${money(d.newFixed)} + ${energyBit}`;
   return `<div class="ccmp">
-    <h4>Paragone${month?" · "+month:""}</h4>
+    <h4>Paragone${month?" · "+month:""}${bi?" · bimensile":""}</h4>
     <div class="ccmpgrid">
       <div class="ccmpbox"><div class="lbl">Contratto attuale</div><div class="meta">${originMeta}</div><div class="val">${money(d.currentTotal)}<span class="u">al mese</span></div></div>
       <div class="ccmpbox new"><div class="lbl">Con noi</div><div class="meta">${newMeta}</div><div class="val">${money(d.newTotal)}<span class="u">al mese</span></div></div>
@@ -1213,6 +1222,8 @@ $("fxSegPrivate").addEventListener("change",fxFillOfferSelects);
 $("fxSegPiva").addEventListener("change",fxFillOfferSelects);
 $("fxLightCompareOn").addEventListener("change",fxToggleBoxes);
 $("fxGasCompareOn").addEventListener("change",fxToggleBoxes);
+$("fxLightBimonthly").addEventListener("change",fxToggleBoxes);
+$("fxGasBimonthly").addEventListener("change",fxToggleBoxes);
 $("fxLightOffer").addEventListener("change",fxToggleBoxes);
 $("fxGasOffer").addEventListener("change",fxToggleBoxes);
 $("fxCalculate").addEventListener("click",calculateCommodity);
