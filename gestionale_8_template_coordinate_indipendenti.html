@@ -241,38 +241,48 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label><input type="radio" name="fxCompare" id="fxCompareYes" value="yes"> Con paragone bolletta</label>
 </div>
 <p class="note" id="fxNoCompareHint">Senza paragone si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
-<p class="note hidden" id="fxCompareHint">Con paragone il seller inserisce costo fisso attuale, costo materia prima, consumo del mese e, se l'offerta è Flex, il mese di riferimento con PUN o PSV.</p>
+<p class="note hidden" id="fxCompareHint">Il contratto attuale può essere Fix o Flex, anche se l'offerta nuova è diversa. Si inseriscono quota fissa, quota consumi e quantità. Se il contratto attuale o l'offerta nuova è Flex, si aggiungono il mese di riferimento e il PUN o il PSV.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
 <p class="note hidden" id="fxLightTeNote">Luce Fix per Te non prevede sconto Fastweb o Vodafone.</p>
 <div id="fxLightCompare" class="hidden fx-compare">
-<h4>Paragone bolletta luce</h4>
+<h4>Contratto attuale luce</h4>
+<div class="checks">
+<label><input type="radio" name="fxLightOrigin" id="fxLightOriginFix" value="fix" checked> Fix</label>
+<label><input type="radio" name="fxLightOrigin" id="fxLightOriginFlex" value="flex"> Flex</label>
+</div>
 <div class="grid3">
-<label>Costo fisso attuale (€/mese)<input id="fxLightFixedNow" type="number" min="0" step="0.01" placeholder="Es. 18"></label>
-<label>Costo materia prima attuale (€/mese)<input id="fxLightEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 45"></label>
-<label>Consumo del mese (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
+<label>Quota fissa (€/mese)<input id="fxLightFixedNow" type="number" min="0" step="0.01" placeholder="Es. 13"></label>
+<label>Quota consumi (€/kWh)<input id="fxLightEnergyNow" type="number" min="0" step="0.001" placeholder="Es. 0,180"></label>
+<label>Quantità (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
 </div>
 <div id="fxLightFlexRef" class="grid hidden" style="margin-top:10px">
 <label>Mese di riferimento<select id="fxLightRefMonth"></select></label>
 <label>PUN del mese (€/kWh)<input id="fxLightPun" type="number" min="0" step="0.001" placeholder="Es. 0,110"></label>
 </div>
+<p class="note" id="fxLightOriginNote"></p>
 </div>
 </div>
 <div id="fxGasBox" class="hidden">
 <h3>Gas</h3>
 <label>Offerta gas<select id="fxGasOffer"></select></label>
 <div id="fxGasCompare" class="hidden fx-compare">
-<h4>Paragone bolletta gas</h4>
+<h4>Contratto attuale gas</h4>
+<div class="checks">
+<label><input type="radio" name="fxGasOrigin" id="fxGasOriginFix" value="fix" checked> Fix</label>
+<label><input type="radio" name="fxGasOrigin" id="fxGasOriginFlex" value="flex"> Flex</label>
+</div>
 <div class="grid3">
-<label>Costo fisso attuale (€/mese)<input id="fxGasFixedNow" type="number" min="0" step="0.01" placeholder="Es. 16"></label>
-<label>Costo materia prima attuale (€/mese)<input id="fxGasEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 55"></label>
-<label>Consumo del mese (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
+<label>Quota fissa (€/mese)<input id="fxGasFixedNow" type="number" min="0" step="0.01" placeholder="Es. 12"></label>
+<label>Quota consumi (€/Smc)<input id="fxGasEnergyNow" type="number" min="0" step="0.001" placeholder="Es. 0,800"></label>
+<label>Quantità (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
 </div>
 <div id="fxGasFlexRef" class="grid hidden" style="margin-top:10px">
 <label>Mese di riferimento<select id="fxGasRefMonth"></select></label>
 <label>PSV del mese (€/Smc)<input id="fxGasPsv" type="number" min="0" step="0.001" placeholder="Es. 0,400"></label>
 </div>
+<p class="note" id="fxGasOriginNote"></p>
 </div>
 </div>
 <div class="actions">
@@ -718,6 +728,25 @@ function fxFillMonthSelects(){
     }
   }
 }
+function fxOriginFlex(service){
+  return $(service==="light"?"fxLightOriginFlex":"fxGasOriginFlex").checked;
+}
+function fxIndexNeeded(service){
+  const offer=fxSelectedOffer(service);
+  return fxOriginFlex(service)||!!(offer&&offer.kind==="flex");
+}
+function fxOriginNote(service){
+  const idx=service==="light"?"PUN":"PSV";
+  const offer=fxSelectedOffer(service);
+  const neu=!!(offer&&offer.kind==="flex");
+  const origin=fxOriginFlex(service)
+    ?`Contratto attuale Flex: quota fissa + quantità × (${idx} + quota consumi).`
+    :"Contratto attuale Fix: quota fissa + quantità × quota consumi.";
+  const ours=neu
+    ?` Con noi: fisso + quantità × (${idx} + spread).`
+    :" Con noi: fisso + quantità × quota consumi.";
+  return origin+ours;
+}
 function fxToggleBoxes(){
   const light=$("fxIncludeLight").checked, gas=$("fxIncludeGas").checked, cmp=fxCompareOn();
   $("fxLightBox").classList.toggle("hidden",!light);
@@ -728,12 +757,13 @@ function fxToggleBoxes(){
   $("fxCompareHint").classList.toggle("hidden",!cmp);
   if(light){
     const o=fxSelectedOffer("light");
-    $("fxLightFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
+    $("fxLightFlexRef").classList.toggle("hidden",!cmp||!fxIndexNeeded("light"));
     $("fxLightTeNote").classList.toggle("hidden",!o||o.id!=="luce-fix-te");
+    $("fxLightOriginNote").textContent=fxOriginNote("light");
   }else $("fxLightTeNote").classList.add("hidden");
   if(gas){
-    const o=fxSelectedOffer("gas");
-    $("fxGasFlexRef").classList.toggle("hidden",!cmp||!o||o.kind!=="flex");
+    $("fxGasFlexRef").classList.toggle("hidden",!cmp||!fxIndexNeeded("gas"));
+    $("fxGasOriginNote").textContent=fxOriginNote("gas");
   }
 }
 function calcCommodityService(service,offer,isFw,compare){
@@ -753,13 +783,16 @@ function calcCommodityService(service,offer,isFw,compare){
       out.indexUsed=Number(compare.indexValue);
       out.unitPrice=out.indexUsed+Number(offer.spread);
     }
+    const currentUnit=compare.originKind==="flex"?Number(compare.indexValue)+Number(compare.unitNow):Number(compare.unitNow);
+    const currentEnergy=compare.consumption*currentUnit;
+    const currentTotal=compare.fixedNow+currentEnergy;
     const newEnergy=compare.consumption*out.unitPrice;
     const newTotal=monthly+newEnergy;
-    const currentTotal=compare.fixedNow+compare.energyNow;
     out.compare={
-      fixedNow:compare.fixedNow,energyNow:compare.energyNow,consumption:compare.consumption,
-      indexValue:compare.indexValue,refMonth:compare.refMonth,
-      newEnergy,newFixed:monthly,newTotal,currentTotal,saving:currentTotal-newTotal
+      originKind:compare.originKind,fixedNow:compare.fixedNow,unitNow:Number(compare.unitNow),currentUnit,
+      consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,
+      currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,
+      saving:currentTotal-newTotal
     };
   }
   return out;
@@ -787,20 +820,22 @@ function calculateCommodity(){
     let compare=null;
     if(compareOn){
       const prefix=key==="light"?"fxLight":"fxGas";
+      const svcLabel=key==="light"?"la luce":"il gas";
+      const originKind=$(prefix+"OriginFlex").checked?"flex":"fix";
       const fixedNow=Number($(prefix+"FixedNow").value);
-      const energyNow=Number($(prefix+"EnergyNow").value);
+      const unitNow=Number($(prefix+"EnergyNow").value);
       const cons=Number($(key==="light"?"fxLightMonthKwh":"fxGasMonthSmc").value);
-      if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci il costo fisso attuale della bolletta per "+(key==="light"?"la luce":"il gas")+".");return}
-      if(!Number.isFinite(energyNow)||energyNow<0){fxError("Inserisci il costo della materia prima attuale per "+(key==="light"?"la luce":"il gas")+".");return}
-      if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci il consumo del mese maggiore di zero per "+(key==="light"?"la luce":"il gas")+".");return}
+      if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci la quota fissa del contratto attuale per "+svcLabel+".");return}
+      if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi del contratto attuale per "+svcLabel+".");return}
+      if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".");return}
       let indexValue=null, refMonth=null;
-      if(offer.kind==="flex"){
+      if(originKind==="flex"||offer.kind==="flex"){
         const idx=Number($(key==="light"?"fxLightPun":"fxGasPsv").value);
         if(!Number.isFinite(idx)||idx<0){fxError("Inserisci "+(key==="light"?"il PUN":"il PSV")+" del mese di riferimento.");return}
         indexValue=idx;
         refMonth=Number($(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value);
       }
-      compare={fixedNow,energyNow,consumption:cons,indexValue,refMonth};
+      compare={originKind,fixedNow,unitNow,consumption:cons,indexValue,refMonth};
     }
     sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
@@ -849,18 +884,21 @@ function fxCompareCard(s){
   const d=s.compare; if(!d)return "";
   const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
   const save=d.saving>=0;
-  let meta=`Consumo del mese: ${num(d.consumption)} ${s.unit}.`;
-  if(s.offer.kind==="flex"){
-    meta+=` ${s.offer.index} di ${month}: ${unitPrice(d.indexValue,s.unit)}.`;
-  }
+  const idx=s.service==="light"?"PUN":"PSV";
+  const qty=`${num(d.consumption)} ${s.unit}`;
+  const originMeta=d.originKind==="flex"
+    ?`Fisso ${money(d.fixedNow)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(d.unitNow,s.unit)})`
+    :`Fisso ${money(d.fixedNow)} + ${qty} × ${unitPrice(d.unitNow,s.unit)}`;
+  const newMeta=s.offer.kind==="flex"
+    ?`Fisso ${money(d.newFixed)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`
+    :`Fisso ${money(d.newFixed)} + ${qty} × ${unitPrice(d.newUnit,s.unit)}`;
   return `<div class="ccmp">
-    <h4>Paragone del mese${month?" · "+month:""}</h4>
+    <h4>Paragone${month?" · "+month:""}</h4>
     <div class="ccmpgrid">
-      <div class="ccmpbox"><div class="lbl">Bolletta attuale</div><div class="meta">Fisso ${money(d.fixedNow)} + materia ${money(d.energyNow)}</div><div class="val">${money(d.currentTotal)}</div></div>
-      <div class="ccmpbox new"><div class="lbl">Offerta Fastweb</div><div class="meta">Fisso ${money(d.newFixed)} + materia ${money(d.newEnergy)}</div><div class="val">${money(d.newTotal)}</div></div>
+      <div class="ccmpbox"><div class="lbl">Contratto attuale ${d.originKind==="flex"?"Flex":"Fix"}</div><div class="meta">${originMeta}</div><div class="val">${money(d.currentTotal)}</div></div>
+      <div class="ccmpbox new"><div class="lbl">Con noi</div><div class="meta">${newMeta}</div><div class="val">${money(d.newTotal)}</div></div>
     </div>
-    <div class="ccmpbox save"><div class="lbl">${save?"Risparmio del mese":"Maggiore spesa del mese"}</div><div class="val">${money(Math.abs(d.saving))}</div></div>
-    <p class="meta">${meta} Nuovo fisso = corrispettivo / 12. Nuova materia = consumo × prezzo energia.</p>
+    <div class="ccmpbox save"><div class="lbl">${save?"Risparmio":"Maggiore spesa"}</div><div class="val">${money(Math.abs(d.saving))}</div></div>
   </div>`;
 }
 function fxServiceCard(q,key,title){
@@ -967,6 +1005,10 @@ $("fxCompareNo").addEventListener("change",fxToggleBoxes);
 $("fxCompareYes").addEventListener("change",fxToggleBoxes);
 $("fxLightOffer").addEventListener("change",fxToggleBoxes);
 $("fxGasOffer").addEventListener("change",fxToggleBoxes);
+$("fxLightOriginFix").addEventListener("change",fxToggleBoxes);
+$("fxLightOriginFlex").addEventListener("change",fxToggleBoxes);
+$("fxGasOriginFix").addEventListener("change",fxToggleBoxes);
+$("fxGasOriginFlex").addEventListener("change",fxToggleBoxes);
 $("fxCalculate").addEventListener("click",calculateCommodity);
 $("fxPdf").addEventListener("click",makeCommodityPdf);
 $("fxPunDefault").addEventListener("change",()=>{
