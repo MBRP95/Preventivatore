@@ -241,7 +241,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label><input type="radio" name="fxCompare" id="fxCompareYes" value="yes"> Con paragone bolletta</label>
 </div>
 <p class="note" id="fxNoCompareHint">Senza paragone si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
-<p class="note hidden" id="fxCompareHint">Il contratto attuale può essere Fix o Flex, anche se l'offerta nuova è diversa. Si inseriscono quota fissa, quota consumi e quantità. Se il contratto attuale o l'offerta nuova è Flex, si aggiungono il mese di riferimento e il PUN o il PSV.</p>
+<p class="note hidden" id="fxCompareHint">Il contratto attuale può essere Fix o Flex, anche se l'offerta nuova è diversa. La quota consumi del gestore attuale è il totale pagato per tutti i kWh o Smc, non il prezzo unitario. La quantità serve a calcolare la spesa con noi. Se il contratto attuale o l'offerta nuova è Flex, si aggiungono il mese di riferimento e il PUN o il PSV.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
@@ -254,7 +254,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 </div>
 <div class="grid3">
 <label>Quota fissa (€/mese)<input id="fxLightFixedNow" type="number" min="0" step="0.01" placeholder="Es. 13"></label>
-<label>Quota consumi (€/kWh)<input id="fxLightEnergyNow" type="number" min="0" step="0.001" placeholder="Es. 0,180"></label>
+<label>Quota consumi totale (€)<input id="fxLightEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 36"></label>
 <label>Quantità (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
 </div>
 <div id="fxLightFlexRef" class="grid hidden" style="margin-top:10px">
@@ -275,7 +275,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 </div>
 <div class="grid3">
 <label>Quota fissa (€/mese)<input id="fxGasFixedNow" type="number" min="0" step="0.01" placeholder="Es. 12"></label>
-<label>Quota consumi (€/Smc)<input id="fxGasEnergyNow" type="number" min="0" step="0.001" placeholder="Es. 0,800"></label>
+<label>Quota consumi totale (€)<input id="fxGasEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 72"></label>
 <label>Quantità (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
 </div>
 <div id="fxGasFlexRef" class="grid hidden" style="margin-top:10px">
@@ -739,12 +739,10 @@ function fxOriginNote(service){
   const idx=service==="light"?"PUN":"PSV";
   const offer=fxSelectedOffer(service);
   const neu=!!(offer&&offer.kind==="flex");
-  const origin=fxOriginFlex(service)
-    ?`Contratto attuale Flex: quota fissa + quantità × (${idx} + quota consumi).`
-    :"Contratto attuale Fix: quota fissa + quantità × quota consumi.";
+  const origin="Contratto attuale: quota fissa + quota consumi, il totale pagato per tutti i "+(service==="light"?"kWh":"Smc")+".";
   const ours=neu
     ?` Con noi: fisso + quantità × (${idx} + spread).`
-    :" Con noi: fisso + quantità × quota consumi.";
+    :" Con noi: fisso + quantità × prezzo unitario.";
   return origin+ours;
 }
 function fxToggleBoxes(){
@@ -783,13 +781,12 @@ function calcCommodityService(service,offer,isFw,compare){
       out.indexUsed=Number(compare.indexValue);
       out.unitPrice=out.indexUsed+Number(offer.spread);
     }
-    const currentUnit=compare.originKind==="flex"?Number(compare.indexValue)+Number(compare.unitNow):Number(compare.unitNow);
-    const currentEnergy=compare.consumption*currentUnit;
+    const currentEnergy=Number(compare.consumptionQuota);
     const currentTotal=compare.fixedNow+currentEnergy;
     const newEnergy=compare.consumption*out.unitPrice;
     const newTotal=monthly+newEnergy;
     out.compare={
-      originKind:compare.originKind,fixedNow:compare.fixedNow,unitNow:Number(compare.unitNow),currentUnit,
+      originKind:compare.originKind,fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,
       consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,
       currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,
       saving:currentTotal-newTotal
@@ -826,7 +823,7 @@ function calculateCommodity(){
       const unitNow=Number($(prefix+"EnergyNow").value);
       const cons=Number($(key==="light"?"fxLightMonthKwh":"fxGasMonthSmc").value);
       if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci la quota fissa del contratto attuale per "+svcLabel+".");return}
-      if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi del contratto attuale per "+svcLabel+".");return}
+      if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi totale del contratto attuale per "+svcLabel+".");return}
       if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".");return}
       let indexValue=null, refMonth=null;
       if(originKind==="flex"||offer.kind==="flex"){
@@ -835,7 +832,7 @@ function calculateCommodity(){
         indexValue=idx;
         refMonth=Number($(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value);
       }
-      compare={originKind,fixedNow,unitNow,consumption:cons,indexValue,refMonth};
+      compare={originKind,fixedNow,consumptionQuota:unitNow,consumption:cons,indexValue,refMonth};
     }
     sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
@@ -886,9 +883,9 @@ function fxCompareCard(s){
   const save=d.saving>=0;
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
-  const originMeta=d.originKind==="flex"
-    ?`Fisso ${money(d.fixedNow)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(d.unitNow,s.unit)})`
-    :`Fisso ${money(d.fixedNow)} + ${qty} × ${unitPrice(d.unitNow,s.unit)}`;
+  const originBits=[`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`];
+  if(d.originKind==="flex"&&d.indexValue!=null)originBits.push(`${idx}${month?" "+month:""} ${unitPrice(d.indexValue,s.unit)}`);
+  const originMeta=originBits.join(" · ");
   const newMeta=s.offer.kind==="flex"
     ?`Fisso ${money(d.newFixed)} + ${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`
     :`Fisso ${money(d.newFixed)} + ${qty} × ${unitPrice(d.newUnit,s.unit)}`;
