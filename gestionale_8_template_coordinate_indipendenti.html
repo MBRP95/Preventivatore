@@ -232,13 +232,8 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 </div>
 <div id="flatFlow">
 <section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label><label><input id="flatFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label></div>
-<div class="checks">
-<label><input type="radio" name="flatCompare" id="flatCompareYes" value="yes" checked> Con paragone fattura</label>
-<label><input type="radio" name="flatCompare" id="flatCompareNo" value="no"> Senza paragone fattura</label>
-</div>
-<p class="note hidden" id="flatNoCompareHint">Senza paragone non servono consumo e spesa. Sul preventivo si stampano solo plafond annuo, canone e costo extra soglia.</p>
-<div id="lightInputs"><h3>Luce</h3><div class="grid3"><label class="flat-bill">Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label class="flat-bill">Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label class="flat-bill">Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label class="flat-bill">Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note flat-bill">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p></div>
-<div id="gasInputs" class="hidden"><h3>Gas</h3><div class="grid flat-bill"><label>Consumo annuo attuale (Smc)<input id="gasConsumption" type="number" min="0" step="1" placeholder="Es. 595"></label><label>Spesa annua attuale gas (€)<input id="gasSpend" type="number" min="0" step="0.01" placeholder="Es. 867"></label></div></div>
+<div id="lightInputs"><h3>Luce</h3><label class="checks"><input id="lightCompare" type="checkbox" checked> Con paragone fattura</label><div id="lightBill" class="grid3"><label>Potenza contatore<select id="meterPower"><option value="3">3 kW — nessun extra</option><option value="4.5">4,5 kW — +5 €/mese</option><option value="6">6 kW — +10 €/mese</option></select></label><label>Residenza<select id="residency"><option value="resident">Residente — nessun extra</option><option value="nonresident">Non residente — +12 €/mese</option></select></label><label>Consumo annuo attuale (kWh)<input id="lightConsumption" type="number" min="0" step="1" placeholder="Es. 1400"></label><label>Spesa annua attuale luce (€)<input id="lightSpend" type="number" min="0" step="0.01" placeholder="Es. 850"></label></div><p class="note" id="lightBillNote">Gli extra di potenza e non residenza si applicano solo alla luce e vengono inclusi nel canone e nel costo annuo stimato.</p><p class="note hidden" id="lightNoCompareHint">Senza paragone si stampano plafond annuo, canone e costo extra soglia.</p></div>
+<div id="gasInputs" class="hidden"><h3>Gas</h3><label class="checks"><input id="gasCompare" type="checkbox" checked> Con paragone fattura</label><div id="gasBill" class="grid"><label>Consumo annuo attuale (Smc)<input id="gasConsumption" type="number" min="0" step="1" placeholder="Es. 595"></label><label>Spesa annua attuale gas (€)<input id="gasSpend" type="number" min="0" step="0.01" placeholder="Es. 867"></label></div><p class="note hidden" id="gasNoCompareHint">Senza paragone si stampano plafond annuo, canone e costo extra soglia.</p></div>
 <div class="actions"><button id="calculate">Calcola tutte le promozioni</button><button class="secondary" id="clear">Nuovo preventivo / Pulisci</button></div><div id="result" class="result hidden" aria-live="polite"></div><div id="calcStatus" class="status hidden"></div></section>
 <section class="panel"><h2>4. Salvataggio, PDF e storico</h2><p class="note">Ogni PDF è una sola pagina: offerta doppia se hai selezionato luce e gas, offerta singola se hai selezionato un solo servizio. I due layout non vengono mai messi insieme. Puoi scaricare il file o stamparlo dal browser.</p><div class="actions"><button id="saveQuote" disabled>Salva preventivo</button><button id="makePdf" disabled>Scarica PDF</button><button class="secondary" id="showHistory" disabled>Mostra storico</button><button class="secondary" id="showTrash" disabled>Apri cestino</button></div>
 <div id="quotePreview" class="hidden"><h3 id="quotePreviewTitle">Anteprima preventivo</h3><p class="note" id="quotePreviewNote"></p><div class="quote-frame" id="quoteFrame"></div></div>
@@ -396,12 +391,17 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 "use strict";
 const PROMO_CATALOG=JSON.parse(document.getElementById("promo-catalog").textContent);
 function flatIsFw(){const el=$("flatFastweb");return !el||el.checked}
-function flatCompareOn(){const el=$("flatCompareYes");return !el||el.checked}
+function serviceCompareOn(prefix){const el=$(prefix+"Compare");return !el||el.checked}
+function sectionCompares(sec,q){if(sec&&typeof sec.compare==="boolean")return sec.compare;return !q||q.compare!==false}
 function flatToggleCompare(reset){
-  const on=flatCompareOn();
-  document.querySelectorAll(".flat-bill").forEach(el=>el.classList.toggle("hidden",!on));
-  const hint=$("flatNoCompareHint");
-  if(hint)hint.classList.toggle("hidden",on);
+  const lightOn=serviceCompareOn("light"), gasOn=serviceCompareOn("gas");
+  const lightBill=$("lightBill"), lightNote=$("lightBillNote"), lightHint=$("lightNoCompareHint");
+  const gasBill=$("gasBill"), gasHint=$("gasNoCompareHint");
+  if(lightBill)lightBill.classList.toggle("hidden",!lightOn);
+  if(lightNote)lightNote.classList.toggle("hidden",!lightOn);
+  if(lightHint)lightHint.classList.toggle("hidden",lightOn);
+  if(gasBill)gasBill.classList.toggle("hidden",!gasOn);
+  if(gasHint)gasHint.classList.toggle("hidden",gasOn);
   if(!reset)return;
   currentQuote=null;
   $("result").classList.add("hidden");
@@ -410,7 +410,8 @@ function flatToggleCompare(reset){
   $("saveQuote").disabled=true;
   $("makePdf").disabled=true;
   hideQuotePreview();
-  $("saveStatus").textContent=on?"Compila i dati e calcola le promozioni.":"Scegli le promo: si stampano plafond annuo, canone e costo extra soglia.";
+  const any=($("includeLight").checked&&lightOn)||($("includeGas").checked&&gasOn);
+  $("saveStatus").textContent=any?"Compila i dati e calcola le promozioni.":"Scegli le promo: si stampano plafond annuo, canone e costo extra soglia.";
 }
 function promoMonthly(p,apply){const gross=Number(p&&p.monthly||0),on=apply===undefined?flatIsFw():!!apply,disc=on?Number(p&&p.convergence||0):0;return Math.max(0,gross-disc)}
 function promoExpiryLabel(iso){const p=String(iso||"").split("-");if(p.length!==3||p.some(x=>!x))return "";return `${p[2]}/${p[1]}/${p[0]}`}
@@ -427,19 +428,22 @@ function calcPromo(p,consumption,spend){const monthly=promoMonthly(p),delta=p.pl
 function calculate(){
  const includeLight=$("includeLight").checked,includeGas=$("includeGas").checked;
  if(!includeLight&&!includeGas){error("Seleziona almeno un servizio: luce, gas o entrambi.");return}
- const data=readForm();const compare=flatCompareOn();
+ const data=readForm();
  const lightExtraMonthly=(data.lightOptions.meterPower===4.5?5:data.lightOptions.meterPower===6?10:0)+(data.lightOptions.residency==="nonresident"?12:0);
  const sections={};
  for(const [on,prefix,list,unit] of [[includeLight,"light",LIGHT_PROMOS,"kWh"],[includeGas,"gas",GAS_PROMOS,"Smc"]]){
   if(!on)continue;
+  const compare=serviceCompareOn(prefix);
   if(!compare){
-    sections[prefix]={unit,consumption:null,currentSpend:null,evaluatedPromos:list.map(p=>({promo:p,displayMonthly:promoMonthly(p),delta:null,refund:null,bonus:null,excessCost:null,annualCost:null,saving:null})),selectedPromo:null,calculations:null};
+    sections[prefix]={unit,compare:false,consumption:null,currentSpend:null,evaluatedPromos:list.map(p=>({promo:p,displayMonthly:promoMonthly(p),delta:null,refund:null,bonus:null,excessCost:null,annualCost:null,saving:null})),selectedPromo:null,calculations:null};
     continue;
   }
   const cr=$(prefix+"Consumption").value,sr=$(prefix+"Spend").value,c=Number(cr),sp=Number(sr);
   if(cr===""||sr===""||!Number.isFinite(c)||!Number.isFinite(sp)||c<=0||sp<0){error(`Inserisci consumo annuo maggiore di zero e spesa annua non negativa per ${prefix==="light"?"la luce":"il gas"}.`);return}
-  sections[prefix]={unit,consumption:c,currentSpend:sp,evaluatedPromos:list.map(p=>{const r=calcPromo(p,c,sp);if(prefix==="light"){r.baseAnnualCost=r.annualCost;r.baseSaving=r.saving;r.extraMonthly=lightExtraMonthly;r.annualCost+=lightExtraMonthly*12;r.saving=sp-r.annualCost;}return {promo:p,...r,displayMonthly:promoMonthly(p)+(prefix==="light"?lightExtraMonthly:0),displayAnnual:promoMonthly(p)*12+(prefix==="light"?lightExtraMonthly*12:0)}}),selectedPromo:null,calculations:null};
+  sections[prefix]={unit,compare:true,consumption:c,currentSpend:sp,evaluatedPromos:list.map(p=>{const r=calcPromo(p,c,sp);if(prefix==="light"){r.baseAnnualCost=r.annualCost;r.baseSaving=r.saving;r.extraMonthly=lightExtraMonthly;r.annualCost+=lightExtraMonthly*12;r.saving=sp-r.annualCost;}return {promo:p,...r,displayMonthly:promoMonthly(p)+(prefix==="light"?lightExtraMonthly:0),displayAnnual:promoMonthly(p)*12+(prefix==="light"?lightExtraMonthly*12:0)}}),selectedPromo:null,calculations:null};
  }
+ const flags=Object.values(sections).map(s=>!!s.compare);
+ const compare=flags.length&&flags.every(Boolean)?true:flags.some(Boolean)?"mixed":false;
  currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,blank:!customerReady(data.customer),lightOptions:data.lightOptions,isFastweb:flatIsFw(),compare,sections,status:"bozza",version:4};
  $("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();renderComparisons();$("saveStatus").textContent="Scegli una promozione per ogni servizio incluso, poi salva o genera il PDF.";
 }
@@ -448,7 +452,7 @@ function renderComparisons(){
  const result=$("result");result.classList.remove("hidden");$("calcStatus").classList.add("hidden");let html="";
  for(const [key,title] of [["light","Confronto promozioni luce"],["gas","Confronto promozioni gas"]]){
   const sec=currentQuote.sections[key];if(!sec)continue;
-  const noCmp=currentQuote.compare===false;
+  const noCmp=!sectionCompares(sec,currentQuote);
   if(noCmp){
     html+=`<h2>${key==="light"?"Promo luce":"Promo gas"}</h2><table><thead><tr><th>Seleziona</th><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Costo extra soglia</th></tr></thead><tbody>`;
     html+=sec.evaluatedPromos.map(x=>`<tr><td><input type="radio" name="pick_${key}" value="${x.promo.name}" style="width:auto;margin:0"></td><td><b>${escapeHtml(x.promo.name)}</b></td><td>${num(x.promo.plafond)} ${sec.unit}</td><td>${money(x.displayMonthly??x.promo.monthly)}</td><td>${unitPrice(x.promo.price,sec.unit)}</td></tr>`).join("");
@@ -472,7 +476,7 @@ function renderComparisons(){
 }
 function renderSelected(){
  const result=$("result");let html='<h2>Promozioni scelte</h2><div class="grid">';
- for(const [key,title] of [["light","Luce"],["gas","Gas"]]){const sec=currentQuote.sections[key];if(!sec)continue;const p=sec.selectedPromo,r=sec.calculations;if(!p||!r)continue;html+=currentQuote.compare===false?`<div class="kpi"><span>${title} · ${p.name}</span><strong>Plafond ${num(p.plafond)} ${sec.unit}</strong><p>Canone ${money(monthlyOf(sec))}/mese · extra soglia ${unitPrice(p.price,sec.unit)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`:`<div class="kpi"><span>${title} · ${p.name}</span><strong>${money(r.saving)} risparmio/anno</strong><p>Canone: ${money(r.displayMonthly??p.monthly)}/mese · costo stimato ${money(r.annualCost)}/anno · mensile percepito ${money(r.annualCost/12)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`}
+ for(const [key,title] of [["light","Luce"],["gas","Gas"]]){const sec=currentQuote.sections[key];if(!sec)continue;const p=sec.selectedPromo,r=sec.calculations;if(!p||!r)continue;html+=!sectionCompares(sec,currentQuote)?`<div class="kpi"><span>${title} · ${p.name}</span><strong>Plafond ${num(p.plafond)} ${sec.unit}</strong><p>Canone ${money(monthlyOf(sec))}/mese · extra soglia ${unitPrice(p.price,sec.unit)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`:`<div class="kpi"><span>${title} · ${p.name}</span><strong>${money(r.saving)} risparmio/anno</strong><p>Canone: ${money(r.displayMonthly??p.monthly)}/mese · costo stimato ${money(r.annualCost)}/anno · mensile percepito ${money(r.annualCost/12)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`}
  html+='</div>';result.innerHTML=html;result.querySelectorAll("[data-change]").forEach(b=>b.addEventListener("click",()=>{hideQuotePreview();for(const r of $("result").querySelectorAll(`input[name="pick_${b.dataset.change}"]`))r.checked=false;renderComparisons()}));
  showQuotePreview(currentQuote);
 }
@@ -569,8 +573,8 @@ function calcNoteLine(type,sec){
 function calcNotesHtml(q){
   const layout=quoteLayout(q); if(!layout)return "";
   const lines=[];
-  if(layout==="dual"||layout==="light")lines.push(calcNoteLine("light",q.sections.light));
-  if(layout==="dual"||layout==="gas")lines.push(calcNoteLine("gas",q.sections.gas));
+  if((layout==="dual"||layout==="light")&&sectionCompares(q.sections.light,q))lines.push(calcNoteLine("light",q.sections.light));
+  if((layout==="dual"||layout==="gas")&&sectionCompares(q.sections.gas,q))lines.push(calcNoteLine("gas",q.sections.gas));
   const texts=lines.filter(Boolean);
   if(!texts.length)return "";
   return `<div class="qcalc">${texts.map(t=>`<p>${escapeHtml(t)}</p>`).join("")}</div>`;
@@ -628,7 +632,7 @@ function flatTermsHtml(type,sec){
 function offerHtml(type,sec,q,single){
   const annual=quoteAnnual(type,sec,q);
   const save=hasSaving(type,sec,q);
-  const noCmp=q&&q.compare===false;
+  const noCmp=!sectionCompares(sec,q);
   const title=promoTitle(type,sec);
   const img=single?(type==="light"?ILL.womanLg:ILL.manLg):(type==="light"?ILL.woman:ILL.man);
   const metrics=save?`<div class="qmetrics">
@@ -682,7 +686,10 @@ function buildQuoteHtml(q){
   let offers="", bottomStats="";
   if(layout==="dual"){
     offers=offerHtml("light",sections.light,q,false)+offerHtml("gas",sections.gas,q,false);
-    bottomStats=q.compare===false?"":statsHtml(offerStatsHtml("light",sections.light,q).concat(offerStatsHtml("gas",sections.gas,q)));
+    const items=[];
+    if(sectionCompares(sections.light,q))items.push(...offerStatsHtml("light",sections.light,q));
+    if(sectionCompares(sections.gas,q))items.push(...offerStatsHtml("gas",sections.gas,q));
+    bottomStats=items.length?statsHtml(items):"";
   }else{
     offers=offerHtml(layout==="light"?"light":"gas",layout==="light"?sections.light:sections.gas,q,true);
   }
@@ -691,7 +698,7 @@ function buildQuoteHtml(q){
     <div class="qinfo">${cust}${shopC}</div>
     <div class="qoffers">${offers}</div>
     ${bottomStats}
-    ${q.compare===false?"":calcNotesHtml(q)}
+    ${calcNotesHtml(q)}
     ${footerHtml()}
   </div>`;
 }
@@ -701,7 +708,8 @@ function showQuotePreview(q){
   const html=buildQuoteHtml(q);
   if(!layout||!html)return hideQuotePreview();
   $("quotePreviewTitle").textContent="Anteprima · "+layoutLabel(layout);
-  $("quotePreviewNote").textContent=q.compare===false?"Senza paragone fattura: si stampano plafond annuo, canone e costo extra soglia.":"Il PDF avrà solo questa pagina ("+layoutLabel(layout)+"), non entrambe le varianti.";
+  const lc=q.sections.light?sectionCompares(q.sections.light,q):false, gc=q.sections.gas?sectionCompares(q.sections.gas,q):false;
+  $("quotePreviewNote").textContent=(q.sections.light&&q.sections.gas&&lc&&!gc)?"Paragone fattura solo per la luce. Per il gas si stampano plafond annuo, canone e costo extra soglia.":(q.sections.light&&q.sections.gas&&gc&&!lc)?"Paragone fattura solo per il gas. Per la luce si stampano plafond annuo, canone e costo extra soglia.":(!lc&&!gc)?"Senza paragone fattura: si stampano plafond annuo, canone e costo extra soglia.":"Il PDF avrà solo questa pagina ("+layoutLabel(layout)+"), non entrambe le varianti.";
   $("quoteFrame").innerHTML=html;
   $("quotePreview").classList.remove("hidden");
   $("printArea").innerHTML=html;
@@ -764,8 +772,9 @@ function quoteSavingLabel(q){
     const sav=Object.values(q.sections||{}).reduce((a,s)=>a+(s.compare?Number(s.compare.saving)||0:0),0);
     return money(sav)+" /mese";
   }
-  if(q.compare===false)return "—";
-  return money(Object.values(q.sections||{}).reduce((a,s)=>a+(s.calculations?.saving||0),0))+" /anno";
+  const secs=Object.values(q.sections||{});
+  if(!secs.some(s=>sectionCompares(s,q)))return "—";
+  return money(secs.reduce((a,s)=>a+(sectionCompares(s,q)?Number(s.calculations?.saving)||0:0),0))+" /anno";
 }
 function renderHistory(){const host=$("history");const wrap=$("archiveLists");if(wrap)wrap.classList.remove("hidden");host.classList.remove("hidden");if(!quotes.length){host.innerHTML='<p class="note">Nessun preventivo salvato.</p>';return}host.innerHTML='<table><thead><tr><th>Numero</th><th>Data</th><th>Cliente</th><th>Tipo</th><th>Servizi</th><th>Risparmio</th><th>Azioni</th></tr></thead><tbody>'+quotes.map((q,i)=>`<tr><td>${escapeHtml(q.quoteNumber||"—")}</td><td>${dateLabel(q.customer?.date)}</td><td>${escapeHtml(q.customer?.name||"")}</td><td>${q.kind==="commodity"?"Fix/Flex":"FLAT"}</td><td>${escapeHtml(quoteServicesLabel(q))}</td><td>${quoteSavingLabel(q)}</td><td><button class="secondary" data-open="${i}">Apri</button> <button class="danger" data-trash="${i}">Sposta nel cestino</button></td></tr>`).join("")+'</tbody></table>';host.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openQuote(quotes[+b.dataset.open])));host.querySelectorAll("[data-trash]").forEach(b=>b.addEventListener("click",()=>moveToTrash(quotes[+b.dataset.trash])))}
 function renderTrash(){const host=$("trash");if(host.classList.contains("hidden"))return;const wrap=$("archiveLists");if(wrap)wrap.classList.remove("hidden");if(!trashQuotes.length){host.innerHTML='<p class="note">Il cestino è vuoto.</p>';return}host.innerHTML='<table><thead><tr><th>Numero</th><th>Data</th><th>Cliente</th><th>Eliminato il</th><th>Azioni</th></tr></thead><tbody>'+trashQuotes.map((q,i)=>`<tr><td>${escapeHtml(q.quoteNumber||"—")}</td><td>${dateLabel(q.customer?.date)}</td><td>${escapeHtml(q.customer?.name||"")}</td><td>${q.deletedAt?new Date(q.deletedAt).toLocaleString("it-IT"):"—"}</td><td><button class="secondary" data-restore="${i}">Ripristina</button> <button class="danger" data-purge="${i}">Elimina definitivamente</button></td></tr>`).join("")+'</tbody></table>';host.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>restoreTrash(trashQuotes[+b.dataset.restore])));host.querySelectorAll("[data-purge]").forEach(b=>b.addEventListener("click",()=>purgeTrash(trashQuotes[+b.dataset.purge])))}
@@ -837,8 +846,8 @@ async function saveCommodityQuote(){
     $("fxPdf").disabled=false;
   }catch(e){$("fxSaveStatus").textContent="Errore nel salvataggio: "+e.message}
 }
-function openQuote(q){if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("shopName").value=q.shop?.name||q.shop?.store||q.shop?.shopName||"";$("shopAddress").value=q.shop?.address||"";$("consultant").value=q.shop?.consultant||"";$("shopEmail").value=q.shop?.email||"";$("shopPhone").value=q.shop?.phone||"";$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("flatFastweb").checked=q.isFastweb!==false;$("flatCompareYes").checked=q.compare!==false;$("flatCompareNo").checked=q.compare===false;flatToggleCompare(false);$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption??"";$("lightSpend").value=q.sections.light.currentSpend??""}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption??"";$("gasSpend").value=q.sections.gas.currentSpend??""}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
-function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("flatFastweb").checked=true;$("flatCompareYes").checked=true;$("flatCompareNo").checked=false;flatToggleCompare(false);$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni."}
+function openQuote(q){if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("shopName").value=q.shop?.name||q.shop?.store||q.shop?.shopName||"";$("shopAddress").value=q.shop?.address||"";$("consultant").value=q.shop?.consultant||"";$("shopEmail").value=q.shop?.email||"";$("shopPhone").value=q.shop?.phone||"";$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("flatFastweb").checked=q.isFastweb!==false;$("lightCompare").checked=q.sections?.light?sectionCompares(q.sections.light,q):true;$("gasCompare").checked=q.sections?.gas?sectionCompares(q.sections.gas,q):true;flatToggleCompare(false);$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption??"";$("lightSpend").value=q.sections.light.currentSpend??""}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption??"";$("gasSpend").value=q.sections.gas.currentSpend??""}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
+function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("flatFastweb").checked=true;$("lightCompare").checked=true;$("gasCompare").checked=true;flatToggleCompare(false);$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni."}
 function exportBackup(){const blob=new Blob([JSON.stringify({schemaVersion:2,exportedAt:new Date().toISOString(),customers,quotes:quotes.map(q=>{delete q._filename;return q}),trashQuotes:trashQuotes.map(q=>{delete q._filename;return q})},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-preventivi-"+today.toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href)}
 function importBackupFile(file){const reader=new FileReader();reader.onload=async()=>{try{const obj=JSON.parse(reader.result);if(!Array.isArray(obj.quotes)||!Array.isArray(obj.customers))throw Error("Formato backup non riconosciuto");if(!folderHandle)throw Error("Seleziona prima la cartella OneDrive");if(!confirm(`Importare ${obj.quotes.length} preventivi e ${obj.customers.length} clienti?`))return;const d=await ensureDir(folderHandle,"dati"),qd=await ensureDir(d,"preventivi"),td=await ensureDir(d,"cestino");for(const q of obj.quotes)await writeJson(qd,quoteFilename(q),q);for(const q of (obj.trashQuotes||[]))await writeJson(td,quoteFilename(q),q);customers=obj.customers;await writeJson(d,"clienti.json",customers);await loadArchive()}catch(e){alert("Importazione non riuscita: "+e.message)}};reader.readAsText(file)}
 
@@ -1181,8 +1190,8 @@ function renderCommodityRateTables(){
 
 $("chooseFolder").addEventListener("click",chooseFolder);$("folderPickerFallback").addEventListener("change",async e=>{const files=[...(e.target.files||[])];e.target.value="";try{await importFirefoxFolder(files)}catch(err){$("folderStatus").textContent="Lettura cartella non riuscita: "+(err&&err.message?err.message:err)}});$("loadArchive").addEventListener("click",loadArchive);$("calculate").addEventListener("click",calculate);$("clear").addEventListener("click",clearForm);$("saveQuote").addEventListener("click",saveQuote);$("makePdf").addEventListener("click",makePdf);$("showHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});$("showTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});$("exportBackup").addEventListener("click",exportBackup);$("importBackup").addEventListener("click",()=>$("backupFile").click());$("backupFile").addEventListener("change",e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=""});
 $("includeLight").addEventListener("change",()=>{$("lightInputs").classList.toggle("hidden",!$("includeLight").checked)});$("includeGas").addEventListener("change",()=>{$("gasInputs").classList.toggle("hidden",!$("includeGas").checked)});
-$("flatCompareYes").addEventListener("change",()=>flatToggleCompare(true));
-$("flatCompareNo").addEventListener("change",()=>flatToggleCompare(true));
+$("lightCompare").addEventListener("change",()=>flatToggleCompare(true));
+$("gasCompare").addEventListener("change",()=>flatToggleCompare(true));
 function renderFlatPriceTables(){const row=(p,unit)=>`<tr><td>${escapeHtml(p.name)}</td><td>${num(p.plafond)} ${unit}</td><td>${money(p.monthly)}</td><td>${money(p.annual)}</td><td>${money(p.price)}</td><td>${money(p.convergence||0)}</td><td>${escapeHtml(promoExpiryLabel(p.expires))}</td></tr>`;$("lightPriceTable").innerHTML=LIGHT_PROMOS.map(p=>row(p,"kWh")).join("");$("gasPriceTable").innerHTML=GAS_PROMOS.map(p=>row(p,"Smc")).join("")}
 renderFlatPriceTables();
 $("modeFlat").addEventListener("click",()=>setToolMode("flat"));
