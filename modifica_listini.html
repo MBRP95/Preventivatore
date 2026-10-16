@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modifica listini preventivi</title>
+<style>
+  :root{color-scheme:light}
+  body{margin:0;background:#fff8d8;color:#111;font-family:Arial,Helvetica,sans-serif}
+  header{background:#FFD000;border-bottom:4px solid #111;padding:16px 22px}
+  header h1{margin:0;font-size:26px}
+  header p{margin:6px 0 0;max-width:760px;line-height:1.4}
+  main{max-width:1100px;margin:0 auto;padding:18px}
+  .panel{background:#fff;border:2px solid #111;border-radius:16px;padding:16px 16px 18px;margin-bottom:16px}
+  h2{margin:0 0 8px;font-size:18px}
+  h3{margin:16px 0 8px;font-size:15px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button,label.file{background:#FFD000;border:2px solid #111;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer}
+  button.secondary{background:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  input[type=file]{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .status{margin-top:10px;background:#fff6c2;border-radius:10px;padding:8px 10px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border-bottom:1px solid #eee4a4;padding:6px 4px;text-align:left;vertical-align:middle}
+  th{font-size:12px}
+  input[type=number],input[type=date]{width:100%;box-sizing:border-box;border:1.5px solid #111;border-radius:8px;padding:6px 7px;font:inherit}
+  .name{font-weight:800;white-space:nowrap}
+  .muted{color:#444;font-size:12px;white-space:nowrap}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Modifica listini</h1>
+  <p>Carica il file HTML del gestionale. I valori attuali compaiono già compilati. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="actions">
+      <label class="file">Carica gestionale HTML<input id="file" type="file" accept=".html,text/html"></label>
+      <button id="download" class="secondary" disabled>Scarica HTML aggiornato</button>
+      <button id="reset" class="secondary" disabled>Ripristina valori caricati</button>
+    </div>
+    <div id="status" class="status">Nessun file caricato.</div>
+  </section>
+  <div id="editor" class="hidden"></div>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let sourceHtml="", fileName="gestionale.html", catalog=null, originalCatalog=null;
+
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function extractCatalog(html){
+  const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
+  if(!m)throw Error("Questo file non contiene il listino del gestionale.");
+  const data=JSON.parse(m[1]);
+  if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
+  return data;
+}
+function replaceCatalog(html,data){
+  const pretty=JSON.stringify(data,null,2);
+  const block='<script type="application/json" id="promo-catalog">\n'+pretty+'\n</scr'+'ipt>';
+  const next=html.replace(/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/,block);
+  if(next===html)throw Error("Impossibile aggiornare il listino nel file.");
+  return next;
+}
+function numInput(path,value,step){
+  return `<input type="number" min="0" step="${step}" data-path="${path}" value="${Number(value)}">`;
+}
+function dateInput(path,value){
+  return `<input type="date" data-path="${path}" value="${String(value||"").slice(0,10)}">`;
+}
+function setPath(obj,path,value){
+  const parts=path.split(".");
+  let cur=obj;
+  for(let i=0;i<parts.length-1;i++)cur=cur[parts[i]];
+  cur[parts[parts.length-1]]=value;
+}
+function flatTable(title,list,key,unit){
+  const rows=list.map((p,i)=>`<tr>
+    <td class="name">${p.name}<div class="muted">Plafond ${p.plafond} ${unit}</div></td>
+    <td>${numInput(`flat.${key}.${i}.monthly`,p.monthly,"0.01")}</td>
+    <td>${numInput(`flat.${key}.${i}.convergence`,p.convergence||0,"0.01")}</td>
+    <td>${numInput(`flat.${key}.${i}.price`,p.price,"0.001")}</td>
+    <td>${dateInput(`flat.${key}.${i}.expires`,p.expires)}</td>
+  </tr>`).join("");
+  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th><th>Scadenza promo</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function commodityTable(title,list,path){
+  const rows=list.map((o,i)=>{
+    const priceLabel=o.kind==="fix"?"energy":"spread";
+    const priceTitle=o.kind==="fix"?`Costo unitario €/${o.unit}`:`Spread €/${o.unit}`;
+    return `<tr>
+      <td class="name">${o.name}<div class="muted">${o.kind==="fix"?"Fix":"Flex"} · ${o.unit}</div></td>
+      <td>${numInput(`${path}.${i}.${priceLabel}`,o[priceLabel],"0.001")}</td>
+      <td>${numInput(`${path}.${i}.comm`,o.comm,"0.01")}</td>
+      <td>${numInput(`${path}.${i}.discountMonth`,o.discountMonth||0,"0.01")}</td>
+      <td>${dateInput(`${path}.${i}.expires`,o.expires)}</td>
+      <td>${numInput(`${path}.${i}.months`,o.months,"1")}</td>
+    </tr>`;
+  }).join("");
+  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Costo unitario o spread</th><th>Contributo fisso annuo €</th><th>Sconto convergenza €/mese</th><th>Scadenza promo</th><th>Durata mesi</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderEditor(){
+  const c=catalog;
+  $("editor").innerHTML=`
+    <section class="panel"><h2>Promo Energia FLAT</h2>
+      ${flatTable("Luce",c.flat.light,"light","kWh")}
+      ${flatTable("Gas",c.flat.gas,"gas","Smc")}
+    </section>
+    <section class="panel"><h2>Fix e Flex</h2>
+      ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
+      ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
+      ${commodityTable("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
+      ${commodityTable("Gas P.IVA",c.commodity.gas.piva,"commodity.gas.piva")}
+    </section>`;
+  $("editor").classList.remove("hidden");
+}
+function loadFileText(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(reader.error||Error("Lettura non riuscita"));
+    reader.readAsText(file);
+  });
+}
+function collectCatalog(){
+  const next=clone(originalCatalog);
+  let error="";
+  for(const input of $("editor").querySelectorAll("[data-path]")){
+    const path=input.dataset.path;
+    if(input.type==="date"){
+      if(!input.value){error="Inserisci tutte le scadenze.";break}
+      setPath(next,path,input.value);
+      continue;
+    }
+    const n=Number(String(input.value).replace(",","."));
+    if(!Number.isFinite(n)||n<0){error="I numeri devono essere maggiori o uguali a zero.";break}
+    if(path.endsWith(".months")&&(!Number.isInteger(n)||n<1)){error="La durata è in mesi interi, almeno 1.";break}
+    setPath(next,path,n);
+  }
+  if(error)throw Error(error);
+  return next;
+}
+$("file").addEventListener("change",async e=>{
+  const file=e.target.files&&e.target.files[0];
+  e.target.value="";
+  if(!file)return;
+  try{
+    sourceHtml=await loadFileText(file);
+    originalCatalog=extractCatalog(sourceHtml);
+    catalog=clone(originalCatalog);
+    fileName=file.name||"gestionale.html";
+    renderEditor();
+    $("download").disabled=false;
+    $("reset").disabled=false;
+    $("status").textContent=`File caricato: ${fileName}. I valori sono quelli già presenti nel gestionale.`;
+  }catch(err){
+    $("status").textContent="File non utilizzabile: "+(err&&err.message?err.message:err);
+  }
+});
+$("reset").addEventListener("click",()=>{
+  if(!originalCatalog)return;
+  catalog=clone(originalCatalog);
+  renderEditor();
+  $("status").textContent="Valori riportati a quelli del file caricato.";
+});
+$("download").addEventListener("click",()=>{
+  try{
+    const next=collectCatalog();
+    const html=replaceCatalog(sourceHtml,next);
+    const blob=new Blob([html],{type:"text/html"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    catalog=clone(next);
+    $("status").textContent=`Scaricato ${fileName}. Sostituisci il gestionale con questo file.`;
+  }catch(err){
+    $("status").textContent=err&&err.message?err.message:String(err);
+  }
+});
+</script>
+</body>
+</html>
