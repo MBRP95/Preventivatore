@@ -81,13 +81,14 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .ccmp .meta{font-size:11px;margin-top:8px;color:#333;line-height:1.4}
 .cpair .ccmp .meta{min-height:4.4em}
 .cpage.has-cmp .ccard{padding:12px 14px}
-table.cpair{width:100%;border-collapse:collapse;margin:0;position:relative;z-index:1;table-layout:fixed}
-table.cpair td{width:auto;vertical-align:top;background:#fff;border:2px solid #111;white-space:normal;color:#111;font-size:13px;text-align:left}
-table.cpair td.top{border-bottom:none;border-radius:16px 16px 0 0;padding:12px 14px 6px}
-table.cpair td.bot{border-top:none;border-radius:0 0 16px 16px;padding:0 14px 14px}
-table.cpair td.gap{width:12px;min-width:12px;max-width:12px;padding:0;border:none;background:transparent}
-table.cpair .ccmp{margin-top:6px}
-table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
+.cpair{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:0;align-items:stretch;position:relative;z-index:1}
+.cpair .ccard{height:100%;margin:0;box-sizing:border-box}
+.cpair .ccard-top{border-bottom:none;border-radius:16px 16px 0 0}
+.cpair .ccard-bot{border-top:none;border-radius:0 0 16px 16px;padding:0 14px 14px;margin-top:-2px}
+.cpage.has-cmp .cpair .ccard-top{padding:12px 14px 8px;border-bottom:none;border-radius:16px 16px 0 0}
+.cpage.has-cmp .cpair .ccard-bot{padding:0 14px 14px;border-top:none;border-radius:0 0 16px 16px}
+.cpair .ccmp{margin-top:6px}
+a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#0b57d0;text-decoration:underline}
 .ccards.one .ccmpbox.save{text-align:center;width:280px;max-width:72%;margin-left:auto;margin-right:auto}
 @media(max-width:700px){.ccmpgrid{grid-template-columns:1fr}}
 #printArea{display:none}
@@ -271,7 +272,7 @@ table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
 </div>
 <div id="fxLightFlexRef" class="grid hidden" style="margin-top:10px">
 <label>Mese di riferimento<select id="fxLightRefMonth"></select></label>
-<label>PUN del mese (€/kWh)<input id="fxLightPun" type="number" min="0" step="0.001" placeholder="Es. 0,110"></label>
+<label>PUN del mese (€/kWh)<input id="fxLightPun" type="number" min="0" step="0.001" placeholder="Es. 0,110"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">Indici di mercato</a></label>
 </div>
 <p class="note" id="fxLightOriginNote"></p>
 </div>
@@ -292,7 +293,7 @@ table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
 </div>
 <div id="fxGasFlexRef" class="grid hidden" style="margin-top:10px">
 <label>Mese di riferimento<select id="fxGasRefMonth"></select></label>
-<label>PSV del mese (€/Smc)<input id="fxGasPsv" type="number" min="0" step="0.001" placeholder="Es. 0,400"></label>
+<label>PSV del mese (€/Smc)<input id="fxGasPsv" type="number" min="0" step="0.001" placeholder="Es. 0,400"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">Indici di mercato</a></label>
 </div>
 <p class="note" id="fxGasOriginNote"></p>
 </div>
@@ -313,8 +314,8 @@ table.cpair h3{margin:0 0 10px;font-size:16px;font-weight:900;color:#111}
 <h2>Listini Fix e Flex</h2>
 <p class="note">I valori delle promo Fix e Flex sono bloccati. Puoi modificare solo gli indici PUN e PSV. Lo sconto Fastweb/Vodafone è in €/mese sul corrispettivo di commercializzazione (0 = nessuno, come Fix per Te).</p>
 <div class="grid">
-<label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"></label>
-<label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"></label>
+<label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="0.001"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">Indici di mercato</a></label>
+<label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="0.001"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">Indici di mercato</a></label>
 </div>
 <div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Comm. €/anno</th><th>Sconto €/mese</th><th>Mesi</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
 </section>
@@ -935,7 +936,7 @@ function buildCommodityHtml(q){
   const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
   const dual=keys.length===2 && !!q.compare;
   const cards=dual
-    ? `<table class="cpair"><tbody><tr>${keys.map(([k,title])=>`<td class="top">${fxServiceCard(q,k,title,"inner")}</td>`).join('<td class="gap" rowspan="2"></td>')}</tr><tr>${keys.map(([k])=>`<td class="bot">${fxCompareCard(q.sections[k])}</td>`).join("")}</tr></tbody></table>`
+    ? `<div class="cpair">${keys.map(([k,title])=>`<article class="ccard ccard-top">${fxServiceCard(q,k,title,"inner")}</article>`).join("")}${keys.map(([k])=>`<article class="ccard ccard-bot">${fxCompareCard(q.sections[k])}</article>`).join("")}</div>`
     : keys.map(([k,title])=>fxServiceCard(q,k,title,true)).join("");
   const cust=q.customer||{}, shop=q.shop||{};
   return `<div class="cpage${q.compare?" has-cmp":""}" data-offer="${escapeHtml(offerLabel)}">
@@ -951,6 +952,14 @@ function buildCommodityHtml(q){
     <div class="cnote"><p>Stima della sola materia prima e del corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p></div>
   </div>`;
 }
+function alignCommodityPair(root){
+  if(!root)return;
+  const tops=[...root.querySelectorAll(".cpair .ccard-top")];
+  if(tops.length<2)return;
+  tops.forEach(t=>{t.style.minHeight="";});
+  const max=Math.max(...tops.map(t=>t.offsetHeight));
+  if(max>0)tops.forEach(t=>{t.style.minHeight=max+"px";});
+}
 function showCommodityPreview(q){
   if(!q||q.kind!=="commodity")return hideCommodityPreview();
   const html=buildCommodityHtml(q);
@@ -959,6 +968,7 @@ function showCommodityPreview(q){
   $("fxFrame").innerHTML=html;
   $("fxPreview").classList.remove("hidden");
   $("printArea").innerHTML=html;
+  alignCommodityPair($("fxFrame"));
 }
 function hideCommodityPreview(){
   const box=$("fxPreview"); if(!box)return;
