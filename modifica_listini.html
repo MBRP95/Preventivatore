@@ -26,6 +26,7 @@
   input[type=number],input[type=date]{width:100%;box-sizing:border-box;border:1.5px solid #111;border-radius:8px;padding:6px 7px;font:inherit}
   .name{font-weight:800;white-space:nowrap}
   .muted{color:#444;font-size:12px;white-space:nowrap}
+  .hint{color:#444;font-size:12px;margin:8px 0 0;line-height:1.4}
   .hidden{display:none}
   footer{max-width:1100px;margin:0 auto;padding:8px 18px 22px;display:flex;justify-content:flex-end}
   footer .credit{text-align:right;font-style:italic;font-size:12px;color:#756f58}
@@ -59,6 +60,9 @@ function extractCatalog(html){
   if(!m)throw Error("Questo file non contiene il listino del gestionale.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
+  if(!data.indices||typeof data.indices!=="object")data.indices={};
+  if(data.indices.pun==null||data.indices.pun==="")data.indices.pun=0.207542;
+  if(data.indices.psv==null||data.indices.psv==="")data.indices.psv=0.843182;
   return data;
 }
 function replaceCatalog(html,data){
@@ -113,6 +117,12 @@ function renderEditor(){
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
     <section class="panel"><h2>Fix e Flex</h2>
+      <h3>Indici di default</h3>
+      <table><thead><tr><th>PUN di default €/kWh</th><th>PSV di default €/Smc</th></tr></thead><tbody><tr>
+        <td>${numInput("indices.pun",c.indices.pun,"any")}</td>
+        <td>${numInput("indices.psv",c.indices.psv,"any")}</td>
+      </tr></tbody></table>
+      <p class="hint">Questi valori compilano il PUN e il PSV di partenza nel gestionale.</p>
       ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
       ${commodityTable("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
