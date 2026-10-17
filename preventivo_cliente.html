@@ -46,6 +46,7 @@ button.link{background:transparent;border:0;padding:0;font:inherit;font-weight:7
 .err{min-height:1.2em;color:#a12626;font-weight:700;margin:8px 0 0}
 .restart{margin:4px 0 0}
 footer{max-width:920px;margin:0 auto;padding:4px 16px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;font-size:12px;color:#756f58}
+footer a{color:#756f58;font-weight:700}
 footer .credit{margin-left:auto;text-align:right;font-style:italic;white-space:nowrap}
 #quotePreview{margin-top:4px}
 .quote-frame{background:#111;border-radius:12px;padding:10px;overflow:auto}
@@ -271,7 +272,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <main>
 <section id="step" aria-live="polite"></section>
 </main>
-<footer><span>Stima di canone e materia energia. Controlla le condizioni commerciali prima di scegliere.</span></footer>
+<footer><span>Stima di canone e materia energia. Controlla le condizioni commerciali prima di scegliere.</span><a href="modifica_listini.html?file=preventivo_cliente.html">Modifica listini</a></footer>
 <!-- Created by Maria Beatriz Ragucci Polato -->
 <div id="printArea"></div>
 <script type="application/json" id="promo-catalog">
@@ -1028,25 +1029,8 @@ function buildQuoteHtml(q){
   }
   return `<div class="qpage ${layout==="dual"?"":"is-single"}" data-layout="${layout}"><div class="qhead"><div class="qtitle">PROMO ENERGIA</div><div class="qmeta">Data: <b>${escapeHtml(date)}</b></div></div><div class="qoffers">${offers}</div>${bottomStats}${calcNotesHtml(q)}${footerHtml()}</div>`;
 }
-async function boot(){
+function boot(){
   applyCatalog(JSON.parse($("promo-catalog").textContent));
-  try{
-    const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),1200);
-    const res=await fetch("gestionale_8_template_coordinate_indipendenti.html",{signal:ctrl.signal});
-    clearTimeout(timer);
-    if(res.ok){
-      const text=await res.text();
-      const start='<script type="application/json" id="promo-catalog">';
-      const end="</scr"+"ipt>";
-      const a=text.indexOf(start);
-      const b=a>=0?text.indexOf(end,a+start.length):-1;
-      if(b>a){
-        const live=JSON.parse(text.slice(a+start.length,b));
-        if(live&&live.flat&&live.flat.light&&live.flat.gas)applyCatalog(live);
-      }
-    }
-  }catch(e){}
   render();
 }
 boot();

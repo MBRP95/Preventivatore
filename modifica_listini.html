@@ -35,12 +35,12 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
-  <p>Carica il file HTML del gestionale. I valori attuali compaiono già compilati. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
+  <p>Carica il gestionale oppure il preventivo del cliente. Canoni, sconti, costi extra soglia, scadenze, durata e indici PUN e PSV compaiono già compilati. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
 </header>
 <main>
   <section class="panel">
     <div class="actions">
-      <label class="file">Carica gestionale HTML<input id="file" type="file" accept=".html,text/html"></label>
+      <label class="file">Carica HTML<input id="file" type="file" accept=".html,text/html"></label>
       <button id="download" class="secondary" disabled>Scarica HTML aggiornato</button>
       <button id="reset" class="secondary" disabled>Ripristina valori caricati</button>
     </div>
@@ -52,12 +52,18 @@
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-let sourceHtml="", fileName="gestionale.html", catalog=null, originalCatalog=null;
+let sourceHtml="", fileName="listino.html", fileKind="file", catalog=null, originalCatalog=null;
+function kindOf(html){
+  if(String(html||"").includes('id="step"'))return "cliente";
+  return "gestionale";
+}
+function kindName(){return fileKind==="cliente"?"il preventivo del cliente":"il gestionale"}
+function kindIn(){return fileKind==="cliente"?"nel preventivo del cliente":"nel gestionale"}
 
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
-  if(!m)throw Error("Questo file non contiene il listino del gestionale.");
+  if(!m)throw Error("Questo file non contiene il listino.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
   if(!data.indices||typeof data.indices!=="object")data.indices={};
@@ -122,13 +128,24 @@ function renderEditor(){
         <td>${numInput("indices.pun",c.indices.pun,"any")}</td>
         <td>${numInput("indices.psv",c.indices.psv,"any")}</td>
       </tr></tbody></table>
-      <p class="hint">Questi valori compilano il PUN e il PSV di partenza nel gestionale.</p>
+      <p class="hint">Questi valori compilano il PUN e il PSV di partenza.</p>
       ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
       ${commodityTable("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
       ${commodityTable("Gas P.IVA",c.commodity.gas.piva,"commodity.gas.piva")}
     </section>`;
   $("editor").classList.remove("hidden");
+}
+function applyLoaded(html,name){
+  sourceHtml=html;
+  originalCatalog=extractCatalog(sourceHtml);
+  catalog=clone(originalCatalog);
+  fileName=name||"listino.html";
+  fileKind=kindOf(sourceHtml);
+  renderEditor();
+  $("download").disabled=false;
+  $("reset").disabled=false;
+  $("status").textContent=`File caricato: ${fileName}. I valori sono quelli già presenti ${kindIn()}.`;
 }
 function loadFileText(file){
   return new Promise((resolve,reject)=>{
@@ -161,14 +178,7 @@ $("file").addEventListener("change",async e=>{
   e.target.value="";
   if(!file)return;
   try{
-    sourceHtml=await loadFileText(file);
-    originalCatalog=extractCatalog(sourceHtml);
-    catalog=clone(originalCatalog);
-    fileName=file.name||"gestionale.html";
-    renderEditor();
-    $("download").disabled=false;
-    $("reset").disabled=false;
-    $("status").textContent=`File caricato: ${fileName}. I valori sono quelli già presenti nel gestionale.`;
+    applyLoaded(await loadFileText(file), file.name||"listino.html");
   }catch(err){
     $("status").textContent="File non utilizzabile: "+(err&&err.message?err.message:err);
   }
@@ -179,6 +189,12 @@ $("reset").addEventListener("click",()=>{
   renderEditor();
   $("status").textContent="Valori riportati a quelli del file caricato.";
 });
+const preset=new URLSearchParams(location.search).get("file");
+if(preset&&/^[A-Za-z0-9._-]+\.html$/.test(preset)){
+  fetch(preset).then(r=>{if(!r.ok)throw Error("File non trovato");return r.text()}).then(html=>applyLoaded(html,preset)).catch(()=>{
+    $("status").textContent="Carica il file HTML con il pulsante qui sopra.";
+  });
+}
 $("download").addEventListener("click",()=>{
   try{
     const next=collectCatalog();
@@ -190,7 +206,7 @@ $("download").addEventListener("click",()=>{
     a.click();
     URL.revokeObjectURL(a.href);
     catalog=clone(next);
-    $("status").textContent=`Scaricato ${fileName}. Sostituisci il gestionale con questo file.`;
+    $("status").textContent=`Scaricato ${fileName}. Sostituisci ${kindName()} con questo file.`;
   }catch(err){
     $("status").textContent=err&&err.message?err.message:String(err);
   }
