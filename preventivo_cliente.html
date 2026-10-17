@@ -59,6 +59,93 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;white-space:n
   footer .credit{white-space:normal}
 }
 
+
+#step select{display:block;width:100%;margin-top:4px;padding:14px 12px;border:2px solid #d4c86a;border-radius:12px;font:inherit;font-size:22px;background:#fff}
+.offer-sheet{background:#fffef6;border:2px solid #eadf83;border-radius:14px;padding:14px 16px}
+.offer-sheet.in-range{background:#f3fff6;border-color:#b7e4b0}
+.offer-sheet .pname{font-size:26px}
+.quote-slot{position:relative;flex:none}
+.quote-pair{display:flex;flex-direction:row;flex-wrap:nowrap;gap:12px;align-items:flex-start;width:max-content}
+body.fit-result{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+body.fit-result header{flex:none;padding:8px 16px 0;max-width:none}
+body.fit-result header h1{font-size:22px;margin:0}
+body.fit-result header p,body.fit-result footer{display:none}
+body.fit-result main{flex:1;min-height:0;width:100%;max-width:none;margin:0;height:auto;padding:6px 16px 8px;display:flex;align-self:stretch}
+body.fit-result #step{flex:1;width:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
+body.fit-result .progress,body.fit-result .stepcount,body.fit-result #step h2,body.fit-result .hint{display:none}
+body.fit-result .nav,body.fit-result .restart,body.fit-result .err{flex:none}
+body.fit-result #quotePreview{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0}
+body.fit-result .quote-frame{width:100%;height:100%;overflow:hidden;background:transparent;padding:0;display:flex;align-items:center;justify-content:center}
+body.fit-result .nav{margin-top:8px}
+@media (orientation:landscape) and (max-height:900px){
+  header{padding:10px 16px 4px}
+  header h1{font-size:26px}
+  header p{margin:2px 0 0}
+  #step h2{font-size:22px}
+  .choice{padding:12px}
+}
+
+.cpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 22px;position:relative;overflow:hidden;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;margin-bottom:14px}
+.ctitle{font-size:42px;font-weight:900;font-style:italic;letter-spacing:-1.5px;line-height:.95;margin:6px 0 0}
+.ctitle small{display:block;font-size:14px;font-style:normal;font-weight:800;letter-spacing:.4px;margin-bottom:4px}
+.cmeta{background:#fff;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.45;min-width:158px}
+.cflags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;position:relative;z-index:1}
+.cflag{background:#111;color:#FFD000;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800}
+.cflag.off{background:#fff;color:#111;border:2px solid #111}
+.cinfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;position:relative;z-index:1}
+.ccard{background:#fff;border-radius:16px;padding:14px 16px;position:relative;z-index:1;border:2px solid #111}
+.ccard h3{margin:0 0 10px;background:#111;color:#FFD000;border-radius:12px;text-align:center;padding:11px 10px;font-size:22px;font-weight:900;font-style:italic;letter-spacing:-.3px}
+.ccards:not(.one) h3,.cpair .ccard h3{font-size:18px;padding:10px 8px}
+.ccmpbox .u{display:block;font-size:10px;font-weight:700;color:#666;margin-top:2px}
+.ccmpbox.save .u{color:#1B6B32}
+.ccards{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1;align-items:start}
+.ccards.one{grid-template-columns:1fr}
+.crow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid #eee4a4}
+.crow b{font-weight:800;text-align:right;max-width:62%}
+.ctotal{background:#111;color:#FFD000;border-radius:12px;padding:12px 14px;margin-top:12px;display:flex;justify-content:space-between;align-items:baseline}
+.ctotal strong{font-size:22px}
+.cnote{margin-top:12px;background:#fff;border-radius:14px;padding:12px 16px;font-size:11px;line-height:1.45;color:#333;position:relative;z-index:1}
+.csum{margin-top:12px;background:#fff;border:2px solid #111;border-radius:16px;padding:14px 16px;position:relative;z-index:1}
+.csum .lbl{font-size:12px;font-weight:800;color:#555}
+.csum .val{font-size:28px;font-weight:900}
+.fx-compare{background:#fff8bf;border:1px solid #eadf83;border-radius:10px;padding:12px;margin-top:10px}
+.fx-compare h4{margin:0 0 10px;font-size:13px;color:#39352b}
+.cdisc{background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;margin:0 0 10px;text-align:center}
+.cdisc b{display:block;font-size:22px;font-style:italic;font-weight:900;letter-spacing:-.4px}
+.cdisc span{display:block;font-size:11px;color:#fff;font-weight:700;margin-top:3px}
+.cstrikethrough{text-decoration:line-through;color:#888;font-weight:700}
+.ccomm{display:flex;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.25}
+.ccards:not(.one) .cdisc{padding:8px 10px;margin-bottom:8px}
+.ccards:not(.one) .cdisc b{font-size:18px}
+.ccards:not(.one) .cdisc span{font-size:10px}
+.cchecks{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
+.cchecks li{padding:4px 0;font-weight:700}
+.ccmp{margin-top:12px;background:#FFF9DF;border:2px solid #111;border-radius:14px;padding:12px;position:relative;z-index:1}
+.ccmp h4{margin:0 0 8px;font-size:13px;font-weight:900}
+.ccmpgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
+.ccmpbox{background:#E4E4E6;border-radius:12px;padding:8px 10px}
+.ccmpgrid .ccmpbox{display:flex;flex-direction:column}
+.ccmpbox.new{background:#FFF3B0}
+.ccmpbox.save{background:#B7E4B0;margin-top:8px}
+.ccmpbox .lbl{font-size:11px;font-weight:800;color:#555}
+.ccmpbox .val{font-size:18px;font-weight:900;margin-top:4px}
+.ccmpgrid .ccmpbox .val{margin-top:auto}
+.ccmpbox.save .val{color:#0F6B28}
+.ccmpbox.save .lbl{color:#1B6B32}
+.ccmp .meta{font-size:11px;margin-top:8px;color:#333;line-height:1.4}
+.cpair .ccmp .meta{min-height:4.4em}
+.cpage.has-cmp .ccard{padding:12px 14px}
+.cpair{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:0;align-items:stretch;position:relative;z-index:1}
+.cpair .ccard{height:100%;margin:0;box-sizing:border-box}
+.cpair .ccard-top{border-bottom:none;border-radius:16px 16px 0 0}
+.cpair .ccard-bot{border-top:none;border-radius:0 0 16px 16px;padding:0 14px 14px;margin-top:-2px}
+.cpage.has-cmp .cpair .ccard-top{padding:12px 14px 8px;border-bottom:none;border-radius:16px 16px 0 0}
+.cpage.has-cmp .cpair .ccard-bot{padding:0 14px 14px;border-top:none;border-radius:0 0 16px 16px}
+.cpair .ccmp{margin-top:6px}
+a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#0b57d0;text-decoration:underline}
+.ccards.one .ccmpbox.save{text-align:center;width:280px;max-width:72%;margin-left:auto;margin-right:auto}
 .qpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 20px;position:relative;overflow:hidden;box-sizing:border-box}
 .qpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
 .qhead{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;margin-bottom:14px}
@@ -170,8 +257,9 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;white-space:n
   html,body{margin:0!important;padding:0!important;background:#fff!important}
   body>*:not(#printArea){display:none!important}
   #printArea{display:block!important;margin:0;padding:0}
-  #printArea .qpage{width:210mm;min-height:297mm;padding:10mm}
-  #printArea .cpage{width:210mm;min-height:297mm;padding:10mm}
+  #printArea .quote-pair{display:block}
+  #printArea .qpage{width:210mm;min-height:297mm;padding:10mm;page-break-after:always}
+  #printArea .cpage{width:210mm;min-height:297mm;padding:10mm;page-break-after:always}
 }
 </style>
 </head>
@@ -179,12 +267,12 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;white-space:n
 <header>
 <p class="brand">PROMO ENERGIA</p>
 <h1>Il tuo preventivo</h1>
-<p>Una domanda alla volta. Non ti chiediamo nome, telefono o i dati del negozio.</p>
 </header>
 <main>
 <section id="step" aria-live="polite"></section>
 </main>
-<footer><span>Stima di canone e materia energia. Controlla le condizioni commerciali prima di scegliere.</span><span class="credit">Created by Maria Beatriz Ragucci Polato</span></footer>
+<footer><span>Stima di canone e materia energia. Controlla le condizioni commerciali prima di scegliere.</span></footer>
+<!-- Created by Maria Beatriz Ragucci Polato -->
 <div id="printArea"></div>
 <script type="application/json" id="promo-catalog">
 {
@@ -450,9 +538,16 @@ function buildQuoteHtml(q){
     ${footerHtml()}
   </div>`;
 }
-let PROMO_CATALOG=null,LIGHT_PROMOS=[],GAS_PROMOS=[];
+let PROMO_CATALOG=null,LIGHT_PROMOS=[],GAS_PROMOS=[],COMMODITY_OFFERS=null;
 let currentQuote=null,fastwebOn=false,stepIndex=0;
-const answers={services:null,fastweb:null,meterPower:null,residency:null,lightKwh:"",lightSpend:"",gasSmc:"",gasSpend:"",lightPromo:null,gasPromo:null};
+const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+function blankAnswers(){
+  return {services:null,lightFamily:null,gasFamily:null,fastweb:null,segment:null,meterPower:null,residency:null,lightKwh:"",lightSpend:"",gasSmc:"",gasSpend:"",lightPromo:null,gasPromo:null,lightBi:null,gasBi:null,lightFixed:"",lightQuota:"",lightQty:"",gasFixed:"",gasQuota:"",gasQty:"",lightMonth:null,gasMonth:null,lightIndex:"",gasIndex:"",fxLightOffer:null,fxGasOffer:null};
+}
+function familyOf(service){return service==="light"?answers.lightFamily:answers.gasFamily}
+function anyFx(){return (wants("light")&&answers.lightFamily==="fx")||(wants("gas")&&answers.gasFamily==="fx")}
+function anyFlat(){return (wants("light")&&answers.lightFamily==="flat")||(wants("gas")&&answers.gasFamily==="flat")}
+let answers=blankAnswers();
 function flatIsFw(){return fastwebOn}
 function $(id){return document.getElementById(id)}
 function wants(service){return answers.services===service||answers.services==="both"}
@@ -465,15 +560,138 @@ function parseNum(raw){
   const n=Number(s);
   return Number.isFinite(n)?n:NaN;
 }
+function commodityFromCatalog(list){return (list||[]).map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
 function applyCatalog(cat){
   PROMO_CATALOG=cat;
   LIGHT_PROMOS=cat.flat.light.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
   GAS_PROMOS=cat.flat.gas.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+  const c=cat.commodity||{};
+  COMMODITY_OFFERS={
+    light:{private:commodityFromCatalog(c.light&&c.light.private),piva:commodityFromCatalog(c.light&&c.light.piva)},
+    gas:{private:commodityFromCatalog(c.gas&&c.gas.private),piva:commodityFromCatalog(c.gas&&c.gas.piva)}
+  };
+}
+function offersFor(service){
+  const seg=answers.segment==="piva"?"piva":"private";
+  return (COMMODITY_OFFERS&&COMMODITY_OFFERS[service]&&COMMODITY_OFFERS[service][seg])||[];
+}
+function serviceHasFlex(service){return offersFor(service).some(o=>o.kind==="flex")}
+function fxFind(id){
+  if(!COMMODITY_OFFERS||!id)return null;
+  for(const svc of ["light","gas"]) for(const seg of ["private","piva"]){
+    const o=COMMODITY_OFFERS[svc][seg].find(x=>x.id===id);
+    if(o)return o;
+  }
+  return null;
+}
+function fxCommAfter(offer,isFw){
+  const disc=(isFw&&Number(offer.discountMonth)>0)?Number(offer.discountMonth)*12:0;
+  return Math.max(0,Number(offer.comm)-disc);
+}
+function fxEnergyTitle(service){return service==="light"?"Componente Energia":"Corrispettivo al consumo"}
+function fxEnergyText(offer,indexUsed){
+  if(offer.kind==="fix")return unitPrice(offer.energy,offer.unit);
+  const idxName=offer.index==="PUN"?"PUN Index GME":"PSV";
+  const spreadTxt=unitPrice(offer.spread,offer.unit);
+  if(indexUsed==null)return idxName+" + "+spreadTxt;
+  return idxName+" "+unitPrice(indexUsed,offer.unit)+" + "+spreadTxt;
+}
+function calcCommodityService(service,offer,isFw,compare){
+  const commList=Number(offer.comm);
+  const comm=fxCommAfter(offer,isFw);
+  const monthly=comm/12;
+  const discountApplied=(isFw&&Number(offer.discountMonth)>0)?Number(offer.discountMonth):0;
+  const out={service,unit:offer.unit,point:offer.point,offer,commList,comm,monthly,discountApplied,indexUsed:null,spread:offer.kind==="flex"?Number(offer.spread):null,unitPrice:offer.kind==="fix"?Number(offer.energy):null,compare:null};
+  if(compare){
+    if(offer.kind==="flex"){out.indexUsed=Number(compare.indexValue);out.unitPrice=out.indexUsed+Number(offer.spread)}
+    const currentEnergy=Number(compare.consumptionQuota);
+    const newEnergy=compare.consumption*out.unitPrice;
+    const bi=!!compare.bimonthly;
+    const currentTotal=(bi?compare.fixedNow*2:compare.fixedNow)+currentEnergy;
+    const newTotal=(bi?monthly*2:monthly)+newEnergy;
+    out.compare={fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,bimonthly:bi,currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,saving:bi?(currentTotal-newTotal)/2:currentTotal-newTotal};
+  }
+  return out;
+}
+function fxCommHtml(s){
+  const o=s.offer;
+  const after=`${num(s.comm)} €/${o.point}/anno`;
+  if(!s.discountApplied)return `<b>${after}</b>`;
+  return `<b class="ccomm"><span class="cstrikethrough">${num(s.commList)} €/${o.point}/anno</span><span>${after}</span></b>`;
+}
+function fxCompareVisible(s){return !!(s&&s.compare&&Number(s.compare.saving)>=0)}
+function fxCompareCard(s){
+  const d=s&&s.compare; if(!fxCompareVisible(s))return "";
+  const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
+  const idx=s.service==="light"?"PUN":"PSV";
+  const qty=`${num(d.consumption)} ${s.unit}`;
+  const bi=!!d.bimonthly;
+  const flex=s.offer.kind==="flex";
+  const energyBit=flex?`${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`:`${qty} × ${unitPrice(d.newUnit,s.unit)}`;
+  const originMeta=bi?"":`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
+  const newMeta=bi?"":`Fisso ${money(d.newFixed)} + ${energyBit}`;
+  return `<div class="ccmp"><h4>Paragone${month?" · "+month:""}${bi?" · bimensile":""}</h4><div class="ccmpgrid"><div class="ccmpbox"><div class="lbl">Contratto attuale</div>${originMeta?`<div class="meta">${originMeta}</div>`:""}<div class="val">${money(d.currentTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div><div class="ccmpbox new"><div class="lbl">Con noi</div>${newMeta?`<div class="meta">${newMeta}</div>`:""}<div class="val">${money(d.newTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div></div><div class="ccmpbox save"><div class="lbl">Risparmio</div><div class="val">${money(Math.abs(d.saving))}<span class="u">al mese</span></div></div></div>`;
+}
+function fxServiceCard(q,key,title,withCompare){
+  const s=q.sections[key]; if(!s)return "";
+  const o=s.offer;
+  let disc="";
+  if(s.discountApplied) disc=`<div class="cdisc"><b>−${num(s.discountApplied)} €/mese</b><span>sul corrispettivo di commercializzazione per i clienti Fastweb o Vodafone</span></div>`;
+  const inner=`<h3>${escapeHtml(o.name)}</h3>${disc}<div class="crow"><span>${fxEnergyTitle(key)}</span><b>${fxEnergyText(o,s.compare?s.indexUsed:null)}</b></div><div class="crow"><span>Corrispettivo di commercializzazione</span>${fxCommHtml(s)}</div><div class="crow"><span>Durata condizioni</span><b>${o.months} mesi</b></div>${promoExpiryLabel(o.expires)?`<div class="crow"><span>Scadenza promo</span><b>${escapeHtml(promoExpiryLabel(o.expires))}</b></div>`:""}<div class="crow"><span>Bolletta digitale</span><b>Inclusa</b></div>`;
+  if(withCompare==="inner")return inner;
+  const showCompare=withCompare!==false&&fxCompareVisible(s);
+  return `<article class="ccard">${inner}${showCompare?fxCompareCard(s):""}</article>`;
+}
+function fxPageKindLabel(q){
+  const kinds=[...new Set(Object.values(q.sections).map(s=>s.offer.kind))];
+  if(kinds.length===1)return kinds[0]==="fix"?"FIX":"FLEX";
+  return "FIX E FLEX";
+}
+function alignCommodityPair(root){
+  if(!root)return;
+  const tops=[...root.querySelectorAll(".cpair .ccard-top")];
+  if(tops.length<2)return;
+  tops.forEach(t=>{t.style.minHeight=""});
+  const max=Math.max(...tops.map(t=>t.offsetHeight));
+  if(max>0)tops.forEach(t=>{t.style.minHeight=max+"px"});
+}
+function buildCommodityHtml(q){
+  const offerLabel=fxPageKindLabel(q);
+  const date=(q.customer?.date||"").split("-").reverse().join("/")||dateLabel(new Date().toISOString().slice(0,10));
+  const keys=[["light","Luce"],["gas","Gas"]].filter(([k])=>q.sections[k]);
+  const dual=keys.length===2&&keys.every(([k])=>fxCompareVisible(q.sections[k]));
+  const hasCmp=keys.some(([k])=>fxCompareVisible(q.sections[k]));
+  const cards=dual
+    ?`<div class="cpair">${keys.map(([k,title])=>`<article class="ccard ccard-top">${fxServiceCard(q,k,title,"inner")}</article>`).join("")}${keys.map(([k])=>`<article class="ccard ccard-bot">${fxCompareCard(q.sections[k])}</article>`).join("")}</div>`
+    :`<div class="ccards ${keys.length===1?"one":""}">${keys.map(([k,title])=>fxServiceCard(q,k,title,true)).join("")}</div>`;
+  return `<div class="cpage${hasCmp?" has-cmp":""}"><div class="chead"><div class="ctitle">PROMO ${offerLabel}</div><div class="cmeta">Data: <b>${escapeHtml(date)}</b></div></div><div class="cflags"><span class="cflag">${q.isPiva?"Cliente con P.IVA":"Cliente privato"}</span></div>${cards}<div class="cnote"><p>Stima della sola materia prima e del corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p></div></div>`;
 }
 function steps(){
-  const s=["services","fastweb"];
-  if(wants("light"))s.push("power","residency","lightKwh","lightSpend","lightPromo");
-  if(wants("gas"))s.push("gasSmc","gasSpend","gasPromo");
+  const s=["services"];
+  if(wants("light"))s.push("lightFamily");
+  if(wants("gas"))s.push("gasFamily");
+  if((wants("light")&&!answers.lightFamily)||(wants("gas")&&!answers.gasFamily))return s;
+  s.push("fastweb");
+  if(anyFx()){
+    s.push("segment");
+    if(!answers.segment)return s;
+  }
+  if(wants("light")){
+    if(answers.lightFamily==="flat")s.push("power","residency","lightKwh","lightSpend","lightPromo");
+    else{
+      s.push("lightBi","lightFixed","lightQuota","lightQty");
+      if(serviceHasFlex("light"))s.push("lightMonth","lightIndex");
+      s.push("fxLightPromo");
+    }
+  }
+  if(wants("gas")){
+    if(answers.gasFamily==="flat")s.push("gasSmc","gasSpend","gasPromo");
+    else{
+      s.push("gasBi","gasFixed","gasQuota","gasQty");
+      if(serviceHasFlex("gas"))s.push("gasMonth","gasIndex");
+      s.push("fxGasPromo");
+    }
+  }
   s.push("result");
   return s;
 }
@@ -490,273 +708,267 @@ function evaluated(type){
     return {...r,promo:p,displayMonthly:promoMonthly(p,!!answers.fastweb)};
   });
 }
-function bestName(rows){
-  let best=null;
-  for(const r of rows){if(r.eligible&&r.saving>0.005&&(!best||r.saving>best.saving))best=r}
-  return best?best.promo.name:"";
-}
 function sectionOf(type){
   const rows=evaluated(type);
   const name=type==="light"?answers.lightPromo:answers.gasPromo;
-  const x=rows.find(r=>r.promo.name===name);
+  const x=rows.find(r=>r.promo.name===name)||rows[0];
   const positive=!!(x&&x.saving>0.005);
-  return {
-    unit:type==="light"?"kWh":"Smc",
-    compare:positive,
-    consumption:parseNum(type==="light"?answers.lightKwh:answers.gasSmc),
-    currentSpend:parseNum(type==="light"?answers.lightSpend:answers.gasSpend),
-    selectedPromo:x.promo,
-    calculations:{delta:x.delta,refund:x.refund,bonus:x.bonus,excessCost:x.excessCost,annualCost:x.annualCost,saving:x.saving,extraMonthly:x.extraMonthly||0,displayMonthly:x.displayMonthly}
-  };
+  return {unit:type==="light"?"kWh":"Smc",compare:positive,consumption:parseNum(type==="light"?answers.lightKwh:answers.gasSmc),currentSpend:parseNum(type==="light"?answers.lightSpend:answers.gasSpend),selectedPromo:x.promo,calculations:{delta:x.delta,refund:x.refund,bonus:x.bonus,excessCost:x.excessCost,annualCost:x.annualCost,saving:x.saving,extraMonthly:x.extraMonthly||0,displayMonthly:x.displayMonthly}};
 }
-function buildQuote(){
-  fastwebOn=!!answers.fastweb;
-  const today=new Date();
-  const iso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+function todayIso(){const t=new Date();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`}
+function fxCompareInput(service,offer){
+  const light=service==="light";
+  return {fixedNow:parseNum(answers[light?"lightFixed":"gasFixed"]),consumptionQuota:parseNum(answers[light?"lightQuota":"gasQuota"]),consumption:parseNum(answers[light?"lightQty":"gasQty"]),indexValue:offer.kind==="flex"?parseNum(answers[light?"lightIndex":"gasIndex"]):null,refMonth:offer.kind==="flex"?Number(answers[light?"lightMonth":"gasMonth"]):null,bimonthly:!!answers[light?"lightBi":"gasBi"]};
+}
+function flatSections(){
   const sections={};
-  if(wants("light"))sections.light=sectionOf("light");
-  if(wants("gas"))sections.gas=sectionOf("gas");
-  const flags=Object.values(sections).map(s=>!!s.compare);
-  currentQuote={
-    customer:{date:iso,name:"",phone:"",email:"",address:""},
-    shop:{},
-    lightOptions:{meterPower:Number(answers.meterPower||3),residency:answers.residency||"resident"},
-    isFastweb:!!answers.fastweb,
-    compare:flags.length&&flags.every(Boolean)?true:flags.some(Boolean)?"mixed":false,
-    sections
-  };
-  return currentQuote;
+  if(wants("light")&&answers.lightFamily==="flat")sections.light=sectionOf("light");
+  if(wants("gas")&&answers.gasFamily==="flat")sections.gas=sectionOf("gas");
+  return sections;
 }
-function outcomeNote(q){
-  const bits=[];
-  for(const [key,ok,no] of [["light","Per la luce il preventivo mette a confronto la tua spesa con la nostra.","Per la luce non risulta un risparmio: vedi la promo, senza confronto."],["gas","Per il gas il preventivo mette a confronto la tua spesa con la nostra.","Per il gas non risulta un risparmio: vedi la promo, senza confronto."]]){
-    const sec=q.sections[key]; if(!sec)continue;
-    bits.push(sec.compare?ok:no);
+function fxSections(){
+  const sections={};
+  if(wants("light")&&answers.lightFamily==="fx"){
+    const offer=fxFind(answers.fxLightOffer)||offersFor("light")[0];
+    if(offer)sections.light=calcCommodityService("light",offer,!!answers.fastweb,fxCompareInput("light",offer));
   }
+  if(wants("gas")&&answers.gasFamily==="fx"){
+    const offer=fxFind(answers.fxGasOffer)||offersFor("gas")[0];
+    if(offer)sections.gas=calcCommodityService("gas",offer,!!answers.fastweb,fxCompareInput("gas",offer));
+  }
+  return sections;
+}
+function buildSheets(){
+  fastwebOn=!!answers.fastweb;
+  const parts=[];
+  const flat=flatSections();
+  if(Object.keys(flat).length){
+    const flags=Object.values(flat).map(s=>!!s.compare);
+    const q={customer:{date:todayIso(),name:"",phone:"",email:"",address:""},shop:{},lightOptions:{meterPower:Number(answers.meterPower||3),residency:answers.residency||"resident"},isFastweb:!!answers.fastweb,compare:flags.length&&flags.every(Boolean)?true:flags.some(Boolean)?"mixed":false,sections:flat};
+    currentQuote=q;
+    parts.push(buildQuoteHtml(q));
+  }
+  const fx=fxSections();
+  if(Object.keys(fx).length){
+    const q={kind:"commodity",isPiva:answers.segment==="piva",isFastweb:!!answers.fastweb,customer:{date:todayIso()},shop:{},sections:fx};
+    currentQuote=q;
+    parts.push(buildCommodityHtml(q));
+  }
+  return parts.join("");
+}
+function outcomeNote(){
+  const bits=[];
+  const flat=flatSections(), fx=fxSections();
+  if(flat.light&&flat.light.compare)bits.push("Per la luce il preventivo mette a confronto la tua spesa con la nostra.");
+  if(fx.light&&fxCompareVisible(fx.light))bits.push("Per la luce il preventivo mette a confronto la bolletta con la nostra.");
+  if(flat.gas&&flat.gas.compare)bits.push("Per il gas il preventivo mette a confronto la tua spesa con la nostra.");
+  if(fx.gas&&fxCompareVisible(fx.gas))bits.push("Per il gas il preventivo mette a confronto la bolletta con la nostra.");
   return bits.join(" ");
 }
-function choiceButtons(items,current,onPick){
+function choiceButtons(items,current){
   return `<div class="choices">${items.map(it=>`<button type="button" class="choice ${current===it.value?"selected":""}" data-value="${escapeHtml(String(it.value))}"><strong>${escapeHtml(it.title)}</strong>${it.text?`<span>${escapeHtml(it.text)}</span>`:""}</button>`).join("")}</div>`;
 }
 function bindChoices(onPick){
   document.querySelectorAll("#step .choice").forEach(btn=>btn.addEventListener("click",()=>onPick(btn.getAttribute("data-value"))));
 }
+function backOnly(){return stepIndex>0?`<div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button></div>`:""}
+function goBack(){
+  if(stepIndex<=0)return;
+  stepIndex-=1;
+  render();
+}
+function bindBack(){const b=$("backBtn");if(b)b.addEventListener("click",goBack)}
 function numberField(id,value,placeholder){
   return `<input id="${id}" aria-label="${escapeHtml(placeholder)}" inputmode="decimal" autocomplete="off" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}">`;
 }
 function navHtml(nextLabel){
   return `<div class="nav">${stepIndex>0?`<button type="button" class="secondary" id="backBtn">Indietro</button>`:""}<button type="button" id="nextBtn">${escapeHtml(nextLabel||"Continua")}</button></div><p class="err" id="err" role="alert"></p>`;
 }
+function afterAdvance(){render()}
 function bindNav(validate){
-  const back=$("backBtn"); if(back)back.addEventListener("click",()=>{stepIndex=Math.max(0,stepIndex-1);render()});
+  bindBack();
   $("nextBtn").addEventListener("click",()=>{
     const msg=validate();
     if(msg){$("err").textContent=msg;return}
-    stepIndex+=1;render();
+    stepIndex+=1;afterAdvance();
   });
-  const field=document.querySelector("#step input");
+  const field=document.querySelector("#step input, #step select");
   if(field){
     field.focus();
     field.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();$("nextBtn").click()}});
   }
 }
-function advance(assign){
-  assign();
-  stepIndex+=1;
-  render();
+function advance(assign){assign();stepIndex+=1;afterAdvance()}
+function choiceView(title,hint,items,current,assign){
+  return {title,hint,body:choiceButtons(items,current)+backOnly(),mount(){bindChoices(v=>advance(()=>assign(v)));bindBack()}};
 }
+function numView(title,hint,key,placeholder,check){
+  return {title,hint,body:numberField("field",answers[key],placeholder)+navHtml(),mount(){bindNav(()=>{
+    const n=parseNum($("field").value);
+    const msg=check(n,$("field").value);
+    if(msg)return msg;
+    answers[key]=String($("field").value).trim();
+    return "";
+  })}};
+}
+function indexDefault(service){
+  const key=service==="light"?"pun":"psv";
+  const fallback=service==="light"?0.207542:0.843182;
+  const n=Number(PROMO_CATALOG.indices?.[key]??fallback);
+  return String(n).replace(".",",");
+}
+function defaultMonth(){return (new Date().getMonth()+11)%12}
 function promoCards(type){
   const rows=evaluated(type);
   const unit=type==="light"?"kWh":"Smc";
   const selected=type==="light"?answers.lightPromo:answers.gasPromo;
-  const best=bestName(rows);
   const extra=type==="light"?lightExtra():0;
   const head=`<p class="context">Consumo ${num(parseNum(type==="light"?answers.lightKwh:answers.gasSmc))} ${unit} · spesa attuale ${money(parseNum(type==="light"?answers.lightSpend:answers.gasSpend))} all'anno${extra?` · extra ${money(extra)} al mese, già nel costo annuo`:""}.</p>`;
   const cards=rows.map(r=>{
     const save=r.saving>0.005;
-    const badges=[r.eligible?`<span class="badge">In linea col tuo consumo</span>`:"",r.promo.name===best?`<span class="badge best">Risparmio più alto</span>`:""].filter(Boolean).join("");
+    const badge=r.eligible?`<span class="badge">In linea con i tuoi consumi</span>`:"";
     const conv=answers.fastweb&&Number(r.promo.convergence)>0?`<small>Canone ${money(r.promo.monthly)} − sconto ${money(r.promo.convergence)}</small>`:"";
-    return `<button type="button" class="pcard ${r.eligible?"in-range":""} ${selected===r.promo.name?"selected":""}" data-promo="${escapeHtml(r.promo.name)}">
-      <div class="prow"><b class="pname">${escapeHtml(r.promo.name)}</b>${badges}</div>
-      <div class="pmeta">Plafond ${num(r.promo.plafond)} ${unit} · scostamento ${num(r.deviation*100)}%</div>
-      <div class="pmeta">Canone ${money(r.displayMonthly)} al mese</div>
-      ${conv}
-      <div class="pmeta">Costo annuo stimato ${money(r.annualCost)}</div>
-      <div class="${save?"psave":"pnosave"}">${save?`Risparmio ${money(r.saving)} all'anno`:"Nessun risparmio: in stampa solo l'offerta"}</div>
-    </button>`;
+    return `<button type="button" class="pcard ${r.eligible?"in-range":""} ${selected===r.promo.name?"selected":""}" data-promo="${escapeHtml(r.promo.name)}"><div class="prow"><b class="pname">${escapeHtml(r.promo.name)}</b>${badge}</div><div class="pmeta">Plafond ${num(r.promo.plafond)} ${unit} · scostamento ${num(r.deviation*100)}%</div><div class="pmeta">Canone ${money(r.displayMonthly)} al mese</div>${conv}<div class="pmeta">Costo annuo stimato ${money(r.annualCost)}</div>${save?`<div class="psave">Risparmio ${money(r.saving)} all'anno</div>`:""}</button>`;
   }).join("");
   return head+`<div class="promo-grid">${cards}</div>`;
 }
 function bindPromos(type){
   document.querySelectorAll("#step .pcard").forEach(btn=>btn.addEventListener("click",()=>{
     const name=btn.getAttribute("data-promo");
-    if(type==="light")answers.lightPromo=name; else answers.gasPromo=name;
+    if(type==="light")answers.lightPromo=name;else answers.gasPromo=name;
     render();
   }));
 }
+function fxCards(service){
+  const selected=service==="light"?answers.fxLightOffer:answers.fxGasOffer;
+  const cards=offersFor(service).map(offer=>{
+    const calc=calcCommodityService(service,offer,!!answers.fastweb,fxCompareInput(service,offer));
+    const save=fxCompareVisible(calc);
+    const te=offer.id==="luce-fix-te"&&answers.fastweb?`<small>Questa offerta non ha lo sconto Fastweb o Vodafone.</small>`:"";
+    return `<button type="button" class="pcard ${selected===offer.id?"selected":""}" data-offer="${escapeHtml(offer.id)}"><b class="pname">${escapeHtml(offer.name)}</b><div class="pmeta">${fxEnergyTitle(service)}: ${fxEnergyText(offer,calc.indexUsed)}</div><div class="pmeta">Fisso ${money(calc.monthly)} al mese</div>${te}${save?`<div class="psave">Risparmio ${money(calc.compare.saving)} al mese</div>`:""}</button>`;
+  }).join("");
+  return `<div class="promo-grid">${cards}</div>`;
+}
+function bindFx(service){
+  document.querySelectorAll("#step .pcard").forEach(btn=>btn.addEventListener("click",()=>{
+    const id=btn.getAttribute("data-offer");
+    if(service==="light")answers.fxLightOffer=id;else answers.fxGasOffer=id;
+    render();
+  }));
+}
+function familyChoices(){
+  return [{value:"flat",title:"Flat",text:"Preferisci la certezza della spesa fissa?"},{value:"fx",title:"Fix e Flex",text:"Preferisci pagare quanto consumi?"}];
+}
 const VIEWS={
-  services(){
-    return {
-      kicker:"Inizio",
-      title:"Cosa vuoi mettere a confronto?",
-      hint:"Scegli la luce, il gas oppure tutti e due. Poi ti chiediamo i dati della bolletta, una domanda alla volta.",
-      body:choiceButtons([
-        {value:"light",title:"Luce",text:"Solo energia elettrica"},
-        {value:"gas",title:"Gas",text:"Solo gas"},
-        {value:"both",title:"Luce e gas",text:"Le due forniture insieme"}
-      ],answers.services),
-      mount(){bindChoices(v=>advance(()=>{answers.services=v}))}
-    };
-  },
-  fastweb(){
-    return {
-      title:"Sei già cliente Fastweb o Vodafone?",
-      hint:"Se sì, il canone della promo scende di 10 € al mese.",
-      body:choiceButtons([
-        {value:"yes",title:"Sì",text:"Ho già Fastweb o Vodafone"},
-        {value:"no",title:"No",text:"Canone intero, senza sconto"}
-      ],answers.fastweb===true?"yes":answers.fastweb===false?"no":null),
-      mount(){bindChoices(v=>advance(()=>{answers.fastweb=v==="yes"}))}
-    };
-  },
-  power(){
-    return {
-      title:"Che potenza ha il contatore della luce?",
-      hint:"Oltre 3 kW il costo annuo della luce sale. Il canone in stampa resta quello della promo.",
-      body:choiceButtons([
-        {value:"3",title:"3 kW",text:"Nessun extra"},
-        {value:"4.5",title:"4,5 kW",text:"+5 € al mese"},
-        {value:"6",title:"6 kW",text:"+10 € al mese"}
-      ],answers.meterPower==null?null:String(answers.meterPower)),
-      mount(){bindChoices(v=>advance(()=>{answers.meterPower=Number(v)}))}
-    };
-  },
-  residency(){
-    return {
-      title:"La fornitura luce è la tua residenza?",
-      hint:"Per una seconda casa si aggiungono 12 € al mese nel costo annuo.",
-      body:choiceButtons([
-        {value:"resident",title:"Sì, è la residenza",text:"Nessun extra"},
-        {value:"nonresident",title:"No, non è la residenza",text:"+12 € al mese"}
-      ],answers.residency),
-      mount(){bindChoices(v=>advance(()=>{answers.residency=v}))}
-    };
-  },
-  lightKwh(){
-    return {
-      title:"Quanti kWh di luce consumi in un anno?",
-      hint:"Usa il consumo annuo della bolletta.",
-      body:numberField("field",answers.lightKwh,"Es. 1500")+navHtml(),
-      mount(){bindNav(()=>{
-        const n=parseNum($("field").value);
-        if(!Number.isFinite(n)||n<=0)return "Inserisci un consumo annuo maggiore di zero.";
-        answers.lightKwh=String($("field").value).trim();
-        return "";
-      })}
-    };
-  },
-  lightSpend(){
-    return {
-      title:"Quanto spendi di luce in un anno?",
-      hint:"La spesa annua della bolletta luce, in euro.",
-      body:numberField("field",answers.lightSpend,"Es. 950")+navHtml(),
-      mount(){bindNav(()=>{
-        const n=parseNum($("field").value);
-        if(!Number.isFinite(n)||n<0)return "Inserisci una spesa annua uguale o maggiore di zero.";
-        answers.lightSpend=String($("field").value).trim();
-        return "";
-      })}
-    };
-  },
-  gasSmc(){
-    return {
-      title:"Quanti Smc di gas consumi in un anno?",
-      hint:"Usa il consumo annuo della bolletta gas.",
-      body:numberField("field",answers.gasSmc,"Es. 600")+navHtml(),
-      mount(){bindNav(()=>{
-        const n=parseNum($("field").value);
-        if(!Number.isFinite(n)||n<=0)return "Inserisci un consumo annuo maggiore di zero.";
-        answers.gasSmc=String($("field").value).trim();
-        return "";
-      })}
-    };
-  },
-  gasSpend(){
-    return {
-      title:"Quanto spendi di gas in un anno?",
-      hint:"La spesa annua della bolletta gas, in euro.",
-      body:numberField("field",answers.gasSpend,"Es. 800")+navHtml(),
-      mount(){bindNav(()=>{
-        const n=parseNum($("field").value);
-        if(!Number.isFinite(n)||n<0)return "Inserisci una spesa annua uguale o maggiore di zero.";
-        answers.gasSpend=String($("field").value).trim();
-        return "";
-      })}
-    };
-  },
+  services(){return {kicker:"Inizio",...choiceView("Cosa vuoi mettere a confronto?","Scegli la luce, il gas oppure tutti e due.",[{value:"light",title:"Luce",text:"Solo energia elettrica"},{value:"gas",title:"Gas",text:"Solo gas"},{value:"both",title:"Luce e gas",text:"Le due forniture insieme"}],answers.services,v=>{answers.services=v})}},
+  lightFamily(){return choiceView("Per la luce, che tipo di offerta preferisci?",wants("gas")?"La scelta della luce è indipendente dal gas.":"",familyChoices(),answers.lightFamily,v=>{answers.lightFamily=v})},
+  gasFamily(){return choiceView("Per il gas, che tipo di offerta preferisci?",wants("light")?"La scelta del gas è indipendente dalla luce.":"",familyChoices(),answers.gasFamily,v=>{answers.gasFamily=v})},
+  fastweb(){return choiceView("Sei già cliente Fastweb o Vodafone?",anyFlat()&&anyFx()?"Sulla Flat il canone scende di 10 € al mese. Su Fix e Flex lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":anyFx()?"Se sì, lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":"Se sì, il canone della promo scende di 10 € al mese.",[{value:"yes",title:"Sì",text:"Ho già Fastweb o Vodafone"},{value:"no",title:"No",text:"Senza sconto"}],answers.fastweb===true?"yes":answers.fastweb===false?"no":null,v=>{answers.fastweb=v==="yes"})},
+  segment(){return choiceView("La fornitura è per un privato o per una partita IVA?","Le offerte Fix e Flex cambiano.",[{value:"private",title:"Privato",text:"Utenza domestica"},{value:"piva",title:"Partita IVA",text:"Utenza business"}],answers.segment,v=>{answers.segment=v})},
+  power(){return choiceView("Che potenza ha il contatore della luce?","Oltre 3 kW il costo annuo della luce sale. Il canone in stampa resta quello della promo.",[{value:"3",title:"3 kW",text:"Nessun extra"},{value:"4.5",title:"4,5 kW",text:"+5 € al mese"},{value:"6",title:"6 kW",text:"+10 € al mese"}],answers.meterPower==null?null:String(answers.meterPower),v=>{answers.meterPower=Number(v)})},
+  residency(){return choiceView("La fornitura luce è la tua residenza?","Per una seconda casa si aggiungono 12 € al mese nel costo annuo.",[{value:"resident",title:"Sì, è la residenza",text:"Nessun extra"},{value:"nonresident",title:"No, non è la residenza",text:"+12 € al mese"}],answers.residency,v=>{answers.residency=v})},
+  lightKwh(){return numView("Quanti kWh di luce consumi in un anno?","Usa il consumo annuo della bolletta.","lightKwh","Es. 1500",n=>!Number.isFinite(n)||n<=0?"Inserisci un consumo annuo maggiore di zero.":"")},
+  lightSpend(){return numView("Quanto spendi di luce in un anno?","La spesa annua della bolletta luce, in euro.","lightSpend","Es. 950",n=>!Number.isFinite(n)||n<0?"Inserisci una spesa annua uguale o maggiore di zero.":"")},
+  gasSmc(){return numView("Quanti Smc di gas consumi in un anno?","Usa il consumo annuo della bolletta gas.","gasSmc","Es. 600",n=>!Number.isFinite(n)||n<=0?"Inserisci un consumo annuo maggiore di zero.":"")},
+  gasSpend(){return numView("Quanto spendi di gas in un anno?","La spesa annua della bolletta gas, in euro.","gasSpend","Es. 800",n=>!Number.isFinite(n)||n<0?"Inserisci una spesa annua uguale o maggiore di zero.":"")},
+  lightBi(){return choiceView("La bolletta della luce è di due mesi?","Se sì, la quota fissa è quella di un mese. I consumi e i kWh sono quelli di tutta la bolletta.",[{value:"yes",title:"Sì",text:"Fattura bimensile"},{value:"no",title:"No",text:"Bolletta di un mese"}],answers.lightBi===true?"yes":answers.lightBi===false?"no":null,v=>{answers.lightBi=v==="yes"})},
+  gasBi(){return choiceView("La bolletta del gas è di due mesi?","Se sì, la quota fissa è quella di un mese. I consumi e gli Smc sono quelli di tutta la bolletta.",[{value:"yes",title:"Sì",text:"Fattura bimensile"},{value:"no",title:"No",text:"Bolletta di un mese"}],answers.gasBi===true?"yes":answers.gasBi===false?"no":null,v=>{answers.gasBi=v==="yes"})},
+  lightFixed(){return numView("Quota fissa della luce, in euro al mese","È l’importo fisso di un mese, non il prezzo al kWh.","lightFixed","Es. 13",n=>!Number.isFinite(n)||n<0?"Inserisci la quota fissa, zero o più.":"")},
+  lightQuota(){return numView("Quota consumi della luce, in euro","Il totale pagato per tutti i kWh della bolletta. Il PUN è già dentro questo importo.","lightQuota","Es. 36",n=>!Number.isFinite(n)||n<0?"Inserisci la quota consumi, zero o più.":"")},
+  lightQty(){return numView("Quanti kWh ci sono in quella bolletta?","Servono per calcolare il costo con noi.","lightQty","Es. 220",n=>!Number.isFinite(n)||n<=0?"Inserisci una quantità maggiore di zero.":"")},
+  gasFixed(){return numView("Quota fissa del gas, in euro al mese","È l’importo fisso di un mese.","gasFixed","Es. 12",n=>!Number.isFinite(n)||n<0?"Inserisci la quota fissa, zero o più.":"")},
+  gasQuota(){return numView("Quota consumi del gas, in euro","Il totale pagato per tutti gli Smc della bolletta. Il PSV è già dentro questo importo.","gasQuota","Es. 72",n=>!Number.isFinite(n)||n<0?"Inserisci la quota consumi, zero o più.":"")},
+  gasQty(){return numView("Quanti Smc ci sono in quella bolletta?","Servono per calcolare il costo con noi.","gasQty","Es. 80",n=>!Number.isFinite(n)||n<=0?"Inserisci una quantità maggiore di zero.":"")},
+  lightMonth(){return monthView("light")},
+  gasMonth(){return monthView("gas")},
+  lightIndex(){return indexView("light")},
+  gasIndex(){return indexView("gas")},
   lightPromo(){
-    return {
-      title:"Quale promo luce preferisci?",
-      hint:"In verde le promo entro il 30% dal tuo consumo. Puoi scegliere anche le altre.",
-      body:promoCards("light")+navHtml("Continua"),
-      mount(){
-        bindPromos("light");
-        bindNav(()=>answers.lightPromo?"":"Scegli una promo luce.");
-      }
-    };
+    return {title:"Quale promo luce preferisci?",hint:"In verde le promo entro il 30% dal tuo consumo. Puoi scegliere anche le altre.",body:promoCards("light")+navHtml("Continua"),mount(){bindPromos("light");bindNav(()=>answers.lightPromo?"":"Scegli una promo luce.")}};
   },
   gasPromo(){
-    return {
-      title:"Quale promo gas preferisci?",
-      hint:"In verde le promo entro il 30% dal tuo consumo. Puoi scegliere anche le altre.",
-      body:promoCards("gas")+navHtml("Continua"),
-      mount(){
-        bindPromos("gas");
-        bindNav(()=>answers.gasPromo?"":"Scegli una promo gas.");
-      }
-    };
+    return {title:"Quale promo gas preferisci?",hint:"In verde le promo entro il 30% dal tuo consumo. Puoi scegliere anche le altre.",body:promoCards("gas")+navHtml("Continua"),mount(){bindPromos("gas");bindNav(()=>answers.gasPromo?"":"Scegli una promo gas.")}};
+  },
+  fxLightPromo(){
+    return {title:"Quale offerta luce preferisci?",hint:"Confronta le offerte e scegline una.",body:fxCards("light")+navHtml("Continua"),mount(){bindFx("light");bindNav(()=>answers.fxLightOffer?"":"Scegli un'offerta luce.")}};
+  },
+  fxGasPromo(){
+    return {title:"Quale offerta gas preferisci?",hint:"Confronta le offerte e scegline una.",body:fxCards("gas")+navHtml("Continua"),mount(){bindFx("gas");bindNav(()=>answers.fxGasOffer?"":"Scegli un'offerta gas.")}};
   },
   result(){
-    const q=buildQuote();
-    const html=buildQuoteHtml(q);
-    return {
-      title:"Il tuo preventivo",
-      hint:outcomeNote(q),
-      body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame">${html}</div></div>
-        <div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button></div>
-        <p class="err" id="err" role="alert"></p>
-        <p class="restart"><button type="button" class="link" id="restartBtn">Ricomincia</button></p>`,
-      mount(){
-        $("printArea").innerHTML=html;
-        $("backBtn").addEventListener("click",()=>{stepIndex=Math.max(0,stepIndex-1);render()});
-        $("restartBtn").addEventListener("click",restart);
-        $("pdfBtn").addEventListener("click",()=>openPdf($("pdfBtn")));
-      }
-    };
+    const html=buildSheets();
+    const hint=outcomeNote();
+    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button></div><p class="err" id="err" role="alert"></p><p class="restart"><button type="button" class="link" id="restartBtn">Ricomincia</button></p>`,mount(){
+      $("printArea").innerHTML=`<div class="quote-pair">${html}</div>`;
+      bindBack();
+      $("restartBtn").addEventListener("click",restart);
+      $("pdfBtn").addEventListener("click",()=>openPdf($("pdfBtn")));
+      $("quoteSlot").querySelectorAll(".cpage").forEach(alignCommodityPair);
+      bindFit();
+    }};
   }
 };
+function monthView(service){
+  const key=service==="light"?"lightMonth":"gasMonth";
+  if(answers[key]==null)answers[key]=defaultMonth();
+  const label=service==="light"?"PUN":"PSV";
+  return {title:`Mese di riferimento del ${label}`,hint:"È il mese della bolletta con cui confrontiamo l’offerta.",body:`<select id="field" aria-label="Mese">${MONTHS_IT.map((m,i)=>`<option value="${i}"${Number(answers[key])===i?" selected":""}>${m}</option>`).join("")}</select>`+navHtml(),mount(){bindNav(()=>{answers[key]=Number($("field").value);return ""})}};
+}
+function indexView(service){
+  const key=service==="light"?"lightIndex":"gasIndex";
+  if(!answers[key])answers[key]=indexDefault(service);
+  const label=service==="light"?"PUN":"PSV";
+  const unit=service==="light"?"kWh":"Smc";
+  return {title:`${label} del mese, in euro per ${unit}`,hint:"Puoi aggiornarlo. Il valore di partenza è quello di settembre.",body:numberField("field",answers[key],service==="light"?"Es. 0,207542":"Es. 0,843182")+`<a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a>`+navHtml(),mount(){bindNav(()=>{
+    const n=parseNum($("field").value);
+    if(!Number.isFinite(n)||n<0)return `Inserisci il ${label}, zero o più.`;
+    answers[key]=String($("field").value).trim();
+    return "";
+  })}};
+}
 function render(){
   const list=steps();
   if(stepIndex<0)stepIndex=0;
   if(stepIndex>=list.length)stepIndex=list.length-1;
   const id=list[stepIndex];
   const view=VIEWS[id]();
+  document.body.classList.toggle("fit-result",id==="result");
   const known=!!answers.services;
-  const bar=`<div class="progress" aria-hidden="true"><span style="width:${known?Math.round((stepIndex+1)/list.length*100):12}%"></span></div><p class="stepcount">${known?`Passo ${stepIndex+1} di ${list.length}`:"Passo 1"}</p>`;
+  const bar=`<div class="progress" aria-hidden="true"><span style="width:${known?Math.round((stepIndex+1)/list.length*100):12}%"></span></div><p class="stepcount">${known?`Passo ${stepIndex+1} di ${list.length}`:"Passo "+(stepIndex+1)}</p>`;
   const same=render.lastId===id;
   render.lastId=id;
-  $("step").innerHTML=`${bar}${view.kicker?`<p class="kicker">${escapeHtml(view.kicker)}</p>`:""}<h2 tabindex="-1">${escapeHtml(view.title)}</h2><p class="hint">${escapeHtml(view.hint||"")}</p>${view.body}`;
+  $("step").innerHTML=`${bar}${view.kicker?`<p class="kicker">${escapeHtml(view.kicker)}</p>`:""}<h2 tabindex="-1">${escapeHtml(view.title)}</h2>${view.hint?`<p class="hint">${escapeHtml(view.hint)}</p>`:""}${view.body}`;
   view.mount();
-  if(same){const sel=document.querySelector("#step .pcard.selected"); if(sel)sel.focus()}
-  else {const h=$("step").querySelector("h2"); if(h)h.focus()}
+  if(!same){const h=$("step").querySelector("h2"); if(h&&id!=="result")h.focus()}
 }
 function restart(){
-  stepIndex=0;
-  currentQuote=null;
-  for(const k of Object.keys(answers))answers[k]=typeof answers[k]==="string"?"":null;
-  $("printArea").innerHTML="";
-  render.lastId="";
-  render();
+  stepIndex=0; currentQuote=null; answers=blankAnswers();
+  $("printArea").innerHTML=""; render.lastId=""; document.body.classList.remove("fit-result"); render();
+}
+function fitQuote(){
+  const frame=$("quoteFrame"), slot=$("quoteSlot");
+  const pair=slot&&slot.querySelector(".quote-pair");
+  if(!frame||!pair)return;
+  pair.style.transform="none";
+  pair.style.position="static";
+  pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
+  const pw=pair.offsetWidth, ph=pair.offsetHeight;
+  const fw=frame.clientWidth, fh=frame.clientHeight;
+  if(!pw||!ph||!fw||!fh)return;
+  const scale=Math.min(fw/pw, fh/ph);
+  pair.style.transform=`scale(${scale})`;
+  pair.style.transformOrigin="top left";
+  pair.style.position="absolute";
+  pair.style.left="0";
+  pair.style.top="0";
+  slot.style.width=(pw*scale)+"px";
+  slot.style.height=(ph*scale)+"px";
+}
+function bindFit(){
+  if(window.__fitQuote)window.removeEventListener("resize",window.__fitQuote);
+  window.__fitQuote=()=>{if(document.body.classList.contains("fit-result"))fitQuote()};
+  window.addEventListener("resize",window.__fitQuote);
+  requestAnimationFrame(()=>requestAnimationFrame(fitQuote));
 }
 function downloadPdfBlob(canvas){
   const W=canvas.width,H=canvas.height;
@@ -779,25 +991,28 @@ function downloadPdfBlob(canvas){
   return new Blob(chunks,{type:"application/pdf"});
 }
 async function openPdf(btn){
-  const node=$("quoteFrame")&&$("quoteFrame").querySelector(".qpage");
-  if(!node){$("err").textContent="Il preventivo non è pronto.";return}
+  const pair=document.querySelector("#quoteSlot .quote-pair");
+  if(!pair||!pair.querySelector(".qpage,.cpage")){$("err").textContent="Il preventivo non è pronto.";return}
   const prev=btn.textContent; btn.disabled=true; btn.textContent="Preparazione del PDF…";
+  const host=document.createElement("div");
+  host.style.cssText="position:absolute;left:-16000px;top:0";
+  const clone=pair.cloneNode(true);
+  clone.style.transform="none"; clone.style.position="static"; clone.style.display="flex"; clone.style.flexDirection="column"; clone.style.gap="0"; clone.style.width="860px";
+  clone.querySelectorAll(".qpage,.cpage").forEach(p=>{p.style.transform="none";p.style.position="static"});
+  host.appendChild(clone); document.body.appendChild(host);
   try{
-    const canvas=await html2canvas(node,{scale:2,backgroundColor:"#FFD000",useCORS:true,logging:false});
+    clone.querySelectorAll(".cpage").forEach(alignCommodityPair);
+    const canvas=await html2canvas(clone,{scale:2,backgroundColor:"#FFD000",useCORS:true,logging:false});
     const blob=downloadPdfBlob(canvas);
     const href=URL.createObjectURL(blob);
     const opened=window.open(href,"_blank");
-    if(!opened){
-      const a=document.createElement("a");
-      a.href=href; a.download="Preventivo_Promo_Energia.pdf";
-      document.body.appendChild(a); a.click(); a.remove();
-    }
+    if(!opened){const a=document.createElement("a"); a.href=href; a.download="Preventivo_Promo_Energia.pdf"; document.body.appendChild(a); a.click(); a.remove()}
     setTimeout(()=>URL.revokeObjectURL(href),60000);
   }catch(e){
     $("err").textContent="Non riesco ad aprire il PDF. Uso la stampa del browser.";
     window.print();
   }finally{
-    btn.disabled=false; btn.textContent=prev;
+    host.remove(); btn.disabled=false; btn.textContent=prev;
   }
 }
 function buildQuoteHtml(q){
@@ -815,13 +1030,7 @@ function buildQuoteHtml(q){
   }else{
     offers=offerHtml(layout==="light"?"light":"gas",layout==="light"?sections.light:sections.gas,q,true);
   }
-  return `<div class="qpage ${layout==="dual"?"":"is-single"}" data-layout="${layout}">
-    <div class="qhead"><div class="qtitle">PROMO ENERGIA</div><div class="qmeta">Data: <b>${escapeHtml(date)}</b></div></div>
-    <div class="qoffers">${offers}</div>
-    ${bottomStats}
-    ${calcNotesHtml(q)}
-    ${footerHtml()}
-  </div>`;
+  return `<div class="qpage ${layout==="dual"?"":"is-single"}" data-layout="${layout}"><div class="qhead"><div class="qtitle">PROMO ENERGIA</div><div class="qmeta">Data: <b>${escapeHtml(date)}</b></div></div><div class="qoffers">${offers}</div>${bottomStats}${calcNotesHtml(q)}${footerHtml()}</div>`;
 }
 async function boot(){
   applyCatalog(JSON.parse($("promo-catalog").textContent));
@@ -832,9 +1041,12 @@ async function boot(){
     clearTimeout(timer);
     if(res.ok){
       const text=await res.text();
-      const m=text.match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
-      if(m){
-        const live=JSON.parse(m[1]);
+      const start='<script type="application/json" id="promo-catalog">';
+      const end="</scr"+"ipt>";
+      const a=text.indexOf(start);
+      const b=a>=0?text.indexOf(end,a+start.length):-1;
+      if(b>a){
+        const live=JSON.parse(text.slice(a+start.length,b));
         if(live&&live.flat&&live.flat.light&&live.flat.gas)applyCatalog(live);
       }
     }
