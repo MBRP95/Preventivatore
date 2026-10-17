@@ -822,15 +822,11 @@ function promoCards(type){
   const rows=evaluated(type);
   const unit=type==="light"?"kWh":"Smc";
   const selected=type==="light"?answers.lightPromo:answers.gasPromo;
-  const extra=type==="light"?lightExtra():0;
-  const head=`<p class="context">Consumo ${num(parseNum(type==="light"?answers.lightKwh:answers.gasSmc))} ${unit} · spesa attuale ${money(parseNum(type==="light"?answers.lightSpend:answers.gasSpend))} all'anno${extra?` · extra ${money(extra)} al mese, già nel costo annuo`:""}.</p>`;
   const cards=rows.map(r=>{
-    const save=r.saving>0.005;
     const badge=r.eligible?`<span class="badge">In linea con i tuoi consumi</span>`:"";
-    const conv=answers.fastweb&&Number(r.promo.convergence)>0?`<small>Canone ${money(r.promo.monthly)} − sconto ${money(r.promo.convergence)}</small>`:"";
-    return `<button type="button" class="pcard ${r.eligible?"in-range":""} ${selected===r.promo.name?"selected":""}" data-promo="${escapeHtml(r.promo.name)}"><div class="prow"><b class="pname">${escapeHtml(r.promo.name)}</b>${badge}</div><div class="pmeta">Plafond ${num(r.promo.plafond)} ${unit} · scostamento ${num(r.deviation*100)}%</div><div class="pmeta">Canone ${money(r.displayMonthly)} al mese</div>${conv}<div class="pmeta">Costo annuo stimato ${money(r.annualCost)}</div>${save?`<div class="psave">Risparmio ${money(r.saving)} all'anno</div>`:""}</button>`;
+    return `<button type="button" class="pcard ${r.eligible?"in-range":""} ${selected===r.promo.name?"selected":""}" data-promo="${escapeHtml(r.promo.name)}"><div class="prow"><b class="pname">${escapeHtml(r.promo.name)}</b>${badge}</div><div class="pmeta">Plafond ${num(r.promo.plafond)} ${unit}</div><div class="pmeta">Canone ${money(r.displayMonthly)} al mese</div><div class="pmeta">Spesa annua stimata ${money(r.annualCost)}</div></button>`;
   }).join("");
-  return head+`<div class="promo-grid">${cards}</div>`;
+  return `<div class="promo-grid">${cards}</div>`;
 }
 function bindPromos(type){
   document.querySelectorAll("#step .pcard").forEach(btn=>btn.addEventListener("click",()=>{
@@ -861,8 +857,8 @@ function familyChoices(){
 }
 const VIEWS={
   services(){return {kicker:"Inizio",...choiceView("Cosa vuoi mettere a confronto?","Scegli la luce, il gas oppure tutti e due.",[{value:"light",title:"Luce",text:"Solo energia elettrica"},{value:"gas",title:"Gas",text:"Solo gas"},{value:"both",title:"Luce e gas",text:"Le due forniture insieme"}],answers.services,v=>{answers.services=v})}},
-  lightFamily(){return choiceView("Per la luce, che tipo di offerta preferisci?",wants("gas")?"La scelta della luce è indipendente dal gas.":"",familyChoices(),answers.lightFamily,v=>{answers.lightFamily=v})},
-  gasFamily(){return choiceView("Per il gas, che tipo di offerta preferisci?",wants("light")?"La scelta del gas è indipendente dalla luce.":"",familyChoices(),answers.gasFamily,v=>{answers.gasFamily=v})},
+  lightFamily(){return choiceView("Per la luce, che tipo di offerta preferisci?","",familyChoices(),answers.lightFamily,v=>{answers.lightFamily=v})},
+  gasFamily(){return choiceView("Per il gas, che tipo di offerta preferisci?","",familyChoices(),answers.gasFamily,v=>{answers.gasFamily=v})},
   fastweb(){return choiceView("Sei già cliente Fastweb o Vodafone?",anyFlat()&&anyFx()?"Sulla Flat il canone scende di 10 € al mese. Su Fix e Flex lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":anyFx()?"Se sì, lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":"Se sì, il canone della promo scende di 10 € al mese.",[{value:"yes",title:"Sì",text:"Ho già Fastweb o Vodafone"},{value:"no",title:"No",text:"Senza sconto"}],answers.fastweb===true?"yes":answers.fastweb===false?"no":null,v=>{answers.fastweb=v==="yes"})},
   segment(){return choiceView("La fornitura è per un privato o per una partita IVA?","Le offerte Fix e Flex cambiano.",[{value:"private",title:"Privato",text:"Utenza domestica"},{value:"piva",title:"Partita IVA",text:"Utenza business"}],answers.segment,v=>{answers.segment=v})},
   power(){return choiceView("Che potenza ha il contatore della luce?","Oltre 3 kW il costo annuo della luce sale. Il canone in stampa resta quello della promo.",[{value:"3",title:"3 kW",text:"Nessun extra"},{value:"4.5",title:"4,5 kW",text:"+5 € al mese"},{value:"6",title:"6 kW",text:"+10 € al mese"}],answers.meterPower==null?null:String(answers.meterPower),v=>{answers.meterPower=Number(v)})},
