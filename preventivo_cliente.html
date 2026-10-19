@@ -85,10 +85,15 @@ body.fit-flyers #step{flex:1;width:100%;min-height:0;margin:0;padding:0;border:0
 .flyer-slot{position:relative;flex:none}
 .flyer-page{position:absolute;left:0;top:0}
 .flyer-page img{display:block;width:100%;height:100%}
-.flyer-cta{position:absolute;z-index:2;border:3px solid #111;background:#111;color:#FFD000;font:900 24px/1.15 Arial,Helvetica,sans-serif;border-radius:14px;padding:12px 16px;cursor:pointer;white-space:nowrap;box-shadow:0 4px 0 #00000040}
-.flyer-page.pos-gap .flyer-cta{top:3.4%;right:24.2%}
-.flyer-page.pos-corner .flyer-cta{top:4.2%;right:2.2%}
-.flyer-cta:focus{outline:3px solid #111;outline-offset:3px}
+.flyer-cta{position:absolute;z-index:3;border:4px solid #111;background:#111;color:#FFD000;font:900 28px/1 Arial,Helvetica,sans-serif;letter-spacing:-.3px;border-radius:999px;padding:14px 16px 14px 20px;cursor:pointer;white-space:nowrap;box-shadow:0 0 0 5px #fff,0 0 0 9px #111;animation:flyer-cta-pulse 1.25s ease-in-out infinite}
+.flyer-cta span{display:inline-block;margin-left:8px;font-size:1.08em}
+.flyer-page.pos-gap .flyer-cta{top:3%;right:23.6%}
+.flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
+.flyer-cta:hover{background:#000}
+.flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
+.flyer-cta:active{transform:scale(.98)}
+@keyframes flyer-cta-pulse{0%,100%{box-shadow:0 0 0 4px #fff,0 0 0 8px #111}50%{box-shadow:0 0 0 9px #fff,0 0 0 14px #111}}
+@media (prefers-reduced-motion:reduce){.flyer-cta{animation:none}}
 .flyer-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:5;width:56px;height:56px;border-radius:50%;border:2px solid #111;background:#fff;color:#111;font:900 34px/1 Arial,Helvetica,sans-serif;cursor:pointer}
 .flyer-arrow.left{left:12px}
 .flyer-arrow.right{right:12px}
@@ -709,7 +714,7 @@ function renderFlyers(){
   if(flyerIndex>=pages.length)flyerIndex=pages.length-1;
   const pos=flyerIndex===0?"pos-gap":"pos-corner";
   const n=pages.length;
-  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">Calcola il preventivo per te!</button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
+  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">Calcola il preventivo per te!<span aria-hidden="true">→</span></button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
   const img=$("flyerImg");
   img.onload=()=>fitFlyer();
   img.src=pages[flyerIndex];
