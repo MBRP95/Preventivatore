@@ -709,7 +709,7 @@ function renderFlyers(){
   if(flyerIndex>=pages.length)flyerIndex=pages.length-1;
   const pos=flyerIndex===0?"pos-gap":"pos-corner";
   const n=pages.length;
-  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">Calcola preventivo per te!</button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
+  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">Calcola il preventivo per te!</button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
   const img=$("flyerImg");
   img.onload=()=>fitFlyer();
   img.src=pages[flyerIndex];

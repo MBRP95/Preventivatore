@@ -206,7 +206,7 @@ function flyerPanel(){
   if(fileKind!=="cliente")return "";
   const pages=currentFlyers();
   const thumbs=pages.length?pages.map((src,i)=>`<img alt="Volantino ${i+1}" src="${src}">`).join(""):`<p class="hint">Nessun volantino in questo file.</p>`;
-  return `<section class="panel"><h2>Volantini</h2><p class="hint">Sono la prima schermata del preventivo sul tablet. Il pulsante «Calcola preventivo per te!» viene aggiunto in alto a destra di ogni pagina. Carica un PDF quando le promo cambiano.</p><div class="thumbs">${thumbs}</div><div class="actions" style="margin-top:12px"><label class="file">Carica PDF volantini<input id="flyerFile" type="file" accept="application/pdf,.pdf"></label></div><p id="flyerStatus" class="hint">${flyerPages?`Nuovo PDF pronto: ${flyerPages.length} pagine. Scarica l’HTML per applicarlo.`:"Il PDF attuale è quello già presente nel file."}</p></section>`;
+  return `<section class="panel"><h2>Volantini</h2><p class="hint">Sono la prima schermata del preventivo sul tablet. Il pulsante «Calcola il preventivo per te!» viene aggiunto in alto a destra di ogni pagina. Carica un PDF quando le promo cambiano.</p><div class="thumbs">${thumbs}</div><div class="actions" style="margin-top:12px"><label class="file">Carica PDF volantini<input id="flyerFile" type="file" accept="application/pdf,.pdf"></label></div><p id="flyerStatus" class="hint">${flyerPages?`Nuovo PDF pronto: ${flyerPages.length} pagine. Scarica l’HTML per applicarlo.`:"Il PDF attuale è quello già presente nel file."}</p></section>`;
 }
 function bindFlyerInput(){
   const input=$("flyerFile");
