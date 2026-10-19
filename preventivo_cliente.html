@@ -99,6 +99,10 @@ body.fit-flyers #step{flex:1;width:100%;min-height:0;margin:0;padding:0;border:0
 .flyer-arrow.left{left:12px}
 .flyer-arrow.right{right:12px}
 .flyer-arrow[hidden]{display:none}
+.fs-btn{position:fixed;z-index:30;top:10px;right:12px;border:2px solid #111;background:#FFD000;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 3px 0 #00000040}
+.fs-btn.on{background:#111;color:#FFD000}
+.fs-note{position:fixed;z-index:30;left:16px;right:16px;bottom:64px;margin:0 auto;max-width:560px;background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
+body.fit-flyers .fs-btn{top:auto;right:auto;left:50%;bottom:14px;transform:translateX(-50%)}
 @media (orientation:landscape) and (max-height:900px){
   header{padding:10px 16px 4px}
   header h1{font-size:26px}
@@ -290,6 +294,8 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <p class="brand">PROMO ENERGIA</p>
 <h1>Il tuo preventivo</h1>
 </header>
+<button type="button" id="fsBtn" class="fs-btn" aria-pressed="false">Schermo intero</button>
+<p id="fsNote" class="fs-note" hidden></p>
 <main>
 <section id="step" aria-live="polite"></section>
 </main>
@@ -1103,8 +1109,51 @@ function buildQuoteHtml(q){
   }
   return `<div class="qpage ${layout==="dual"?"":"is-single"}" data-layout="${layout}"><div class="qhead"><div class="qtitle">PROMO ENERGIA</div><div class="qmeta">Data: <b>${escapeHtml(date)}</b></div></div><div class="qoffers">${offers}</div>${bottomStats}${calcNotesHtml(q)}${footerHtml()}</div>`;
 }
+function fsElement(){return document.fullscreenElement||document.webkitFullscreenElement||null}
+function syncFsBtn(){
+  const btn=$("fsBtn");
+  if(!btn)return;
+  const on=!!fsElement();
+  btn.classList.toggle("on",on);
+  btn.textContent=on?"Esci":"Schermo intero";
+  btn.setAttribute("aria-pressed",on?"true":"false");
+}
+function enterFullscreen(){
+  const el=document.documentElement;
+  if(el.requestFullscreen)return el.requestFullscreen({navigationUI:"hide"});
+  if(el.webkitRequestFullscreen){el.webkitRequestFullscreen();return Promise.resolve()}
+  return Promise.reject(new Error("unsupported"));
+}
+function exitFullscreen(){
+  if(document.exitFullscreen)return document.exitFullscreen();
+  if(document.webkitExitFullscreen){document.webkitExitFullscreen();return Promise.resolve()}
+  return Promise.reject(new Error("unsupported"));
+}
+function bindFullscreen(){
+  const btn=$("fsBtn");
+  if(!btn)return;
+  btn.addEventListener("click",async()=>{
+    const note=$("fsNote");
+    if(note){note.hidden=true;note.textContent=""}
+    try{
+      if(fsElement())await exitFullscreen();
+      else await enterFullscreen();
+    }catch(e){
+      if(note){
+        note.hidden=false;
+        note.textContent="Edge non è entrato a schermo intero. Tocca di nuovo il pulsante. Se la barra degli indirizzi resta, scorri la pagina verso l’alto per nasconderla.";
+      }
+    }
+    syncFsBtn();
+  });
+  const onChange=()=>{syncFsBtn();if(window.__fitFlyer)window.__fitFlyer();if(window.__fitQuote)window.__fitQuote()};
+  document.addEventListener("fullscreenchange",onChange);
+  document.addEventListener("webkitfullscreenchange",onChange);
+  syncFsBtn();
+}
 function boot(){
   applyCatalog(JSON.parse($("promo-catalog").textContent));
+  bindFullscreen();
   render();
 }
 boot();
