@@ -90,6 +90,8 @@ body.fit-flyers #step{flex:1;width:100%;min-height:0;margin:0;padding:0;border:0
 .flyer-page.pos-gap .flyer-cta{top:3.6%;right:24.8%;font-size:24px;padding:12px 14px 12px 16px;letter-spacing:-.4px}
 .flyer-page.pos-gap .flyer-cta span{margin-left:6px}
 .flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
+.flyer-cta.pos-custom{right:auto;display:flex;align-items:center;justify-content:center;padding:0 3%;overflow:hidden;animation:none;box-shadow:0 0 0 3px #fff,0 0 0 6px #111}
+.flyer-cta.pos-custom span{margin-left:.3em;font-size:1em}
 .flyer-cta:hover{background:#000}
 .flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
 .flyer-cta:active{transform:scale(.98)}
@@ -700,6 +702,28 @@ let flyerIndex=0;
 function flyerSources(){
   try{const data=JSON.parse($("flyer-pages").textContent);return Array.isArray(data)?data:[]}catch(e){return []}
 }
+function flyerButtonArea(index){
+  try{
+    const el=$("flyer-buttons");
+    if(!el)return null;
+    const data=JSON.parse(el.textContent);
+    const area=Array.isArray(data)?data[index]:null;
+    if(!area)return null;
+    const x=Number(area.x),y=Number(area.y),w=Number(area.w),h=Number(area.h);
+    if(![x,y,w,h].every(n=>Number.isFinite(n)&&n>=0&&n<=1)||w<0.02||h<0.015)return null;
+    return {x,y,w,h};
+  }catch(e){return null}
+}
+function fitFlyerLabel(btn){
+  if(!btn||!btn.clientWidth||!btn.clientHeight)return;
+  let size=Math.max(10,Math.floor(btn.clientHeight*0.46));
+  btn.style.fontSize=size+"px";
+  for(let i=0;i<18&&size>8;i++){
+    if(btn.scrollWidth<=btn.clientWidth+1&&btn.scrollHeight<=btn.clientHeight+1)break;
+    size=Math.max(8,Math.floor(size*0.88));
+    btn.style.fontSize=size+"px";
+  }
+}
 function fitFlyer(){
   const frame=$("flyerFit"), slot=$("flyerSlot"), page=$("flyerPage"), img=$("flyerImg");
   if(!frame||!slot||!page||!img||!img.naturalWidth)return;
@@ -714,15 +738,27 @@ function fitFlyer(){
   page.style.transformOrigin="top left";
   slot.style.width=(pw*scale)+"px";
   slot.style.height=(ph*scale)+"px";
+  const cta=$("flyerCta");
+  if(cta&&cta.classList.contains("pos-custom"))fitFlyerLabel(cta);
 }
 function renderFlyers(){
   const pages=flyerSources();
   if(!pages.length){stepIndex=Math.max(stepIndex,1);render();return}
   if(flyerIndex<0)flyerIndex=0;
   if(flyerIndex>=pages.length)flyerIndex=pages.length-1;
-  const pos=flyerIndex===0?"pos-gap":"pos-corner";
+  const area=flyerButtonArea(flyerIndex);
+  const pos=area?"pos-custom":(flyerIndex===0?"pos-gap":"pos-corner");
   const n=pages.length;
   $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">Calcola il preventivo per te!<span aria-hidden="true">→</span></button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
+  const btn=$("flyerCta");
+  if(area){
+    btn.classList.add("pos-custom");
+    btn.style.left=(area.x*100)+"%";
+    btn.style.top=(area.y*100)+"%";
+    btn.style.width=(area.w*100)+"%";
+    btn.style.height=(area.h*100)+"%";
+    btn.style.right="auto";
+  }
   const img=$("flyerImg");
   img.onload=()=>fitFlyer();
   img.src=pages[flyerIndex];
