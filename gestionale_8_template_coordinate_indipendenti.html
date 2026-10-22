@@ -90,7 +90,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 .cpage.has-cmp .cpair .ccard-top{padding:12px 14px 8px;border-bottom:none;border-radius:16px 16px 0 0}
 .cpage.has-cmp .cpair .ccard-bot{padding:0 14px 14px;border-top:none;border-radius:0 0 16px 16px}
 .cpair .ccmp{margin-top:6px}
-a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#0b57d0;text-decoration:underline}
+.idx-read{margin:8px 0 0;font-weight:800}
 .ccards.one .ccmpbox.save{text-align:center;width:280px;max-width:72%;margin-left:auto;margin-right:auto}
 @media(max-width:700px){.ccmpgrid{grid-template-columns:1fr}}
 #printArea{display:none}
@@ -257,7 +257,7 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label><input id="fxFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label>
 </div>
 <p class="note" id="fxNoCompareHint">Senza paragone, per quel servizio, si stampa solo l'offerta scelta (componente energia, corrispettivo, durata).</p>
-<p class="note hidden" id="fxCompareHint">La spesa attuale è quota fissa + quota consumi: in quel totale il PUN o il PSV è già incluso. La quantità serve a calcolare la spesa con noi. Il mese di riferimento e il PUN o il PSV si chiedono solo se la nuova offerta è Flex.</p>
+<p class="note hidden" id="fxCompareHint">La spesa attuale è quota fissa + quota consumi: in quel totale il PUN o il PSV è già incluso. La quantità serve a calcolare la spesa con noi. Se la nuova offerta è Flex, il mese si sceglie dall'elenco e l'indice si carica da solo.</p>
 <div id="fxLightBox">
 <h3>Luce</h3>
 <label>Offerta luce<select id="fxLightOffer"></select></label>
@@ -271,9 +271,12 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label>Quota consumi totale (€)<input id="fxLightEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 36"></label>
 <label>Quantità (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
 </div>
-<div id="fxLightFlexRef" class="grid hidden" style="margin-top:10px">
+<div id="fxLightFlexRef" class="hidden" style="margin-top:10px">
+<div class="grid">
 <label>Mese di riferimento<select id="fxLightRefMonth"></select></label>
-<label>PUN del mese (€/kWh)<input id="fxLightPun" type="number" min="0" step="any" placeholder="Es. 0,207542"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
+<label id="fxLightSecondWrap" class="hidden">Secondo mese consecutivo<select id="fxLightRefMonth2"></select></label>
+</div>
+<p class="note idx-read" id="fxLightIndexRead"></p>
 </div>
 <p class="note" id="fxLightOriginNote"></p>
 </div>
@@ -290,9 +293,12 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <label>Quota consumi totale (€)<input id="fxGasEnergyNow" type="number" min="0" step="0.01" placeholder="Es. 72"></label>
 <label>Quantità (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
 </div>
-<div id="fxGasFlexRef" class="grid hidden" style="margin-top:10px">
+<div id="fxGasFlexRef" class="hidden" style="margin-top:10px">
+<div class="grid">
 <label>Mese di riferimento<select id="fxGasRefMonth"></select></label>
-<label>PSV del mese (€/Smc)<input id="fxGasPsv" type="number" min="0" step="any" placeholder="Es. 0,843182"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
+<label id="fxGasSecondWrap" class="hidden">Secondo mese consecutivo<select id="fxGasRefMonth2"></select></label>
+</div>
+<p class="note idx-read" id="fxGasIndexRead"></p>
 </div>
 <p class="note" id="fxGasOriginNote"></p>
 </div>
@@ -315,10 +321,6 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 </section>
 <section class="panel">
 <h2>Listini Fix e Flex</h2>
-<div class="grid">
-<label>PUN di default (€/kWh)<input id="fxPunDefault" type="number" min="0" step="any"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
-<label>PSV di default (€/Smc)<input id="fxPsvDefault" type="number" min="0" step="any"><a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a></label>
-</div>
 <div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Contributo fisso annuo</th><th>Contributo fisso mensile</th><th>Sconto convergenza</th><th>Durata</th><th>Scadenza</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
 </section>
 </div>
@@ -348,8 +350,22 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <script type="application/json" id="promo-catalog">
 {
   "indices": {
-    "pun": 0.207542,
-    "psv": 0.843182
+    "pun": 0.208146,
+    "psv": 0.843182,
+    "series": [
+      {"id": "2026-09", "pun": 0.208146, "psv": 0.843182},
+      {"id": "2026-08", "pun": 0.182468, "psv": 0.686448},
+      {"id": "2026-07", "pun": 0.158500, "psv": 0.606612},
+      {"id": "2026-06", "pun": 0.135691, "psv": 0.499366},
+      {"id": "2026-05", "pun": 0.124464, "psv": 0.501752},
+      {"id": "2026-04", "pun": 0.123399, "psv": 0.492325},
+      {"id": "2026-03", "pun": 0.143582, "psv": 0.5997699},
+      {"id": "2026-02", "pun": 0.110572, "psv": 0.376788},
+      {"id": "2026-01", "pun": 0.124858, "psv": 0.403934},
+      {"id": "2025-12", "pun": 0.109359, "psv": 0.327985},
+      {"id": "2025-11", "pun": 0.111583, "psv": 0.348704},
+      {"id": "2025-10", "pun": 0.107552, "psv": 0.353670}
+    ]
   },
   "flat": {
     "light": [
@@ -556,7 +572,7 @@ function quoteAnnual(type,sec,q){return monthlyOf(sec)*12+consumptionAdj(sec).co
 function quoteSaving(type,sec,q){return currentOf(sec)-quoteAnnual(type,sec,q)}
 function hasSaving(type,sec,q){return quoteSaving(type,sec,q)>0.005}
 function annualOf(sec){return Number(sec?.calculations?.annualCost||0)}
-function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:6}).format(n)+" €/"+unit}
+function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)+" €/"+unit}
 function calcNoteLine(type,sec){
   const p=sec?.selectedPromo; if(!p||!sec)return "";
   const unit=type==="light"?"kWh":"Smc";
@@ -797,6 +813,7 @@ function openCommodityQuote(q){
   $("fxLightCompareOn").checked=!!q.sections?.light?.compare;
   $("fxGasCompareOn").checked=!!q.sections?.gas?.compare;
   fxFillOfferSelects();
+  const restoreMonths=[];
   for(const [key,prefix,qtyId] of [["light","fxLight","fxLightMonthKwh"],["gas","fxGas","fxGasMonthSmc"]]){
     const s=q.sections?.[key]; if(!s)continue;
     const offerSel=$(prefix+"Offer");
@@ -808,16 +825,26 @@ function openCommodityQuote(q){
     $(qtyId).value=c.consumption;
     const bi=$(prefix+"Bimonthly");
     if(bi)bi.checked=!!c.bimonthly;
-    if(c.indexValue!=null){
-      const idx=$(key==="light"?"fxLightPun":"fxGasPsv");
-      if(idx)idx.value=c.indexValue;
+    const ids=Array.isArray(c.refMonths)?c.refMonths.slice():[];
+    if(!ids.length && typeof c.refMonth==="string" && /[A-Za-zÀ-ù]/.test(c.refMonth)){
+      for(const part of c.refMonth.split(" e ")){
+        const month=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth");
+        const opt=month&&[...month.options].find(o=>monthTitle(o.value)===part);
+        if(opt)ids.push(opt.value);
+      }
     }
-    if(c.refMonth!=null){
+    if(ids[0]){
       const month=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth");
-      if(month)month.value=String(c.refMonth);
+      if(month)month.value=String(ids[0]);
+      restoreMonths.push([key, ids[1]?String(ids[1]):""]);
     }
   }
   fxToggleBoxes();
+  for(const [key,id2] of restoreMonths){
+    const sel=$(key==="light"?"fxLightRefMonth2":"fxGasRefMonth2");
+    if(sel&&id2&&[...sel.options].some(o=>o.value===id2))sel.value=id2;
+  }
+  fxPaintIndexRead();
   currentCommodityQuote=JSON.parse(JSON.stringify(q));
   delete currentCommodityQuote._filename;
   renderCommodityResult(currentCommodityQuote);
@@ -859,7 +886,58 @@ function importBackupFile(file){const reader=new FileReader();reader.onload=asyn
 
 let currentCommodityQuote=null;
 const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
-const COMMODITY_INDEX={pun:Number(PROMO_CATALOG.indices?.pun??0.207542),psv:Number(PROMO_CATALOG.indices?.psv??0.843182)};
+const INDEX_SERIES_FALLBACK=[
+  {id:"2026-09",pun:0.208146,psv:0.843182},
+  {id:"2026-08",pun:0.182468,psv:0.686448},
+  {id:"2026-07",pun:0.1585,psv:0.606612},
+  {id:"2026-06",pun:0.135691,psv:0.499366},
+  {id:"2026-05",pun:0.124464,psv:0.501752},
+  {id:"2026-04",pun:0.123399,psv:0.492325},
+  {id:"2026-03",pun:0.143582,psv:0.5997699},
+  {id:"2026-02",pun:0.110572,psv:0.376788},
+  {id:"2026-01",pun:0.124858,psv:0.403934},
+  {id:"2025-12",pun:0.109359,psv:0.327985},
+  {id:"2025-11",pun:0.111583,psv:0.348704},
+  {id:"2025-10",pun:0.107552,psv:0.35367}
+];
+function indexSeries(){
+  const raw=PROMO_CATALOG&&PROMO_CATALOG.indices&&PROMO_CATALOG.indices.series;
+  const list=Array.isArray(raw)&&raw.length?raw:INDEX_SERIES_FALLBACK;
+  return list.map(row=>({id:String(row.id||""),pun:Number(row.pun),psv:Number(row.psv)})).filter(r=>/^\d{4}-\d{2}$/.test(r.id)&&Number.isFinite(r.pun)&&r.pun>=0&&Number.isFinite(r.psv)&&r.psv>=0).sort((a,b)=>a.id<b.id?1:-1);
+}
+function indexById(id){return indexSeries().find(r=>r.id===id)||null}
+function monthTitle(id){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const name=MONTHS_IT[Number(m[2])-1]||"";
+  return name?name+" "+m[1]:"";
+}
+function shiftMonthId(id,delta){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function neighborIds(id){
+  const have=new Set(indexSeries().map(r=>r.id));
+  return [shiftMonthId(id,-1),shiftMonthId(id,1)].filter(x=>have.has(x));
+}
+function preferredNeighbor(id,current){
+  const list=neighborIds(id);
+  if(current&&list.includes(current))return current;
+  const prev=shiftMonthId(id,-1);
+  return list.includes(prev)?prev:(list[0]||"");
+}
+function formatIndex(n){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)}
+function monthCaption(ref){
+  if(ref==null||ref==="")return "";
+  if(typeof ref==="number"||/^\d+$/.test(String(ref))){
+    const i=Number(ref);
+    return i>=0&&i<12?MONTHS_IT[i]:"";
+  }
+  return String(ref);
+}
+const COMMODITY_INDEX=(()=>{const row=indexSeries()[0]||{pun:0.208146,psv:0.843182};return {pun:Number(row.pun),psv:Number(row.psv)}})();
 function commodityFromCatalog(list){return list.map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
 const COMMODITY_OFFERS={
   light:{private:commodityFromCatalog(PROMO_CATALOG.commodity.light.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.light.piva)},
@@ -912,14 +990,43 @@ function fxFillOfferSelects(){
   fxToggleBoxes();
 }
 function fxFillMonthSelects(){
-  const now=new Date();
-  const prevM=(now.getMonth()+11)%12;
+  const series=indexSeries();
   for(const id of ["fxLightRefMonth","fxGasRefMonth"]){
     const sel=$(id); if(!sel)continue;
-    if(!sel.options.length){
-      sel.innerHTML=MONTHS_IT.map((m,i)=>`<option value="${i}">${m}</option>`).join("");
-      sel.value=String(prevM);
-    }
+    const prev=sel.value;
+    sel.innerHTML=series.map(r=>`<option value="${r.id}">${monthTitle(r.id)}</option>`).join("");
+    sel.value=series.some(r=>r.id===prev)?prev:(series[0]?series[0].id:"");
+  }
+  fxSyncSecondMonths();
+}
+function fxSyncSecondMonths(){
+  for(const [biId,aId,bId,wrapId] of [["fxLightBimonthly","fxLightRefMonth","fxLightRefMonth2","fxLightSecondWrap"],["fxGasBimonthly","fxGasRefMonth","fxGasRefMonth2","fxGasSecondWrap"]]){
+    const on=!!($(biId)&&$(biId).checked);
+    const wrap=$(wrapId);
+    if(wrap)wrap.classList.toggle("hidden",!on);
+    const first=$(aId), sel=$(bId);
+    if(!first||!sel)continue;
+    const list=neighborIds(first.value);
+    const chosen=preferredNeighbor(first.value,sel.value);
+    sel.innerHTML=list.map(id=>`<option value="${id}">${monthTitle(id)}</option>`).join("");
+    if(chosen)sel.value=chosen;
+  }
+  fxPaintIndexRead();
+}
+function fxPaintIndexRead(){
+  for(const [svc,aId,bId,readId,biId] of [["light","fxLightRefMonth","fxLightRefMonth2","fxLightIndexRead","fxLightBimonthly"],["gas","fxGasRefMonth","fxGasRefMonth2","fxGasIndexRead","fxGasBimonthly"]]){
+    const box=$(readId); if(!box||!$(aId))continue;
+    const label=svc==="light"?"PUN":"PSV";
+    const unit=svc==="light"?"kWh":"Smc";
+    const field=svc==="light"?"pun":"psv";
+    const row=indexById($(aId).value);
+    if(!row){box.textContent="";continue}
+    if($(biId)&&$(biId).checked){
+      const row2=indexById($(bId).value);
+      if(!row2){box.textContent="In elenco non c'è un mese consecutivo.";continue}
+      const avg=(Number(row[field])+Number(row2[field]))/2;
+      box.textContent=`${label} ${monthTitle(row.id)}: ${formatIndex(row[field])} €/${unit}. ${label} ${monthTitle(row2.id)}: ${formatIndex(row2[field])} €/${unit}. Media: ${formatIndex(avg)} €/${unit}.`;
+    }else box.textContent=`${label} di ${monthTitle(row.id)}: ${formatIndex(row[field])} €/${unit}.`;
   }
 }
 function fxIndexNeeded(service){
@@ -935,7 +1042,7 @@ function fxOriginNote(service){
     ?` Con noi: fisso + quantità × (${idx} + spread).`
     :" Con noi: fisso + quantità × prezzo unitario.";
   const bi=$(service==="light"?"fxLightBimonthly":"fxGasBimonthly");
-  const extra=bi&&bi.checked?" Fattura bimensile: costo attuale e costo nostro sul bimestre. Il risparmio è la differenza divisa per due.":"";
+  const extra=bi&&bi.checked?" Fattura bimensile: due mesi consecutivi, con la media di "+idx+". Costo attuale e costo nostro sul bimestre. Il risparmio è la differenza divisa per due.":"";
   return origin+ours+extra;
 }
 function fxToggleBoxes(){
@@ -959,6 +1066,7 @@ function fxToggleBoxes(){
     $("fxGasFlexRef").classList.toggle("hidden",!gasCmp||!fxIndexNeeded("gas"));
     $("fxGasOriginNote").textContent=fxOriginNote("gas");
   }
+  fxSyncSecondMonths();
 }
 function calcCommodityService(service,offer,isFw,compare){
   const commList=Number(offer.comm);
@@ -984,7 +1092,7 @@ function calcCommodityService(service,offer,isFw,compare){
     const newTotal=(bi?monthly*2:monthly)+newEnergy;
     out.compare={
       fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,
-      consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,
+      consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,refMonths:compare.refMonths||null,
       bimonthly:bi,
       currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,
       saving:bi?(currentTotal-newTotal)/2:currentTotal-newTotal
@@ -1019,14 +1127,26 @@ function calculateCommodity(){
       if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci la quota fissa del contratto attuale per "+svcLabel+".");return}
       if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi totale del contratto attuale per "+svcLabel+".");return}
       if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".");return}
-      let indexValue=null, refMonth=null;
+      let indexValue=null, refMonth=null, refMonths=null;
       if(offer.kind==="flex"){
-        const idx=Number($(key==="light"?"fxLightPun":"fxGasPsv").value);
-        if(!Number.isFinite(idx)||idx<0){fxError("Inserisci "+(key==="light"?"il PUN":"il PSV")+" del mese di riferimento.");return}
-        indexValue=idx;
-        refMonth=Number($(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value);
+        const id=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value;
+        const row=indexById(id);
+        const label=key==="light"?"PUN":"PSV";
+        const field=key==="light"?"pun":"psv";
+        if(!row){fxError("Scegli il mese di riferimento del "+label+".");return}
+        const ids=[id];
+        indexValue=Number(row[field]);
+        if($(prefix+"Bimonthly").checked){
+          const id2=$(key==="light"?"fxLightRefMonth2":"fxGasRefMonth2").value;
+          const row2=indexById(id2);
+          if(!row2||!neighborIds(id).includes(id2)){fxError("Per la fattura bimensile scegli due mesi consecutivi.");return}
+          indexValue=(indexValue+Number(row2[field]))/2;
+          ids.push(id2);
+        }
+        refMonths=ids;
+        refMonth=ids.map(monthTitle).join(" e ");
       }
-      compare={fixedNow,consumptionQuota:unitNow,consumption:cons,indexValue,refMonth,bimonthly:!!$(prefix+"Bimonthly").checked};
+      compare={fixedNow,consumptionQuota:unitNow,consumption:cons,indexValue,refMonth,refMonths,bimonthly:!!$(prefix+"Bimonthly").checked};
     }
     sections[key]=calcCommodityService(key,offer,isFw,compare);
   }
@@ -1082,7 +1202,7 @@ function fxCommHtml(s){
 function fxCompareVisible(s){return !!(s&&s.compare&&Number(s.compare.saving)>=0)}
 function fxCompareCard(s){
   const d=s&&s.compare; if(!fxCompareVisible(s))return "";
-  const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
+  const month=monthCaption(d.refMonth);
   const save=true;
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
@@ -1202,10 +1322,6 @@ function renderCommodityRateTables(){
     }
   }
   $("fxOfferTable").innerHTML=html;
-  $("fxPunDefault").value=COMMODITY_INDEX.pun;
-  $("fxPsvDefault").value=COMMODITY_INDEX.psv;
-  $("fxLightPun").value=COMMODITY_INDEX.pun;
-  $("fxGasPsv").value=COMMODITY_INDEX.psv;
 }
 
 $("chooseFolder").addEventListener("click",chooseFolder);$("folderPickerFallback").addEventListener("change",async e=>{const files=[...(e.target.files||[])];e.target.value="";try{await importFirefoxFolder(files)}catch(err){$("folderStatus").textContent="Lettura cartella non riuscita: "+(err&&err.message?err.message:err)}});$("loadArchive").addEventListener("click",loadArchive);$("calculate").addEventListener("click",calculate);$("clear").addEventListener("click",clearForm);$("saveQuote").addEventListener("click",saveQuote);$("makePdf").addEventListener("click",makePdf);$("showHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});$("showTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});$("exportBackup").addEventListener("click",exportBackup);$("importBackup").addEventListener("click",()=>$("backupFile").click());$("backupFile").addEventListener("change",e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=""});
@@ -1231,14 +1347,10 @@ $("fxPdf").addEventListener("click",makeCommodityPdf);
 $("fxSave").addEventListener("click",saveCommodityQuote);
 $("fxHistory").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.add("hidden");loadArchive()});
 $("fxTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});
-$("fxPunDefault").addEventListener("change",()=>{
-  const n=Number($("fxPunDefault").value);
-  if(Number.isFinite(n)&&n>=0){COMMODITY_INDEX.pun=n;$("fxLightPun").value=n;}
-});
-$("fxPsvDefault").addEventListener("change",()=>{
-  const n=Number($("fxPsvDefault").value);
-  if(Number.isFinite(n)&&n>=0){COMMODITY_INDEX.psv=n;$("fxGasPsv").value=n;}
-});
+$("fxLightRefMonth").addEventListener("change",fxSyncSecondMonths);
+$("fxGasRefMonth").addEventListener("change",fxSyncSecondMonths);
+$("fxLightRefMonth2").addEventListener("change",fxPaintIndexRead);
+$("fxGasRefMonth2").addEventListener("change",fxPaintIndexRead);
 fxFillMonthSelects();
 fxFillOfferSelects();
 renderCommodityRateTables();

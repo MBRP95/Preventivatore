@@ -50,7 +50,7 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
-  <p>Carica il gestionale oppure il preventivo del cliente. Canoni, sconti, costi extra soglia, scadenze, durata e indici PUN e PSV compaiono già compilati. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
+  <p>Carica il gestionale oppure il preventivo del cliente. Canoni, sconti, costi extra soglia, scadenze, durata e gli indici PUN e PSV, mese per mese, compaiono già compilati. Puoi aggiungere il mese successivo. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
 </header>
 <main>
   <section class="panel">
@@ -124,14 +124,57 @@ function kindName(){return fileKind==="cliente"?"il preventivo del cliente":"il 
 function kindIn(){return fileKind==="cliente"?"nel preventivo del cliente":"nel gestionale"}
 
 function clone(v){return JSON.parse(JSON.stringify(v))}
+const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const INDEX_SERIES_FALLBACK=[
+  {id:"2026-09",pun:0.208146,psv:0.843182},
+  {id:"2026-08",pun:0.182468,psv:0.686448},
+  {id:"2026-07",pun:0.1585,psv:0.606612},
+  {id:"2026-06",pun:0.135691,psv:0.499366},
+  {id:"2026-05",pun:0.124464,psv:0.501752},
+  {id:"2026-04",pun:0.123399,psv:0.492325},
+  {id:"2026-03",pun:0.143582,psv:0.5997699},
+  {id:"2026-02",pun:0.110572,psv:0.376788},
+  {id:"2026-01",pun:0.124858,psv:0.403934},
+  {id:"2025-12",pun:0.109359,psv:0.327985},
+  {id:"2025-11",pun:0.111583,psv:0.348704},
+  {id:"2025-10",pun:0.107552,psv:0.35367}
+];
+function monthTitle(id){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return String(id||"");
+  const name=MONTHS_IT[Number(m[2])-1]||"";
+  return name?name+" "+m[1]:String(id);
+}
+function shiftMonthId(id,delta){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function normalizeSeries(list){
+  const rows=Array.isArray(list)?list:[];
+  const clean=[];
+  for(const row of rows){
+    const id=String(row&&row.id||"");
+    if(!/^\d{4}-\d{2}$/.test(id))continue;
+    const pun=Number(row.pun), psv=Number(row.psv);
+    if(!Number.isFinite(pun)||pun<0||!Number.isFinite(psv)||psv<0)continue;
+    clean.push({id,pun,psv});
+  }
+  const src=clean.length?clean:INDEX_SERIES_FALLBACK.map(r=>({id:r.id,pun:r.pun,psv:r.psv}));
+  src.sort((a,b)=>a.id<b.id?1:-1);
+  return src;
+}
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
   if(!m)throw Error("Questo file non contiene il listino.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
   if(!data.indices||typeof data.indices!=="object")data.indices={};
-  if(data.indices.pun==null||data.indices.pun==="")data.indices.pun=0.207542;
-  if(data.indices.psv==null||data.indices.psv==="")data.indices.psv=0.843182;
+  data.indices.series=normalizeSeries(data.indices.series);
+  const newest=data.indices.series[0];
+  data.indices.pun=Number(newest.pun);
+  data.indices.psv=Number(newest.psv);
   return data;
 }
 function replaceCatalog(html,data){
@@ -142,7 +185,15 @@ function replaceCatalog(html,data){
   return next;
 }
 function numInput(path,value,step){
-  return `<input type="number" min="0" step="${step}" data-path="${path}" value="${Number(value)}">`;
+  const shown=value===""||value==null?"":Number(value);
+  return `<input type="number" min="0" step="${step}" data-path="${path}" value="${shown}">`;
+}
+function indexRowsHtml(series){
+  return series.map((row,i)=>`<tr>
+    <td class="name">${monthTitle(row.id)}</td>
+    <td>${numInput(`indices.series.${i}.pun`,row.pun,"any")}</td>
+    <td>${numInput(`indices.series.${i}.psv`,row.psv,"any")}</td>
+  </tr>`).join("");
 }
 function dateInput(path,value){
   return `<input type="date" data-path="${path}" value="${String(value||"").slice(0,10)}">`;
@@ -396,12 +447,12 @@ function renderEditor(){
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
     <section class="panel"><h2>Fix e Flex</h2>
-      <h3>Indici di default</h3>
-      <table><thead><tr><th>PUN di default €/kWh</th><th>PSV di default €/Smc</th></tr></thead><tbody><tr>
-        <td>${numInput("indices.pun",c.indices.pun,"any")}</td>
-        <td>${numInput("indices.psv",c.indices.psv,"any")}</td>
-      </tr></tbody></table>
-      <p class="hint">Questi valori compilano il PUN e il PSV di partenza.</p>
+      <h3>Indici PUN e PSV</h3>
+      <table><thead><tr><th>Mese</th><th>PUN €/kWh</th><th>PSV €/Smc</th></tr></thead><tbody>
+        ${indexRowsHtml(c.indices.series)}
+      </tbody></table>
+      <p class="hint">Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si usa la media di due mesi consecutivi.</p>
+      <button type="button" id="addIndexMonth">Aggiungi mese successivo</button>
       ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
       ${commodityTable("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
@@ -410,6 +461,24 @@ function renderEditor(){
   $("editor").classList.remove("hidden");
   bindFlyerInput();
   bindFlyerDraw();
+  $("addIndexMonth").addEventListener("click",addNextIndexMonth);
+}
+function addNextIndexMonth(){
+  let next;
+  try{ next=collectCatalog(); }
+  catch(err){ $("status").textContent=err&&err.message?err.message:String(err); return; }
+  const series=next.indices.series;
+  const newest=[...series].sort((a,b)=>String(a.id)<String(b.id)?1:-1)[0];
+  if(!newest){ $("status").textContent="Elenco indici vuoto."; return; }
+  const id=shiftMonthId(newest.id,1);
+  if(series.some(r=>r.id===id)){ $("status").textContent=monthTitle(id)+" è già in elenco."; return; }
+  series.push({id,pun:"",psv:""});
+  series.sort((a,b)=>String(a.id)<String(b.id)?1:-1);
+  catalog=next;
+  renderEditor();
+  const pun=document.querySelector('[data-path="indices.series.0.pun"]');
+  if(pun)pun.focus();
+  $("status").textContent=`Aggiunto ${monthTitle(id)}. Inserisci PUN e PSV, poi scarica il file.`;
 }
 function applyLoaded(html,name){
   sourceHtml=html;
@@ -434,7 +503,7 @@ function loadFileText(file){
   });
 }
 function collectCatalog(){
-  const next=clone(originalCatalog);
+  const next=clone(catalog||originalCatalog);
   let error="";
   for(const input of $("editor").querySelectorAll("[data-path]")){
     const path=input.dataset.path;
@@ -443,12 +512,18 @@ function collectCatalog(){
       setPath(next,path,input.value);
       continue;
     }
+    if(String(input.value).trim()===""){error="Compila tutti i valori, anche PUN e PSV.";break}
     const n=Number(String(input.value).replace(",","."));
     if(!Number.isFinite(n)||n<0){error="I numeri devono essere maggiori o uguali a zero.";break}
     if(path.endsWith(".months")&&(!Number.isInteger(n)||n<1)){error="La durata è in mesi interi, almeno 1.";break}
     setPath(next,path,n);
   }
   if(error)throw Error(error);
+  if(!Array.isArray(next.indices.series)||!next.indices.series.length)throw Error("Manca l'elenco di PUN e PSV.");
+  next.indices.series.sort((a,b)=>String(a.id)<String(b.id)?1:-1);
+  const newest=next.indices.series[0];
+  next.indices.pun=Number(newest.pun);
+  next.indices.psv=Number(newest.psv);
   return next;
 }
 $("file").addEventListener("change",async e=>{

@@ -173,7 +173,8 @@ body.fit-flyers .fs-btn.on{bottom:4px}
 .cpage.has-cmp .cpair .ccard-top{padding:12px 14px 8px;border-bottom:none;border-radius:16px 16px 0 0}
 .cpage.has-cmp .cpair .ccard-bot{padding:0 14px 14px;border-top:none;border-radius:0 0 16px 16px}
 .cpair .ccmp{margin-top:6px}
-a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#0b57d0;text-decoration:underline}
+#step label.sub{display:block;margin-top:14px;font-size:15px;font-weight:800}
+#step .idx-read{margin:14px 0 0;padding:12px 14px;background:#fff;border:2px solid #111;border-radius:12px;font-size:16px;font-weight:800;line-height:1.45}
 .ccards.one .ccmpbox.save{text-align:center;width:280px;max-width:72%;margin-left:auto;margin-right:auto}
 .qpage{width:860px;background:#FFD000;color:#111;font-family:Arial,Helvetica,sans-serif;padding:26px 24px 20px;position:relative;overflow:hidden;box-sizing:border-box}
 .qpage:before{content:"";position:absolute;right:-90px;top:-140px;width:460px;height:300px;background:#FFE445;border-radius:50%;opacity:.5;pointer-events:none}
@@ -309,8 +310,22 @@ a.idx-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;co
 <script type="application/json" id="promo-catalog">
 {
   "indices": {
-    "pun": 0.207542,
-    "psv": 0.843182
+    "pun": 0.208146,
+    "psv": 0.843182,
+    "series": [
+      {"id": "2026-09", "pun": 0.208146, "psv": 0.843182},
+      {"id": "2026-08", "pun": 0.182468, "psv": 0.686448},
+      {"id": "2026-07", "pun": 0.158500, "psv": 0.606612},
+      {"id": "2026-06", "pun": 0.135691, "psv": 0.499366},
+      {"id": "2026-05", "pun": 0.124464, "psv": 0.501752},
+      {"id": "2026-04", "pun": 0.123399, "psv": 0.492325},
+      {"id": "2026-03", "pun": 0.143582, "psv": 0.5997699},
+      {"id": "2026-02", "pun": 0.110572, "psv": 0.376788},
+      {"id": "2026-01", "pun": 0.124858, "psv": 0.403934},
+      {"id": "2025-12", "pun": 0.109359, "psv": 0.327985},
+      {"id": "2025-11", "pun": 0.111583, "psv": 0.348704},
+      {"id": "2025-10", "pun": 0.107552, "psv": 0.353670}
+    ]
   },
   "flat": {
     "light": [
@@ -420,7 +435,7 @@ function quoteAnnual(type,sec,q){return monthlyOf(sec)*12+consumptionAdj(sec).co
 function quoteSaving(type,sec,q){return currentOf(sec)-quoteAnnual(type,sec,q)}
 function hasSaving(type,sec,q){return quoteSaving(type,sec,q)>0.005}
 function annualOf(sec){return Number(sec?.calculations?.annualCost||0)}
-function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:6}).format(n)+" €/"+unit}
+function unitPrice(n,unit){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)+" €/"+unit}
 function calcNoteLine(type,sec){
   const p=sec?.selectedPromo; if(!p||!sec)return "";
   const unit=type==="light"?"kWh":"Smc";
@@ -573,8 +588,59 @@ function buildQuoteHtml(q){
 let PROMO_CATALOG=null,LIGHT_PROMOS=[],GAS_PROMOS=[],COMMODITY_OFFERS=null;
 let currentQuote=null,fastwebOn=false,stepIndex=0;
 const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const INDEX_SERIES_FALLBACK=[
+  {id:"2026-09",pun:0.208146,psv:0.843182},
+  {id:"2026-08",pun:0.182468,psv:0.686448},
+  {id:"2026-07",pun:0.1585,psv:0.606612},
+  {id:"2026-06",pun:0.135691,psv:0.499366},
+  {id:"2026-05",pun:0.124464,psv:0.501752},
+  {id:"2026-04",pun:0.123399,psv:0.492325},
+  {id:"2026-03",pun:0.143582,psv:0.5997699},
+  {id:"2026-02",pun:0.110572,psv:0.376788},
+  {id:"2026-01",pun:0.124858,psv:0.403934},
+  {id:"2025-12",pun:0.109359,psv:0.327985},
+  {id:"2025-11",pun:0.111583,psv:0.348704},
+  {id:"2025-10",pun:0.107552,psv:0.35367}
+];
+function indexSeries(){
+  const raw=PROMO_CATALOG&&PROMO_CATALOG.indices&&PROMO_CATALOG.indices.series;
+  const list=Array.isArray(raw)&&raw.length?raw:INDEX_SERIES_FALLBACK;
+  return list.map(row=>({id:String(row.id||""),pun:Number(row.pun),psv:Number(row.psv)})).filter(r=>/^\d{4}-\d{2}$/.test(r.id)&&Number.isFinite(r.pun)&&r.pun>=0&&Number.isFinite(r.psv)&&r.psv>=0).sort((a,b)=>a.id<b.id?1:-1);
+}
+function indexById(id){return indexSeries().find(r=>r.id===id)||null}
+function monthTitle(id){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const name=MONTHS_IT[Number(m[2])-1]||"";
+  return name?name+" "+m[1]:"";
+}
+function shiftMonthId(id,delta){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function neighborIds(id){
+  const have=new Set(indexSeries().map(r=>r.id));
+  return [shiftMonthId(id,-1),shiftMonthId(id,1)].filter(x=>have.has(x));
+}
+function preferredNeighbor(id,current){
+  const list=neighborIds(id);
+  if(current&&list.includes(current))return current;
+  const prev=shiftMonthId(id,-1);
+  return list.includes(prev)?prev:(list[0]||"");
+}
+function formatIndex(n){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)}
+function monthCaption(ref){
+  if(ref==null||ref==="")return "";
+  if(typeof ref==="number"||/^\d+$/.test(String(ref))){
+    const i=Number(ref);
+    return i>=0&&i<12?MONTHS_IT[i]:"";
+  }
+  return String(ref);
+}
 function blankAnswers(){
-  return {services:null,lightFamily:null,gasFamily:null,fastweb:null,segment:null,meterPower:null,residency:null,lightKwh:"",lightSpend:"",gasSmc:"",gasSpend:"",lightPromo:null,gasPromo:null,lightBi:null,gasBi:null,lightFixed:"",lightQuota:"",lightQty:"",gasFixed:"",gasQuota:"",gasQty:"",lightMonth:null,gasMonth:null,lightIndex:"",gasIndex:"",fxLightOffer:null,fxGasOffer:null};
+  return {services:null,lightFamily:null,gasFamily:null,fastweb:null,segment:null,meterPower:null,residency:null,lightKwh:"",lightSpend:"",gasSmc:"",gasSpend:"",lightPromo:null,gasPromo:null,lightBi:null,gasBi:null,lightFixed:"",lightQuota:"",lightQty:"",gasFixed:"",gasQuota:"",gasQty:"",lightMonth:null,gasMonth:null,lightMonth2:null,gasMonth2:null,lightIndex:"",gasIndex:"",fxLightOffer:null,fxGasOffer:null};
 }
 function familyOf(service){return service==="light"?answers.lightFamily:answers.gasFamily}
 function anyFx(){return (wants("light")&&answers.lightFamily==="fx")||(wants("gas")&&answers.gasFamily==="fx")}
@@ -641,7 +707,7 @@ function calcCommodityService(service,offer,isFw,compare){
     const bi=!!compare.bimonthly;
     const currentTotal=(bi?compare.fixedNow*2:compare.fixedNow)+currentEnergy;
     const newTotal=(bi?monthly*2:monthly)+newEnergy;
-    out.compare={fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,bimonthly:bi,currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,saving:bi?(currentTotal-newTotal)/2:currentTotal-newTotal};
+    out.compare={fixedNow:compare.fixedNow,consumptionQuota:currentEnergy,consumption:compare.consumption,indexValue:compare.indexValue,refMonth:compare.refMonth,refMonths:compare.refMonths||null,bimonthly:bi,currentEnergy,currentTotal,newEnergy,newFixed:monthly,newUnit:out.unitPrice,newTotal,saving:bi?(currentTotal-newTotal)/2:currentTotal-newTotal};
   }
   return out;
 }
@@ -654,7 +720,7 @@ function fxCommHtml(s){
 function fxCompareVisible(s){return !!(s&&s.compare&&Number(s.compare.saving)>=0)}
 function fxCompareCard(s){
   const d=s&&s.compare; if(!fxCompareVisible(s))return "";
-  const month=d.refMonth==null?"":MONTHS_IT[d.refMonth]||"";
+  const month=monthCaption(d.refMonth);
   const idx=s.service==="light"?"PUN":"PSV";
   const qty=`${num(d.consumption)} ${s.unit}`;
   const bi=!!d.bimonthly;
@@ -794,7 +860,7 @@ function steps(){
     if(answers.lightFamily==="flat")s.push("power","residency","lightKwh","lightSpend","lightPromo");
     else{
       s.push("lightBi","lightFixed","lightQuota","lightQty");
-      if(serviceHasFlex("light"))s.push("lightMonth","lightIndex");
+      if(serviceHasFlex("light"))s.push("lightMonth");
       s.push("fxLightPromo");
     }
   }
@@ -802,7 +868,7 @@ function steps(){
     if(answers.gasFamily==="flat")s.push("gasSmc","gasSpend","gasPromo");
     else{
       s.push("gasBi","gasFixed","gasQuota","gasQty");
-      if(serviceHasFlex("gas"))s.push("gasMonth","gasIndex");
+      if(serviceHasFlex("gas"))s.push("gasMonth");
       s.push("fxGasPromo");
     }
   }
@@ -832,7 +898,10 @@ function sectionOf(type){
 function todayIso(){const t=new Date();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`}
 function fxCompareInput(service,offer){
   const light=service==="light";
-  return {fixedNow:parseNum(answers[light?"lightFixed":"gasFixed"]),consumptionQuota:parseNum(answers[light?"lightQuota":"gasQuota"]),consumption:parseNum(answers[light?"lightQty":"gasQty"]),indexValue:offer.kind==="flex"?parseNum(answers[light?"lightIndex":"gasIndex"]):null,refMonth:offer.kind==="flex"?Number(answers[light?"lightMonth":"gasMonth"]):null,bimonthly:!!answers[light?"lightBi":"gasBi"]};
+  const monthId=answers[light?"lightMonth":"gasMonth"];
+  const month2Id=answers[light?"lightMonth2":"gasMonth2"];
+  const caption=[monthTitle(monthId),month2Id?monthTitle(month2Id):""].filter(Boolean).join(" e ");
+  return {fixedNow:parseNum(answers[light?"lightFixed":"gasFixed"]),consumptionQuota:parseNum(answers[light?"lightQuota":"gasQuota"]),consumption:parseNum(answers[light?"lightQty":"gasQty"]),indexValue:offer.kind==="flex"?parseNum(answers[light?"lightIndex":"gasIndex"]):null,refMonth:offer.kind==="flex"?caption:null,refMonths:offer.kind==="flex"?[monthId,month2Id].filter(Boolean):null,bimonthly:!!answers[light?"lightBi":"gasBi"]};
 }
 function flatSections(){
   const sections={};
@@ -925,13 +994,6 @@ function numView(title,hint,key,placeholder,check){
     return "";
   })}};
 }
-function indexDefault(service){
-  const key=service==="light"?"pun":"psv";
-  const fallback=service==="light"?0.207542:0.843182;
-  const n=Number(PROMO_CATALOG.indices?.[key]??fallback);
-  return String(n).replace(".",",");
-}
-function defaultMonth(){return (new Date().getMonth()+11)%12}
 function promoCards(type){
   const rows=evaluated(type);
   const unit=type==="light"?"kWh":"Smc";
@@ -991,8 +1053,6 @@ const VIEWS={
   gasQty(){return numView("Quanti Smc ci sono in quella bolletta?","Servono per calcolare il costo con noi.","gasQty","Es. 80",n=>!Number.isFinite(n)||n<=0?"Inserisci una quantità maggiore di zero.":"")},
   lightMonth(){return monthView("light")},
   gasMonth(){return monthView("gas")},
-  lightIndex(){return indexView("light")},
-  gasIndex(){return indexView("gas")},
   lightPromo(){
     return {title:"Quale promo luce preferisci?",hint:"In verde le promo entro il 30% dal tuo consumo. Puoi scegliere anche le altre.",body:promoCards("light")+navHtml("Continua"),mount(){bindPromos("light");bindNav(()=>answers.lightPromo?"":"Scegli una promo luce.")}};
   },
@@ -1019,22 +1079,61 @@ const VIEWS={
   }
 };
 function monthView(service){
-  const key=service==="light"?"lightMonth":"gasMonth";
-  if(answers[key]==null)answers[key]=defaultMonth();
-  const label=service==="light"?"PUN":"PSV";
-  return {title:`Mese di riferimento del ${label}`,hint:"È il mese della bolletta con cui confrontiamo l’offerta.",body:`<select id="field" aria-label="Mese">${MONTHS_IT.map((m,i)=>`<option value="${i}"${Number(answers[key])===i?" selected":""}>${m}</option>`).join("")}</select>`+navHtml(),mount(){bindNav(()=>{answers[key]=Number($("field").value);return ""})}};
-}
-function indexView(service){
-  const key=service==="light"?"lightIndex":"gasIndex";
-  if(!answers[key])answers[key]=indexDefault(service);
-  const label=service==="light"?"PUN":"PSV";
-  const unit=service==="light"?"kWh":"Smc";
-  return {title:`${label} del mese, in euro per ${unit}`,hint:"Puoi aggiornarlo. Il valore di partenza è quello di settembre.",body:numberField("field",answers[key],service==="light"?"Es. 0,207542":"Es. 0,843182")+`<a class="idx-link" href="https://www.enercom.it/indici-di-mercato/" target="_blank" rel="noopener noreferrer">indici di mercato aggiornati</a>`+navHtml(),mount(){bindNav(()=>{
-    const n=parseNum($("field").value);
-    if(!Number.isFinite(n)||n<0)return `Inserisci il ${label}, zero o più.`;
-    answers[key]=String($("field").value).trim();
-    return "";
-  })}};
+  const light=service==="light";
+  const monthKey=light?"lightMonth":"gasMonth";
+  const month2Key=light?"lightMonth2":"gasMonth2";
+  const indexKey=light?"lightIndex":"gasIndex";
+  const bi=!!answers[light?"lightBi":"gasBi"];
+  const series=indexSeries();
+  if(!indexById(answers[monthKey]))answers[monthKey]=series[0]?series[0].id:null;
+  if(!bi)answers[month2Key]=null;
+  else if(!neighborIds(answers[monthKey]).includes(answers[month2Key]))answers[month2Key]=preferredNeighbor(answers[monthKey],"");
+  const label=light?"PUN":"PSV";
+  const unit=light?"kWh":"Smc";
+  const fieldName=light?"pun":"psv";
+  const options=series.map(r=>`<option value="${r.id}"${answers[monthKey]===r.id?" selected":""}>${monthTitle(r.id)}</option>`).join("");
+  const second=bi?`<label class="sub">Secondo mese<select id="field2" aria-label="Secondo mese"></select></label>`:"";
+  const title=bi?`Quali due mesi copre la bolletta ${light?"della luce":"del gas"}?`:`Mese di riferimento del ${label}`;
+  const hint=bi?`I due mesi sono consecutivi. I conteggi usano la media dei due ${label}.`:`Il ${label} di quel mese si carica da solo.`;
+  return {title,hint,body:`<label class="sub">${bi?"Primo mese":"Mese"}<select id="field" aria-label="Mese">${options}</select></label>${second}<p class="idx-read" id="idxRead"></p>`+navHtml(),mount(){
+    const paint=()=>{
+      const id=$("field").value;
+      const row=indexById(id);
+      const box=$("idxRead");
+      if(bi&&$("field2")){
+        const chosen=preferredNeighbor(id,$("field2").value);
+        const list=neighborIds(id);
+        $("field2").innerHTML=list.map(n=>`<option value="${n}"${n===chosen?" selected":""}>${monthTitle(n)}</option>`).join("");
+      }
+      if(!row){box.textContent="Questo mese non è in elenco.";return}
+      if(bi){
+        const id2=$("field2")?$("field2").value:"";
+        const row2=indexById(id2);
+        if(!row2){box.textContent="In elenco non c'è un mese consecutivo.";return}
+        const avg=(Number(row[fieldName])+Number(row2[fieldName]))/2;
+        box.textContent=`${label} ${monthTitle(id)}: ${formatIndex(row[fieldName])} €/${unit}. ${label} ${monthTitle(id2)}: ${formatIndex(row2[fieldName])} €/${unit}. Media: ${formatIndex(avg)} €/${unit}.`;
+      }else box.textContent=`${label} di ${monthTitle(id)}: ${formatIndex(row[fieldName])} €/${unit}.`;
+    };
+    $("field").addEventListener("change",paint);
+    if($("field2"))$("field2").addEventListener("change",paint);
+    paint();
+    bindNav(()=>{
+      const id=$("field").value;
+      const row=indexById(id);
+      if(!row)return "Scegli un mese dell'elenco.";
+      let id2=null;
+      if(bi){
+        id2=$("field2")?$("field2").value:"";
+        if(!id2||!neighborIds(id).includes(id2))return "Scegli due mesi consecutivi.";
+      }
+      const row2=id2?indexById(id2):null;
+      const value=row2?(Number(row[fieldName])+Number(row2[fieldName]))/2:Number(row[fieldName]);
+      answers[monthKey]=id;
+      answers[month2Key]=id2;
+      answers[indexKey]=String(value);
+      return "";
+    });
+  }};
 }
 function render(){
   const list=steps();
