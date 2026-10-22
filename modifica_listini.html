@@ -32,8 +32,10 @@
   .flyer-pick{margin-top:14px}
   .flyer-canvas{position:relative;width:100%;cursor:crosshair;user-select:none;touch-action:none}
   .flyer-canvas img{display:block;width:100%;height:auto;border:2px solid #111;border-radius:12px;background:#FFD000}
-  .flyer-box{position:absolute;box-sizing:border-box;border:3px solid #111;background:#111;color:#FFD000;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:999px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111;cursor:grab}
+  .flyer-box{position:absolute;box-sizing:border-box;border:3px solid #111;background:#111;color:#FFD000;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:999px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111;cursor:grab;animation:flyer-box-pulse 1.25s ease-in-out infinite}
   .flyer-box:active{cursor:grabbing}
+  @keyframes flyer-box-pulse{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #111}50%{box-shadow:0 0 0 7px #fff,0 0 0 11px #111}}
+  @media (prefers-reduced-motion:reduce){.flyer-box{animation:none}}
   .flyer-label{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;padding:0 8px}
   .flyer-handle{position:absolute;width:16px;height:16px;background:#fff;border:2px solid #111;border-radius:4px;z-index:2}
   .flyer-handle.nw{left:-8px;top:-8px;cursor:nwse-resize}
