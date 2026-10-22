@@ -451,7 +451,7 @@ function renderEditor(){
       <table><thead><tr><th>Mese</th><th>PUN €/kWh</th><th>PSV €/Smc</th></tr></thead><tbody>
         ${indexRowsHtml(c.indices.series)}
       </tbody></table>
-      <p class="hint">Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si usa la media di due mesi consecutivi. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio.</p>
+      <p class="hint">Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si sceglie solo il primo mese: il successivo entra da solo e si usa la media. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio.</p>
       <button type="button" id="addIndexMonth">Aggiungi mese successivo</button>
       ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}

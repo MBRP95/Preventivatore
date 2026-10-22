@@ -272,10 +272,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label>Quantità (kWh)<input id="fxLightMonthKwh" type="number" min="0" step="1" placeholder="Es. 220"></label>
 </div>
 <div id="fxLightFlexRef" class="hidden" style="margin-top:10px">
-<div class="grid">
-<label>Mese di riferimento<select id="fxLightRefMonth"></select></label>
-<label id="fxLightSecondWrap" class="hidden">Secondo mese consecutivo<select id="fxLightRefMonth2"></select></label>
-</div>
+<label><span id="fxLightMonthLabel">Mese di riferimento</span><select id="fxLightRefMonth"></select></label>
 <p class="note idx-read" id="fxLightIndexRead"></p>
 </div>
 <p class="note" id="fxLightOriginNote"></p>
@@ -294,10 +291,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <label>Quantità (Smc)<input id="fxGasMonthSmc" type="number" min="0" step="1" placeholder="Es. 80"></label>
 </div>
 <div id="fxGasFlexRef" class="hidden" style="margin-top:10px">
-<div class="grid">
-<label>Mese di riferimento<select id="fxGasRefMonth"></select></label>
-<label id="fxGasSecondWrap" class="hidden">Secondo mese consecutivo<select id="fxGasRefMonth2"></select></label>
-</div>
+<label><span id="fxGasMonthLabel">Mese di riferimento</span><select id="fxGasRefMonth"></select></label>
 <p class="note idx-read" id="fxGasIndexRead"></p>
 </div>
 <p class="note" id="fxGasOriginNote"></p>
@@ -813,7 +807,6 @@ function openCommodityQuote(q){
   $("fxLightCompareOn").checked=!!q.sections?.light?.compare;
   $("fxGasCompareOn").checked=!!q.sections?.gas?.compare;
   fxFillOfferSelects();
-  const restoreMonths=[];
   for(const [key,prefix,qtyId] of [["light","fxLight","fxLightMonthKwh"],["gas","fxGas","fxGasMonthSmc"]]){
     const s=q.sections?.[key]; if(!s)continue;
     const offerSel=$(prefix+"Offer");
@@ -833,17 +826,14 @@ function openCommodityQuote(q){
         if(opt)ids.push(opt.value);
       }
     }
-    if(ids[0]){
+    if(ids.length){
+      const sorted=ids.filter(Boolean).map(String).sort();
+      const start=sorted.length>1&&nextMonthId(sorted[0])===sorted[1]?sorted[0]:String(ids[0]);
       const month=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth");
-      if(month)month.value=String(ids[0]);
-      restoreMonths.push([key, ids[1]?String(ids[1]):""]);
+      if(month&&[...month.options].some(o=>o.value===start))month.value=start;
     }
   }
   fxToggleBoxes();
-  for(const [key,id2] of restoreMonths){
-    const sel=$(key==="light"?"fxLightRefMonth2":"fxGasRefMonth2");
-    if(sel&&id2&&[...sel.options].some(o=>o.value===id2))sel.value=id2;
-  }
   fxPaintIndexRead();
   currentCommodityQuote=JSON.parse(JSON.stringify(q));
   delete currentCommodityQuote._filename;
@@ -918,15 +908,9 @@ function shiftMonthId(id,delta){
   const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
 }
-function neighborIds(id){
-  const have=new Set(indexSeries().map(r=>r.id));
-  return [shiftMonthId(id,-1),shiftMonthId(id,1)].filter(x=>have.has(x));
-}
-function preferredNeighbor(id,current){
-  const list=neighborIds(id);
-  if(current&&list.includes(current))return current;
-  const prev=shiftMonthId(id,-1);
-  return list.includes(prev)?prev:(list[0]||"");
+function nextMonthId(id){
+  const next=shiftMonthId(id,1);
+  return indexById(next)?next:"";
 }
 function formatIndex(n){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)}
 function monthCaption(ref){
@@ -997,33 +981,22 @@ function fxFillMonthSelects(){
     sel.innerHTML=series.map(r=>`<option value="${r.id}">${monthTitle(r.id)}</option>`).join("");
     sel.value=series.some(r=>r.id===prev)?prev:(series[0]?series[0].id:"");
   }
-  fxSyncSecondMonths();
-}
-function fxSyncSecondMonths(){
-  for(const [biId,aId,bId,wrapId] of [["fxLightBimonthly","fxLightRefMonth","fxLightRefMonth2","fxLightSecondWrap"],["fxGasBimonthly","fxGasRefMonth","fxGasRefMonth2","fxGasSecondWrap"]]){
-    const on=!!($(biId)&&$(biId).checked);
-    const wrap=$(wrapId);
-    if(wrap)wrap.classList.toggle("hidden",!on);
-    const first=$(aId), sel=$(bId);
-    if(!first||!sel)continue;
-    const list=neighborIds(first.value);
-    const chosen=preferredNeighbor(first.value,sel.value);
-    sel.innerHTML=list.map(id=>`<option value="${id}">${monthTitle(id)}</option>`).join("");
-    if(chosen)sel.value=chosen;
-  }
   fxPaintIndexRead();
 }
 function fxPaintIndexRead(){
-  for(const [svc,aId,bId,readId,biId] of [["light","fxLightRefMonth","fxLightRefMonth2","fxLightIndexRead","fxLightBimonthly"],["gas","fxGasRefMonth","fxGasRefMonth2","fxGasIndexRead","fxGasBimonthly"]]){
+  for(const [svc,aId,readId,biId,labelId] of [["light","fxLightRefMonth","fxLightIndexRead","fxLightBimonthly","fxLightMonthLabel"],["gas","fxGasRefMonth","fxGasIndexRead","fxGasBimonthly","fxGasMonthLabel"]]){
     const box=$(readId); if(!box||!$(aId))continue;
     const label=svc==="light"?"PUN":"PSV";
     const unit=svc==="light"?"kWh":"Smc";
     const field=svc==="light"?"pun":"psv";
+    const bi=!!($(biId)&&$(biId).checked);
+    const name=$(labelId);
+    if(name)name.textContent=bi?"Primo mese della bolletta":"Mese di riferimento";
     const row=indexById($(aId).value);
     if(!row){box.textContent="";continue}
-    if($(biId)&&$(biId).checked){
-      const row2=indexById($(bId).value);
-      if(!row2){box.textContent="In elenco non c'è un mese consecutivo.";continue}
+    if(bi){
+      const row2=indexById(nextMonthId(row.id));
+      if(!row2){box.textContent=`Per ${monthTitle(row.id)} non c'è il mese successivo in elenco. Scegli il primo dei due mesi.`;continue}
       const avg=(Number(row[field])+Number(row2[field]))/2;
       box.textContent=`${label} ${monthTitle(row.id)}: ${formatIndex(row[field])} €/${unit}. ${label} ${monthTitle(row2.id)}: ${formatIndex(row2[field])} €/${unit}. Media: ${formatIndex(avg)} €/${unit}.`;
     }else box.textContent=`${label} di ${monthTitle(row.id)}: ${formatIndex(row[field])} €/${unit}.`;
@@ -1042,7 +1015,7 @@ function fxOriginNote(service){
     ?` Con noi: fisso + quantità × (${idx} + spread).`
     :" Con noi: fisso + quantità × prezzo unitario.";
   const bi=$(service==="light"?"fxLightBimonthly":"fxGasBimonthly");
-  const extra=bi&&bi.checked?" Fattura bimensile: due mesi consecutivi, con la media di "+idx+". Costo attuale e costo nostro sul bimestre. Il risparmio è la differenza divisa per due.":"";
+  const extra=bi&&bi.checked?" Fattura bimensile: si sceglie il primo mese e il successivo si aggiunge da solo, con la media di "+idx+". Costo attuale e costo nostro sul bimestre. Il risparmio è la differenza divisa per due.":"";
   return origin+ours+extra;
 }
 function fxToggleBoxes(){
@@ -1066,7 +1039,7 @@ function fxToggleBoxes(){
     $("fxGasFlexRef").classList.toggle("hidden",!gasCmp||!fxIndexNeeded("gas"));
     $("fxGasOriginNote").textContent=fxOriginNote("gas");
   }
-  fxSyncSecondMonths();
+  fxPaintIndexRead();
 }
 function calcCommodityService(service,offer,isFw,compare){
   const commList=Number(offer.comm);
@@ -1137,9 +1110,9 @@ function calculateCommodity(){
         const ids=[id];
         indexValue=Number(row[field]);
         if($(prefix+"Bimonthly").checked){
-          const id2=$(key==="light"?"fxLightRefMonth2":"fxGasRefMonth2").value;
+          const id2=nextMonthId(id);
           const row2=indexById(id2);
-          if(!row2||!neighborIds(id).includes(id2)){fxError("Per la fattura bimensile scegli due mesi consecutivi.");return}
+          if(!row2){fxError("Per la fattura bimensile scegli il primo dei due mesi. Il successivo si aggiunge da solo e deve essere in elenco.");return}
           indexValue=(indexValue+Number(row2[field]))/2;
           ids.push(id2);
         }
@@ -1347,10 +1320,8 @@ $("fxPdf").addEventListener("click",makeCommodityPdf);
 $("fxSave").addEventListener("click",saveCommodityQuote);
 $("fxHistory").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.add("hidden");loadArchive()});
 $("fxTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});
-$("fxLightRefMonth").addEventListener("change",fxSyncSecondMonths);
-$("fxGasRefMonth").addEventListener("change",fxSyncSecondMonths);
-$("fxLightRefMonth2").addEventListener("change",fxPaintIndexRead);
-$("fxGasRefMonth2").addEventListener("change",fxPaintIndexRead);
+$("fxLightRefMonth").addEventListener("change",fxPaintIndexRead);
+$("fxGasRefMonth").addEventListener("change",fxPaintIndexRead);
 fxFillMonthSelects();
 fxFillOfferSelects();
 renderCommodityRateTables();

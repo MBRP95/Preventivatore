@@ -620,15 +620,16 @@ function shiftMonthId(id,delta){
   const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
 }
-function neighborIds(id){
-  const have=new Set(indexSeries().map(r=>r.id));
-  return [shiftMonthId(id,-1),shiftMonthId(id,1)].filter(x=>have.has(x));
+function nextMonthId(id){
+  const next=shiftMonthId(id,1);
+  return indexById(next)?next:"";
 }
-function preferredNeighbor(id,current){
-  const list=neighborIds(id);
-  if(current&&list.includes(current))return current;
-  const prev=shiftMonthId(id,-1);
-  return list.includes(prev)?prev:(list[0]||"");
+function defaultIndexMonth(bi){
+  const series=indexSeries();
+  if(!series.length)return null;
+  if(!bi)return series[0].id;
+  const withNext=series.find(r=>nextMonthId(r.id));
+  return withNext?withNext.id:series[0].id;
 }
 function formatIndex(n){return new Intl.NumberFormat("it-IT",{minimumFractionDigits:3,maximumFractionDigits:8}).format(n)}
 function monthCaption(ref){
@@ -1085,37 +1086,28 @@ function monthView(service){
   const indexKey=light?"lightIndex":"gasIndex";
   const bi=!!answers[light?"lightBi":"gasBi"];
   const series=indexSeries();
-  if(!indexById(answers[monthKey]))answers[monthKey]=series[0]?series[0].id:null;
-  if(!bi)answers[month2Key]=null;
-  else if(!neighborIds(answers[monthKey]).includes(answers[month2Key]))answers[month2Key]=preferredNeighbor(answers[monthKey],"");
+  if(!indexById(answers[monthKey]))answers[monthKey]=defaultIndexMonth(bi);
   const label=light?"PUN":"PSV";
   const unit=light?"kWh":"Smc";
   const fieldName=light?"pun":"psv";
   const options=series.map(r=>`<option value="${r.id}"${answers[monthKey]===r.id?" selected":""}>${monthTitle(r.id)}</option>`).join("");
-  const second=bi?`<label class="sub">Secondo mese<select id="field2" aria-label="Secondo mese"></select></label>`:"";
-  const title=bi?`Quali due mesi copre la bolletta ${light?"della luce":"del gas"}?`:`Mese di riferimento del ${label}`;
-  const hint=bi?`I due mesi sono consecutivi. I conteggi usano la media dei due ${label}.`:`Il ${label} di quel mese si carica da solo.`;
-  return {title,hint,body:`<label class="sub">${bi?"Primo mese":"Mese"}<select id="field" aria-label="Mese">${options}</select></label>${second}<p class="idx-read" id="idxRead"></p>`+navHtml(),mount(){
+  const title=bi?`Da quale mese parte la bolletta ${light?"della luce":"del gas"}?`:`Mese di riferimento del ${label}`;
+  const hint=bi?`Scegli solo il primo mese. Per giugno e luglio scegli giugno: luglio si aggiunge da solo e i conteggi usano la media dei due ${label}.`:`Il ${label} di quel mese si carica da solo.`;
+  return {title,hint,body:`<label class="sub">${bi?"Primo mese":"Mese"}<select id="field" aria-label="Mese">${options}</select></label><p class="idx-read" id="idxRead"></p>`+navHtml(),mount(){
     const paint=()=>{
       const id=$("field").value;
       const row=indexById(id);
       const box=$("idxRead");
-      if(bi&&$("field2")){
-        const chosen=preferredNeighbor(id,$("field2").value);
-        const list=neighborIds(id);
-        $("field2").innerHTML=list.map(n=>`<option value="${n}"${n===chosen?" selected":""}>${monthTitle(n)}</option>`).join("");
-      }
       if(!row){box.textContent="Questo mese non è in elenco.";return}
       if(bi){
-        const id2=$("field2")?$("field2").value:"";
+        const id2=nextMonthId(id);
         const row2=indexById(id2);
-        if(!row2){box.textContent="In elenco non c'è un mese consecutivo.";return}
+        if(!row2){box.textContent=`Per ${monthTitle(id)} non c'è il mese successivo in elenco. Scegli il primo dei due mesi.`;return}
         const avg=(Number(row[fieldName])+Number(row2[fieldName]))/2;
         box.textContent=`${label} ${monthTitle(id)}: ${formatIndex(row[fieldName])} €/${unit}. ${label} ${monthTitle(id2)}: ${formatIndex(row2[fieldName])} €/${unit}. Media: ${formatIndex(avg)} €/${unit}.`;
       }else box.textContent=`${label} di ${monthTitle(id)}: ${formatIndex(row[fieldName])} €/${unit}.`;
     };
     $("field").addEventListener("change",paint);
-    if($("field2"))$("field2").addEventListener("change",paint);
     paint();
     bindNav(()=>{
       const id=$("field").value;
@@ -1123,8 +1115,8 @@ function monthView(service){
       if(!row)return "Scegli un mese dell'elenco.";
       let id2=null;
       if(bi){
-        id2=$("field2")?$("field2").value:"";
-        if(!id2||!neighborIds(id).includes(id2))return "Scegli due mesi consecutivi.";
+        id2=nextMonthId(id);
+        if(!id2)return `Per ${monthTitle(id)} non c'è il mese successivo in elenco. Scegli il primo dei due mesi.`;
       }
       const row2=id2?indexById(id2):null;
       const value=row2?(Number(row[fieldName])+Number(row2[fieldName]))/2:Number(row[fieldName]);
