@@ -163,7 +163,7 @@ function normalizeSeries(list){
   }
   const src=clean.length?clean:INDEX_SERIES_FALLBACK.map(r=>({id:r.id,pun:r.pun,psv:r.psv}));
   src.sort((a,b)=>a.id<b.id?1:-1);
-  return src;
+  return src.slice(0,12);
 }
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
@@ -451,7 +451,7 @@ function renderEditor(){
       <table><thead><tr><th>Mese</th><th>PUN €/kWh</th><th>PSV €/Smc</th></tr></thead><tbody>
         ${indexRowsHtml(c.indices.series)}
       </tbody></table>
-      <p class="hint">Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si usa la media di due mesi consecutivi.</p>
+      <p class="hint">Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si usa la media di due mesi consecutivi. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio.</p>
       <button type="button" id="addIndexMonth">Aggiungi mese successivo</button>
       ${commodityTable("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityTable("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
@@ -474,11 +474,16 @@ function addNextIndexMonth(){
   if(series.some(r=>r.id===id)){ $("status").textContent=monthTitle(id)+" è già in elenco."; return; }
   series.push({id,pun:"",psv:""});
   series.sort((a,b)=>String(a.id)<String(b.id)?1:-1);
+  let dropped="";
+  if(series.length>12){
+    const old=series.pop();
+    dropped=monthTitle(old.id);
+  }
   catalog=next;
   renderEditor();
   const pun=document.querySelector('[data-path="indices.series.0.pun"]');
   if(pun)pun.focus();
-  $("status").textContent=`Aggiunto ${monthTitle(id)}. Inserisci PUN e PSV, poi scarica il file.`;
+  $("status").textContent=dropped?`Aggiunto ${monthTitle(id)}. ${dropped} esce dall'elenco. Inserisci PUN e PSV, poi scarica il file.`:`Aggiunto ${monthTitle(id)}. Inserisci PUN e PSV, poi scarica il file.`;
 }
 function applyLoaded(html,name){
   sourceHtml=html;
@@ -521,6 +526,7 @@ function collectCatalog(){
   if(error)throw Error(error);
   if(!Array.isArray(next.indices.series)||!next.indices.series.length)throw Error("Manca l'elenco di PUN e PSV.");
   next.indices.series.sort((a,b)=>String(a.id)<String(b.id)?1:-1);
+  if(next.indices.series.length>12)next.indices.series.length=12;
   const newest=next.indices.series[0];
   next.indices.pun=Number(newest.pun);
   next.indices.psv=Number(newest.psv);
