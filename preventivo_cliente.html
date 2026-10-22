@@ -328,6 +328,7 @@ body.fit-flyers .fs-btn.on{bottom:4px}
     ]
   },
   "flat": {
+    "years": 2,
     "light": [
       {"name": "START", "plafond": 800, "monthly": 47, "price": 0.3, "convergence": 10, "expires": "2026-10-25"},
       {"name": "LIGHT", "plafond": 1500, "monthly": 64, "price": 0.283, "convergence": 10, "expires": "2026-10-25"},
@@ -538,9 +539,10 @@ function offerHtml(type,sec,q,single){
     ${single&&!noCmp?statsHtml(offerStatsHtml(type,sec,q)):""}
   </article>`;
 }
+function flatLockedLabel(){const n=Number(PROMO_CATALOG&&PROMO_CATALOG.flat&&PROMO_CATALOG.flat.years);const years=Number.isInteger(n)&&n>=1?n:2;return years===1?"PER 1 ANNO":"PER "+years+" ANNI"}
 function footerHtml(){
   const items=[
-    [ICO.shield,"PREZZO BLOCCATO","PER 2 ANNI"],
+    [ICO.shield,"PREZZO BLOCCATO",flatLockedLabel()],
     [ICO.piggy,"BONUS CONSUMO SMART","SE UTILIZZI MENO DEL 70% DEL TUO CONSUMO ANNUO"],
     [ICO.leaf,"SCELTA SOSTENIBILE","ENERGIA PIÙ PULITA PER UN FUTURO MIGLIORE"],
     [ICO.head,"ASSISTENZA SEMPRE CON TE","VIA APP, TELEFONO O NEI NOSTRI NEGOZI"]

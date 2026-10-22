@@ -27,6 +27,7 @@
   .name{font-weight:800;white-space:nowrap}
   .muted{color:#444;font-size:12px;white-space:nowrap}
   .hint{color:#444;font-size:12px;margin:8px 0 0;line-height:1.4}
+  label.years{display:flex;flex-direction:column;gap:6px;font-weight:800;margin:0 0 12px;max-width:280px}
   .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
   .thumbs img{height:150px;width:auto;border:2px solid #111;border-radius:10px;background:#FFD000}
   .flyer-pick{margin-top:14px}
@@ -170,6 +171,8 @@ function extractCatalog(html){
   if(!m)throw Error("Questo file non contiene il listino.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
+  const years=Number(data.flat.years);
+  data.flat.years=Number.isInteger(years)&&years>=1?years:2;
   if(!data.indices||typeof data.indices!=="object")data.indices={};
   data.indices.series=normalizeSeries(data.indices.series);
   const newest=data.indices.series[0];
@@ -443,6 +446,7 @@ function renderEditor(){
   $("editor").innerHTML=`
     ${flyerPanel()}
     <section class="panel"><h2>Promo Energia FLAT</h2>
+      <label class="years">Durata prezzo bloccato (anni)<input type="number" min="1" step="1" data-path="flat.years" value="${Number(c.flat.years)||2}"></label>
       ${flatTable("Luce",c.flat.light,"light","kWh")}
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
@@ -521,6 +525,7 @@ function collectCatalog(){
     const n=Number(String(input.value).replace(",","."));
     if(!Number.isFinite(n)||n<0){error="I numeri devono essere maggiori o uguali a zero.";break}
     if(path.endsWith(".months")&&(!Number.isInteger(n)||n<1)){error="La durata è in mesi interi, almeno 1.";break}
+    if(path==="flat.years"&&(!Number.isInteger(n)||n<1)){error="La durata Flat è in anni interi, almeno 1.";break}
     setPath(next,path,n);
   }
   if(error)throw Error(error);
