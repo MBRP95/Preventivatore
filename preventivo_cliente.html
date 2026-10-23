@@ -329,6 +329,7 @@ body.fit-flyers .fs-btn.on{bottom:4px}
   },
   "flat": {
     "years": 2,
+    "expires": "2026-10-25",
     "light": [
       {"name": "START", "plafond": 800, "monthly": 47, "price": 0.3, "convergence": 10, "expires": "2026-10-25"},
       {"name": "LIGHT", "plafond": 1500, "monthly": 64, "price": 0.283, "convergence": 10, "expires": "2026-10-25"},
@@ -661,11 +662,25 @@ function parseNum(raw){
   const n=Number(s);
   return Number.isFinite(n)?n:NaN;
 }
-function commodityFromCatalog(list){return (list||[]).map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
+function commodityFromCatalog(list){return (list||[]).map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||"",visible:o.visible!==false};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
+function flatExpiryIso(cat){
+  const flat=cat&&cat.flat;
+  const direct=String(flat&&flat.expires||"").slice(0,10);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(direct))return direct;
+  for(const key of ["light","gas"]){
+    for(const p of (flat&&flat[key])||[]){
+      const d=String(p&&p.expires||"").slice(0,10);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;
+    }
+  }
+  return "";
+}
 function applyCatalog(cat){
   PROMO_CATALOG=cat;
-  LIGHT_PROMOS=cat.flat.light.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
-  GAS_PROMOS=cat.flat.gas.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+  const exp=flatExpiryIso(cat);
+  const stamp=p=>({...p,expires:exp||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)});
+  LIGHT_PROMOS=cat.flat.light.map(stamp);
+  GAS_PROMOS=cat.flat.gas.map(stamp);
   const c=cat.commodity||{};
   COMMODITY_OFFERS={
     light:{private:commodityFromCatalog(c.light&&c.light.private),piva:commodityFromCatalog(c.light&&c.light.piva)},
@@ -674,7 +689,17 @@ function applyCatalog(cat){
 }
 function offersFor(service){
   const seg=answers.segment==="piva"?"piva":"private";
-  return (COMMODITY_OFFERS&&COMMODITY_OFFERS[service]&&COMMODITY_OFFERS[service][seg])||[];
+  return ((COMMODITY_OFFERS&&COMMODITY_OFFERS[service]&&COMMODITY_OFFERS[service][seg])||[]).filter(o=>o.visible!==false);
+}
+function fixPerTeShown(){
+  const rows=(COMMODITY_OFFERS&&COMMODITY_OFFERS.light&&COMMODITY_OFFERS.light.private)||[];
+  return rows.some(o=>o.id==="luce-fix-te"&&o.visible!==false);
+}
+function fastwebHint(){
+  const te=fixPerTeShown()?" Luce Fix per Te non lo prevede.":"";
+  if(anyFlat()&&anyFx())return "Sulla Flat il canone scende di 10 € al mese. Su Fix e Flex lo sconto vale sul corrispettivo di commercializzazione."+te;
+  if(anyFx())return "Se sì, lo sconto vale sul corrispettivo di commercializzazione."+te;
+  return "Se sì, il canone della promo scende di 10 € al mese.";
 }
 function serviceHasFlex(service){return offersFor(service).some(o=>o.kind==="flex")}
 function fxFind(id){
@@ -1038,7 +1063,7 @@ const VIEWS={
   services(){return {kicker:"Inizio",...choiceView("Cosa vuoi mettere a confronto?","Scegli la luce, il gas oppure tutti e due.",[{value:"light",title:"Luce",text:"Solo energia elettrica"},{value:"gas",title:"Gas",text:"Solo gas"},{value:"both",title:"Luce e gas",text:"Le due forniture insieme"}],answers.services,v=>{answers.services=v})}},
   lightFamily(){return choiceView("Per la luce, che tipo di offerta preferisci?","",familyChoices(),answers.lightFamily,v=>{answers.lightFamily=v})},
   gasFamily(){return choiceView("Per il gas, che tipo di offerta preferisci?","",familyChoices(),answers.gasFamily,v=>{answers.gasFamily=v})},
-  fastweb(){return choiceView("Sei già cliente Fastweb o Vodafone?",anyFlat()&&anyFx()?"Sulla Flat il canone scende di 10 € al mese. Su Fix e Flex lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":anyFx()?"Se sì, lo sconto vale sul corrispettivo di commercializzazione. Luce Fix per Te non lo prevede.":"Se sì, il canone della promo scende di 10 € al mese.",[{value:"yes",title:"Sì",text:"Ho già Fastweb o Vodafone"},{value:"no",title:"No",text:"Senza sconto"}],answers.fastweb===true?"yes":answers.fastweb===false?"no":null,v=>{answers.fastweb=v==="yes"})},
+  fastweb(){return choiceView("Sei già cliente Fastweb o Vodafone?",fastwebHint(),[{value:"yes",title:"Sì",text:"Ho già Fastweb o Vodafone"},{value:"no",title:"No",text:"Senza sconto"}],answers.fastweb===true?"yes":answers.fastweb===false?"no":null,v=>{answers.fastweb=v==="yes"})},
   segment(){return choiceView("La fornitura è per un privato o per una partita IVA?","Le offerte Fix e Flex cambiano.",[{value:"private",title:"Privato",text:"Utenza domestica"},{value:"piva",title:"Partita IVA",text:"Utenza business"}],answers.segment,v=>{answers.segment=v})},
   power(){return choiceView("Che potenza ha il contatore della luce?","Oltre 3 kW il costo annuo della luce sale. Il canone in stampa resta quello della promo.",[{value:"3",title:"3 kW",text:"Nessun extra"},{value:"4.5",title:"4,5 kW",text:"+5 € al mese"},{value:"6",title:"6 kW",text:"+10 € al mese"}],answers.meterPower==null?null:String(answers.meterPower),v=>{answers.meterPower=Number(v)})},
   residency(){return choiceView("La fornitura luce è la tua residenza?","Per una seconda casa si aggiungono 12 € al mese nel costo annuo.",[{value:"resident",title:"Sì, è la residenza",text:"Nessun extra"},{value:"nonresident",title:"No, non è la residenza",text:"+12 € al mese"}],answers.residency,v=>{answers.residency=v})},

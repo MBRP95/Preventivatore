@@ -27,7 +27,10 @@
   .name{font-weight:800;white-space:nowrap}
   .muted{color:#444;font-size:12px;white-space:nowrap}
   .hint{color:#444;font-size:12px;margin:8px 0 0;line-height:1.4}
-  label.years{display:flex;flex-direction:column;gap:6px;font-weight:800;margin:0 0 12px;max-width:280px}
+  .years-row{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 12px}
+  label.years{display:flex;flex-direction:column;gap:6px;font-weight:800;max-width:280px}
+  td.show{text-align:center}
+  td.show input{width:18px;height:18px;accent-color:#111}
   .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
   .thumbs img{height:150px;width:auto;border:2px solid #111;border-radius:10px;background:#FFD000}
   .flyer-pick{margin-top:14px}
@@ -51,7 +54,7 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
-  <p>Carica il gestionale oppure il preventivo del cliente. Canoni, sconti, costi extra soglia, scadenze, durata e gli indici PUN e PSV, mese per mese, compaiono già compilati. Puoi aggiungere il mese successivo. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
+  <p>Carica il gestionale oppure il preventivo del cliente. Canoni, sconti, costi extra soglia, la scadenza delle Flat, la durata e gli indici PUN e PSV, mese per mese, compaiono già compilati. La casella Mostra nasconde un'offerta Fix o Flex. Puoi aggiungere il mese successivo. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
 </header>
 <main>
   <section class="panel">
@@ -173,6 +176,7 @@ function extractCatalog(html){
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
   const years=Number(data.flat.years);
   data.flat.years=Number.isInteger(years)&&years>=1?years:2;
+  syncFlatExpiry(data.flat);
   if(!data.indices||typeof data.indices!=="object")data.indices={};
   data.indices.series=normalizeSeries(data.indices.series);
   const newest=data.indices.series[0];
@@ -201,6 +205,23 @@ function indexRowsHtml(series){
 function dateInput(path,value){
   return `<input type="date" data-path="${path}" value="${String(value||"").slice(0,10)}">`;
 }
+function flatExpiryOf(flat){
+  const direct=String(flat&&flat.expires||"").slice(0,10);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(direct))return direct;
+  for(const key of ["light","gas"]){
+    for(const p of (flat&&flat[key])||[]){
+      const d=String(p&&p.expires||"").slice(0,10);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;
+    }
+  }
+  return "";
+}
+function syncFlatExpiry(flat){
+  if(!flat)return;
+  const exp=flatExpiryOf(flat);
+  flat.expires=exp;
+  for(const key of ["light","gas"]) for(const p of flat[key]||[]) p.expires=exp;
+}
 function setPath(obj,path,value){
   const parts=path.split(".");
   let cur=obj;
@@ -213,15 +234,15 @@ function flatTable(title,list,key,unit){
     <td>${numInput(`flat.${key}.${i}.monthly`,p.monthly,"0.01")}</td>
     <td>${numInput(`flat.${key}.${i}.convergence`,p.convergence||0,"0.01")}</td>
     <td>${numInput(`flat.${key}.${i}.price`,p.price,"0.001")}</td>
-    <td>${dateInput(`flat.${key}.${i}.expires`,p.expires)}</td>
   </tr>`).join("");
-  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th><th>Scadenza promo</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function commodityTable(title,list,path){
   const rows=list.map((o,i)=>{
     const priceLabel=o.kind==="fix"?"energy":"spread";
     const priceTitle=o.kind==="fix"?`Costo unitario €/${o.unit}`:`Spread €/${o.unit}`;
     return `<tr>
+      <td class="show"><input type="checkbox" data-path="${path}.${i}.visible" ${o.visible===false?"":"checked"} title="Mostra nel preventivo"></td>
       <td class="name">${o.name}<div class="muted">${o.kind==="fix"?"Fix":"Flex"} · ${o.unit}</div></td>
       <td>${numInput(`${path}.${i}.${priceLabel}`,o[priceLabel],"0.001")}</td>
       <td>${numInput(`${path}.${i}.comm`,o.comm,"0.01")}</td>
@@ -230,7 +251,7 @@ function commodityTable(title,list,path){
       <td>${numInput(`${path}.${i}.months`,o.months,"1")}</td>
     </tr>`;
   }).join("");
-  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Costo unitario o spread</th><th>Contributo fisso annuo €</th><th>Sconto convergenza €/mese</th><th>Scadenza promo</th><th>Durata mesi</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<h3>${title}</h3><table><thead><tr><th>Mostra</th><th>Promo</th><th>Costo unitario o spread</th><th>Contributo fisso annuo €</th><th>Sconto convergenza €/mese</th><th>Scadenza promo</th><th>Durata mesi</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function extractFlyers(html){
   const m=String(html||"").match(/<script type="application\/json" id="flyer-pages">([\s\S]*?)<\/script>/);
@@ -446,7 +467,10 @@ function renderEditor(){
   $("editor").innerHTML=`
     ${flyerPanel()}
     <section class="panel"><h2>Promo Energia FLAT</h2>
-      <label class="years">Durata prezzo bloccato (anni)<input type="number" min="1" step="1" data-path="flat.years" value="${Number(c.flat.years)||2}"></label>
+      <div class="years-row">
+        <label class="years">Durata prezzo bloccato (anni)<input type="number" min="1" step="1" data-path="flat.years" value="${Number(c.flat.years)||2}"></label>
+        <label class="years">Scadenza promo Flat${dateInput("flat.expires", c.flat.expires)}</label>
+      </div>
       ${flatTable("Luce",c.flat.light,"light","kWh")}
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
@@ -516,6 +540,7 @@ function collectCatalog(){
   let error="";
   for(const input of $("editor").querySelectorAll("[data-path]")){
     const path=input.dataset.path;
+    if(input.type==="checkbox"){setPath(next,path,!!input.checked);continue}
     if(input.type==="date"){
       if(!input.value){error="Inserisci tutte le scadenze.";break}
       setPath(next,path,input.value);
@@ -535,6 +560,7 @@ function collectCatalog(){
   const newest=next.indices.series[0];
   next.indices.pun=Number(newest.pun);
   next.indices.psv=Number(newest.psv);
+  syncFlatExpiry(next.flat);
   return next;
 }
 $("file").addEventListener("change",async e=>{

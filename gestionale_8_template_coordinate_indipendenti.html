@@ -238,13 +238,13 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
 <section class="panel"><h2>4. Salvataggio, PDF e storico</h2><div class="actions"><button id="saveQuote" disabled>Salva preventivo</button><button id="makePdf" disabled>Scarica PDF</button><button class="secondary" id="showHistory" disabled>Mostra storico</button><button class="secondary" id="showTrash" disabled>Apri cestino</button></div>
 <div id="quotePreview" class="hidden"><h3 id="quotePreviewTitle">Anteprima preventivo</h3><p class="note" id="quotePreviewNote"></p><div class="quote-frame" id="quoteFrame"></div></div>
 <div id="saveStatus" class="status">Compila i dati e calcola le promozioni.</div></section>
-<section class="panel"><h2>Listini configurati</h2><h3>Luce</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/kWh</th><th>Sconto convergenza</th><th>Scadenza</th></tr></thead><tbody id="lightPriceTable"></tbody></table><h3>Gas</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/Smc</th><th>Sconto convergenza</th><th>Scadenza</th></tr></thead><tbody id="gasPriceTable"></tbody></table><p class="note">Controlla i listini prima dell'uso con clienti reali. Per modificare canoni, sconti e scadenze apri modifica_listini.html e usa il file scaricato.</p></section>
+<section class="panel"><h2>Listini configurati</h2><p class="note" id="flatExpiryNote"></p><h3>Luce</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/kWh</th><th>Sconto convergenza</th></tr></thead><tbody id="lightPriceTable"></tbody></table><h3>Gas</h3><table><thead><tr><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Canone/anno</th><th>€/Smc</th><th>Sconto convergenza</th></tr></thead><tbody id="gasPriceTable"></tbody></table><p class="note">Controlla i listini prima dell'uso con clienti reali. Per modificare canoni, sconti e scadenze apri modifica_listini.html e usa il file scaricato.</p></section>
 </div>
 
 <div id="commodityFlow" class="hidden">
 <section class="panel">
 <h2>Preventivi Fix e Flex</h2>
-<p class="note">Sezione separata dalle promo FLAT. Stima <b>materia prima</b> e <b>corrispettivo di commercializzazione</b> delle offerte Fastweb Energia. Sconto Fastweb o Vodafone su tutte tranne <b>Luce Fix per Te</b>.</p>
+<p class="note" id="fxIntroNote">Sezione separata dalle promo FLAT. Stima <b>materia prima</b> e <b>corrispettivo di commercializzazione</b> delle offerte Fastweb Energia. Sconto Fastweb o Vodafone su tutte tranne <b>Luce Fix per Te</b>.</p>
 <div class="checks">
 <label><input type="radio" name="fxSeg" id="fxSegPrivate" value="private" checked> Privato</label>
 <label><input type="radio" name="fxSeg" id="fxSegPiva" value="piva"> P.IVA</label>
@@ -363,6 +363,7 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12p
   },
   "flat": {
     "years": 2,
+    "expires": "2026-10-25",
     "light": [
       {"name": "START", "plafond": 800, "monthly": 47, "price": 0.3, "convergence": 10, "expires": "2026-10-25"},
       {"name": "LIGHT", "plafond": 1500, "monthly": 64, "price": 0.283, "convergence": 10, "expires": "2026-10-25"},
@@ -430,8 +431,21 @@ function flatToggleCompare(reset){
 }
 function promoMonthly(p,apply){const gross=Number(p&&p.monthly||0),on=apply===undefined?flatIsFw():!!apply,disc=on?Number(p&&p.convergence||0):0;return Math.max(0,gross-disc)}
 function promoExpiryLabel(iso){const p=String(iso||"").split("-");if(p.length!==3||p.some(x=>!x))return "";return `${p[2]}/${p[1]}/${p[0]}`}
-const LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
-const GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+function flatExpiryIso(cat){
+  const flat=cat&&cat.flat;
+  const direct=String(flat&&flat.expires||"").slice(0,10);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(direct))return direct;
+  for(const key of ["light","gas"]){
+    for(const p of (flat&&flat[key])||[]){
+      const d=String(p&&p.expires||"").slice(0,10);
+      if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;
+    }
+  }
+  return "";
+}
+const FLAT_EXPIRES=flatExpiryIso(PROMO_CATALOG);
+const LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+const GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
 const $=id=>document.getElementById(id);let folderHandle=null,currentQuote=null,quotes=[],trashQuotes=[],customers=[];
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n);
 const num=n=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(n);
@@ -826,7 +840,7 @@ function openCommodityQuote(q){
   $("fxIncludeGas").checked=!!q.sections?.gas;
   $("fxLightCompareOn").checked=!!q.sections?.light?.compare;
   $("fxGasCompareOn").checked=!!q.sections?.gas?.compare;
-  fxFillOfferSelects();
+  fxFillOfferSelects({light:q.sections?.light?.offer?.id||"",gas:q.sections?.gas?.offer?.id||""});
   for(const [key,prefix,qtyId] of [["light","fxLight","fxLightMonthKwh"],["gas","fxGas","fxGasMonthSmc"]]){
     const s=q.sections?.[key]; if(!s)continue;
     const offerSel=$(prefix+"Offer");
@@ -938,7 +952,7 @@ function monthCaption(ref){
   return String(ref);
 }
 const COMMODITY_INDEX=(()=>{const row=indexSeries()[0]||{pun:0.208146,psv:0.843182};return {pun:Number(row.pun),psv:Number(row.psv)}})();
-function commodityFromCatalog(list){return list.map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
+function commodityFromCatalog(list){return list.map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||"",visible:o.visible!==false};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
 const COMMODITY_OFFERS={
   light:{private:commodityFromCatalog(PROMO_CATALOG.commodity.light.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.light.piva)},
   gas:{private:commodityFromCatalog(PROMO_CATALOG.commodity.gas.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.gas.piva)}
@@ -950,10 +964,20 @@ function fxFindOffer(id){return fxAllOffers().find(o=>o.id===id)}
 function fxSeg(){return $("fxSegPiva").checked?"piva":"private"}
 function fxServiceCompareOn(service){const el=$(service==="light"?"fxLightCompareOn":"fxGasCompareOn");return !!(el&&el.checked)}
 function fxIsFw(){return $("fxFastweb").checked}
-function fxOffersFor(service){return COMMODITY_OFFERS[service][fxSeg()]}
+function fxOffersFor(service){return COMMODITY_OFFERS[service][fxSeg()].filter(o=>o.visible!==false)}
+function fxOfferInSegment(service,id){return id?COMMODITY_OFFERS[service][fxSeg()].find(o=>o.id===id)||null:null}
 function fxSelectedOffer(service){
   const sel=$(service==="light"?"fxLightOffer":"fxGasOffer");
-  return fxOffersFor(service).find(o=>o.id===sel.value)||fxOffersFor(service)[0];
+  return fxOfferInSegment(service, sel&&sel.value)||fxOffersFor(service)[0];
+}
+function fxFixPerTeShown(){
+  return ["private","piva"].some(seg=>(COMMODITY_OFFERS.light[seg]||[]).some(o=>o.id==="luce-fix-te"&&o.visible!==false));
+}
+function fxSyncIntro(){
+  const el=$("fxIntroNote");
+  if(!el)return;
+  const base="Sezione separata dalle promo FLAT. Stima <b>materia prima</b> e <b>corrispettivo di commercializzazione</b> delle offerte Fastweb Energia. Sconto Fastweb o Vodafone su tutte";
+  el.innerHTML=fxFixPerTeShown()?base+" tranne <b>Luce Fix per Te</b>.":base+".";
 }
 function fxCommAfter(offer,isFw){
   const disc=(isFw && Number(offer.discountMonth)>0)?Number(offer.discountMonth)*12:0;
@@ -979,14 +1003,18 @@ function setToolMode(mode){
     if(currentQuote)showQuotePreview(currentQuote);
   }
 }
-function fxFillOfferSelects(){
+function fxFillOfferSelects(keep){
+  keep=keep||{};
   for(const [svc,id] of [["light","fxLightOffer"],["gas","fxGasOffer"]]){
     const sel=$(id); if(!sel)continue;
-    const prev=sel.value;
+    const prev=keep[svc]||sel.value;
     const list=fxOffersFor(svc);
-    sel.innerHTML=list.map(o=>`<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join("");
-    if(list.some(o=>o.id===prev))sel.value=prev;
+    const hidden=prev&&!list.some(o=>o.id===prev)?fxOfferInSegment(svc,prev):null;
+    const rows=hidden?[hidden,...list]:list;
+    sel.innerHTML=rows.map(o=>`<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join("");
+    if(rows.some(o=>o.id===prev))sel.value=prev;
   }
+  fxSyncIntro();
   fxToggleBoxes();
 }
 function fxFillMonthSelects(){
@@ -1303,6 +1331,7 @@ function renderCommodityRateTables(){
   for(const [svc,svcL] of [["light","Luce"],["gas","Gas"]]){
     for(const [seg,segL] of [["private","Privato"],["piva","P.IVA"]]){
       for(const o of COMMODITY_OFFERS[svc][seg]){
+        if(o.visible===false)continue;
         const energy=o.kind==="fix"
           ?`${fxRateText(o,"energy")} €/${o.unit}`
           :`spread ${fxRateText(o,"spread")} €/${o.unit}`;
@@ -1317,7 +1346,7 @@ $("chooseFolder").addEventListener("click",chooseFolder);$("folderPickerFallback
 $("includeLight").addEventListener("change",()=>{$("lightInputs").classList.toggle("hidden",!$("includeLight").checked)});$("includeGas").addEventListener("change",()=>{$("gasInputs").classList.toggle("hidden",!$("includeGas").checked)});
 $("lightCompare").addEventListener("change",()=>flatToggleCompare(true));
 $("gasCompare").addEventListener("change",()=>flatToggleCompare(true));
-function renderFlatPriceTables(){const row=(p,unit)=>`<tr><td>${escapeHtml(p.name)}</td><td>${num(p.plafond)} ${unit}</td><td>${money(p.monthly)}</td><td>${money(p.annual)}</td><td>${money(p.price)}</td><td>${money(p.convergence||0)}</td><td>${escapeHtml(promoExpiryLabel(p.expires))}</td></tr>`;$("lightPriceTable").innerHTML=LIGHT_PROMOS.map(p=>row(p,"kWh")).join("");$("gasPriceTable").innerHTML=GAS_PROMOS.map(p=>row(p,"Smc")).join("")}
+function renderFlatPriceTables(){const row=(p,unit)=>`<tr><td>${escapeHtml(p.name)}</td><td>${num(p.plafond)} ${unit}</td><td>${money(p.monthly)}</td><td>${money(p.annual)}</td><td>${money(p.price)}</td><td>${money(p.convergence||0)}</td></tr>`;$("lightPriceTable").innerHTML=LIGHT_PROMOS.map(p=>row(p,"kWh")).join("");$("gasPriceTable").innerHTML=GAS_PROMOS.map(p=>row(p,"Smc")).join("");const note=$("flatExpiryNote");if(note){const label=promoExpiryLabel(FLAT_EXPIRES||(LIGHT_PROMOS[0]&&LIGHT_PROMOS[0].expires));note.textContent=label?"Scadenza promo Flat: "+label:""}}
 renderFlatPriceTables();
 $("modeFlat").addEventListener("click",()=>setToolMode("flat"));
 $("modeCommodity").addEventListener("click",()=>setToolMode("commodity"));
@@ -1329,8 +1358,8 @@ $("fxLightCompareOn").addEventListener("change",fxToggleBoxes);
 $("fxGasCompareOn").addEventListener("change",fxToggleBoxes);
 $("fxLightBimonthly").addEventListener("change",fxToggleBoxes);
 $("fxGasBimonthly").addEventListener("change",fxToggleBoxes);
-$("fxLightOffer").addEventListener("change",fxToggleBoxes);
-$("fxGasOffer").addEventListener("change",fxToggleBoxes);
+$("fxLightOffer").addEventListener("change",()=>fxFillOfferSelects());
+$("fxGasOffer").addEventListener("change",()=>fxFillOfferSelects());
 $("fxCalculate").addEventListener("click",calculateCommodity);
 $("fxPdf").addEventListener("click",makeCommodityPdf);
 $("fxSave").addEventListener("click",saveCommodityQuote);
