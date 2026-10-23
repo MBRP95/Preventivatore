@@ -162,7 +162,7 @@ body.fit-flyers .fs-btn.on{bottom:4px}
 .ccmpbox .val{font-size:18px;font-weight:900;margin-top:4px}
 .ccmpgrid .ccmpbox .val{margin-top:auto}
 .ccmpbox.save .val{color:#0F6B28}
-.ccmpbox.save .lbl{color:#1B6B32}
+.ccmpbox.save .lbl{color:#1B6B32;line-height:1.3}
 .ccmp .meta{font-size:11px;margin-top:8px;color:#333;line-height:1.4}
 .cpair .ccmp .meta{min-height:4.4em}
 .cpage.has-cmp .ccard{padding:12px 14px}
@@ -756,7 +756,7 @@ function fxCompareCard(s){
   const energyBit=flex?`${qty} × (${idx} ${unitPrice(d.indexValue,s.unit)} + ${unitPrice(s.spread,s.unit)})`:`${qty} × ${unitPrice(d.newUnit,s.unit)}`;
   const originMeta=bi?"":`Fisso ${money(d.fixedNow)} + quota consumi ${money(d.consumptionQuota)}`;
   const newMeta=bi?"":`Fisso ${money(d.newFixed)} + ${energyBit}`;
-  return `<div class="ccmp"><h4>Paragone${month?" · "+month:""}${bi?" · bimensile":""}</h4><div class="ccmpgrid"><div class="ccmpbox"><div class="lbl">Contratto attuale</div>${originMeta?`<div class="meta">${originMeta}</div>`:""}<div class="val">${money(d.currentTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div><div class="ccmpbox new"><div class="lbl">Con noi</div>${newMeta?`<div class="meta">${newMeta}</div>`:""}<div class="val">${money(d.newTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div></div><div class="ccmpbox save"><div class="lbl">Risparmio</div><div class="val">${money(Math.abs(d.saving))}<span class="u">al mese</span></div></div></div>`;
+  return `<div class="ccmp"><h4>Paragone${month?" · "+month:""}${bi?" · bimensile":""}</h4><div class="ccmpgrid"><div class="ccmpbox"><div class="lbl">Contratto attuale</div>${originMeta?`<div class="meta">${originMeta}</div>`:""}<div class="val">${money(d.currentTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div><div class="ccmpbox new"><div class="lbl">Con noi</div>${newMeta?`<div class="meta">${newMeta}</div>`:""}<div class="val">${money(d.newTotal)}${bi?"":`<span class="u">al mese</span>`}</div></div></div><div class="ccmpbox save"><div class="lbl">Risparmio rispetto a questa fattura</div><div class="val">${money(Math.abs(d.saving))}<span class="u">al mese</span></div></div></div>`;
 }
 function fxServiceCard(q,key,title,withCompare){
   const s=q.sections[key]; if(!s)return "";
@@ -1045,7 +1045,7 @@ function fxCards(service){
     const calc=calcCommodityService(service,offer,!!answers.fastweb,fxCompareInput(service,offer));
     const save=fxCompareVisible(calc);
     const te=offer.id==="luce-fix-te"&&answers.fastweb?`<small>Questa offerta non ha lo sconto Fastweb o Vodafone.</small>`:"";
-    return `<button type="button" class="pcard ${selected===offer.id?"selected":""}" data-offer="${escapeHtml(offer.id)}"><b class="pname">${escapeHtml(offer.name)}</b><div class="pmeta">${fxEnergyTitle(service)}: ${fxEnergyText(offer,calc.indexUsed)}</div><div class="pmeta">Fisso ${money(calc.monthly)} al mese</div>${te}${save?`<div class="psave">Risparmio ${money(calc.compare.saving)} al mese</div>`:""}</button>`;
+    return `<button type="button" class="pcard ${selected===offer.id?"selected":""}" data-offer="${escapeHtml(offer.id)}"><b class="pname">${escapeHtml(offer.name)}</b><div class="pmeta">${fxEnergyTitle(service)}: ${fxEnergyText(offer,calc.indexUsed)}</div><div class="pmeta">Fisso ${money(calc.monthly)} al mese</div>${te}${save?`<div class="psave">Risparmio rispetto a questa fattura ${money(calc.compare.saving)} al mese</div>`:""}</button>`;
   }).join("");
   return `<div class="promo-grid">${cards}</div>`;
 }
