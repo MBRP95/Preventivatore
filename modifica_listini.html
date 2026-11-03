@@ -222,6 +222,13 @@ function extractAccess(html){
     return /^[a-f0-9]{64}$/.test(hash)?hash:"";
   }catch(e){return ""}
 }
+function stampPageRev(html){
+  if(!String(html||"").includes('name="page-rev"'))return html;
+  const rev=new Date().toISOString();
+  const next=html.replace(/name="page-rev" content="[^"]*"/,'name="page-rev" content="'+rev+'"');
+  if(next===html)throw Error("Impossibile aggiornare la revisione del file.");
+  return next;
+}
 function replaceAccess(html,hash){
   const block='<script type="application/json" id="site-access">{"sha256":"'+hash+'"}</scr'+'ipt>';
   const next=html.replace(/<script type="application\/json" id="site-access">[\s\S]*?<\/script>/,block);
@@ -935,6 +942,7 @@ $("download").addEventListener("click",async()=>{
       let html=replaceCatalog(src.html,next);
       if(slot==="cliente") html=applyClientExtras(html);
       if(slot==="gestionale"&&newHash) html=replaceAccess(html,newHash);
+      if(slot==="gestionale") html=stampPageRev(html);
       built.push({slot,name:src.name,html});
     }
     if(window.__SITE){

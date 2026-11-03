@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-03T21:48:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -1546,13 +1546,22 @@ async function initSite(){
 }
 
 async function downloadLocalHtml(){
-  if(location.protocol==="file:"){alert("Questo file è già sul computer.");return}
   const btn=$("downloadHtml");
   btn.disabled=true;
   try{
-    const res=await fetch(location.href,{cache:"no-store"});
-    if(!res.ok)throw Error("Risposta "+res.status);
-    const html=await res.text();
+    const urlMeta=document.querySelector('meta[name="update-url"]');
+    let html="";
+    if(urlMeta&&urlMeta.content){
+      try{
+        const remote=await fetch(urlMeta.content+(urlMeta.content.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+        if(remote.ok)html=await remote.text();
+      }catch(e){}
+    }
+    if(!html.includes('id="promo-catalog"')&&location.protocol!=="file:"){
+      const res=await fetch(location.href,{cache:"no-store"});
+      if(!res.ok)throw Error("Risposta "+res.status);
+      html=await res.text();
+    }
     if(!html.includes('id="promo-catalog"'))throw Error("File non riconosciuto");
     const a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
@@ -1601,4 +1610,34 @@ restoreFirefoxArchive();
 if(window.__SITE)initSite();
 
 
-</script></body></html>
+</script>
+<script>
+(function(){
+  const metaRev=document.querySelector('meta[name="page-rev"]');
+  const metaUrl=document.querySelector('meta[name="update-url"]');
+  if(!metaRev||!metaUrl||!metaUrl.content)return;
+  const localRev=metaRev.content||"";
+  let dirty=false;
+  document.addEventListener("input",()=>{dirty=true},true);
+  document.addEventListener("change",()=>{dirty=true},true);
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),8000);
+  fetch(metaUrl.content+(metaUrl.content.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store",signal:ctrl.signal}).then(r=>{
+    if(!r.ok)throw Error(String(r.status));
+    return r.text();
+  }).then(html=>{
+    clearTimeout(timer);
+    if(dirty)return;
+    const found=html.match(/name="page-rev" content="([^"]*)"/);
+    const remoteRev=found?found[1]:"";
+    if(!remoteRev||remoteRev<=localRev)return;
+    if(!html.includes('id="promo-catalog"')||!html.includes('name="update-url"'))return;
+    if(sessionStorage.getItem("preventivatore-update-rev")===remoteRev)return;
+    sessionStorage.setItem("preventivatore-update-rev",remoteRev);
+    document.open();
+    document.write(html);
+    document.close();
+  }).catch(()=>{});
+})();
+</script>
+</body></html>
