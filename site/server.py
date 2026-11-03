@@ -832,7 +832,15 @@ def main() -> None:
         print(f"Preventivatore su http://127.0.0.1:{port}")
         if DEV:
             print("Prova: password negozio, PIN Modena 1001, PIN Verona 1002, admin admin")
-    server = ThreadingHTTPServer(("0.0.0.0", port), App)
+    try:
+        server = ThreadingHTTPServer(("0.0.0.0", port), App)
+    except OSError:
+        print(f"La porta {port} è già in uso. Chiudi l'altra finestra del sito e riprova.")
+        return
+    if os.environ.get("SITE_OPEN") == "1":
+        import webbrowser
+        threading.Timer(0.7, lambda: webbrowser.open(f"http://127.0.0.1:{port}/")).start()
+    print("Per spegnere il sito chiudi questa finestra.")
     server.serve_forever()
 
 
