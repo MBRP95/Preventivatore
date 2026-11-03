@@ -5,7 +5,7 @@
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fff7a8 0,#fffbea 230px,#fffbea 100%)}header{background:var(--fw-yellow);color:var(--fw-ink);padding:22px 24px;border-bottom:4px solid var(--fw-ink)}header h1{font-size:24px;margin:0 0 5px;font-weight:900;letter-spacing:-.4px}header p{margin:0;color:#403c27;font-size:14px}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fff7a8 0,#fffbea 230px,#fffbea 100%)}header{background:var(--fw-yellow);color:var(--fw-ink);padding:22px 24px;border-bottom:4px solid var(--fw-ink);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}header h1{font-size:24px;margin:0;font-weight:900;letter-spacing:-.4px}header p{margin:0;color:#403c27;font-size:14px}header button{background:#fff}
 main{max-width:1100px;margin:22px auto;padding:0 16px 40px}.panel{background:#fff;border:1px solid var(--fw-border);border-top:4px solid var(--fw-yellow);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 12px #3e330d0a}
 h2{font-size:17px;margin:0 0 14px;color:var(--fw-ink)}h3{color:#49432a}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 label{display:block;font-size:13px;font-weight:700;color:#39352b}input,select{display:block;width:100%;margin-top:6px;padding:10px 11px;border:1px solid #d4c86a;border-radius:7px;font:inherit;background:#fffef5}input:focus,select:focus{outline:2px solid #f2d900;outline-offset:1px;border-color:#b9a800}
@@ -288,7 +288,7 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 });
 })();
 </script>
-<header><h1>Gestionale preventivi energia</h1></header>
+<header><h1>Gestionale preventivi energia</h1><button type="button" id="downloadHtml">Scarica HTML per uso locale</button></header>
 <main>
 <section class="panel"><h2>1. Archivio sul computer</h2>
 <div class="actions"><button id="chooseFolder">Seleziona cartella sul computer</button><button class="secondary" id="loadArchive" disabled>Carica archivio</button><button class="secondary" id="exportBackup">Esporta backup JSON</button><button class="secondary" id="importBackup">Importa backup JSON</button><input id="backupFile" type="file" accept=".json,application/json" class="hidden"><input id="folderPickerFallback" type="file" class="hidden" webkitdirectory multiple></div><div id="folderStatus" class="status">Nessuna cartella selezionata. Lo storico resta sul computer del negozio. Puoi comunque fare calcoli e stampare il PDF.</div></section>
@@ -1545,6 +1545,29 @@ async function initSite(){
   try{await loadArchiveSite()}catch(e){$("folderStatus").textContent=e.message}
 }
 
+async function downloadLocalHtml(){
+  if(location.protocol==="file:"){alert("Questo file è già sul computer.");return}
+  const btn=$("downloadHtml");
+  btn.disabled=true;
+  try{
+    const res=await fetch(location.href,{cache:"no-store"});
+    if(!res.ok)throw Error("Risposta "+res.status);
+    const html=await res.text();
+    if(!html.includes('id="promo-catalog"'))throw Error("File non riconosciuto");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+    a.download="PreventivatoreStore.html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  }catch(e){
+    alert("Download non riuscito. Apri la pagina dal sito e riprova.");
+  }finally{
+    btn.disabled=false;
+  }
+}
+$("downloadHtml").addEventListener("click",downloadLocalHtml);
 $("chooseFolder").addEventListener("click",chooseFolder);$("folderPickerFallback").addEventListener("change",async e=>{const files=[...(e.target.files||[])];e.target.value="";try{await importFirefoxFolder(files)}catch(err){$("folderStatus").textContent="Lettura cartella non riuscita: "+(err&&err.message?err.message:err)}});$("loadArchive").addEventListener("click",loadArchive);$("calculate").addEventListener("click",calculate);$("clear").addEventListener("click",clearForm);$("saveQuote").addEventListener("click",saveQuote);$("makePdf").addEventListener("click",makePdf);$("showHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});$("showTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});$("exportBackup").addEventListener("click",exportBackup);$("importBackup").addEventListener("click",()=>$("backupFile").click());$("backupFile").addEventListener("change",e=>{if(e.target.files[0])importBackupFile(e.target.files[0]);e.target.value=""});
 $("includeLight").addEventListener("change",()=>{$("lightInputs").classList.toggle("hidden",!$("includeLight").checked)});$("includeGas").addEventListener("change",()=>{$("gasInputs").classList.toggle("hidden",!$("includeGas").checked)});
 $("lightCompare").addEventListener("change",()=>flatToggleCompare(true));
