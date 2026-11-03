@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-03T22:40:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-03T22:50:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -421,9 +421,14 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 <script type="application/json" id="promo-catalog">
 {
   "indices": {
-    "pun": 0.208146,
-    "psv": 0.843182,
+    "pun": 0.230817,
+    "psv": 0.945436,
     "series": [
+      {
+        "id": "2026-10",
+        "pun": 0.230817,
+        "psv": 0.945436
+      },
       {
         "id": "2026-09",
         "pun": 0.208146,
@@ -478,11 +483,6 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
         "id": "2025-11",
         "pun": 0.111583,
         "psv": 0.348704
-      },
-      {
-        "id": "2025-10",
-        "pun": 0.107552,
-        "psv": 0.35367
       }
     ]
   },
@@ -1177,6 +1177,7 @@ function importBackupFile(file){if(window.__SITE)return importBackupSite(file);c
 let currentCommodityQuote=null;
 const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const INDEX_SERIES_FALLBACK=[
+  {id:"2026-10",pun:0.230817,psv:0.945436},
   {id:"2026-09",pun:0.208146,psv:0.843182},
   {id:"2026-08",pun:0.182468,psv:0.686448},
   {id:"2026-07",pun:0.1585,psv:0.606612},
@@ -1187,8 +1188,7 @@ const INDEX_SERIES_FALLBACK=[
   {id:"2026-02",pun:0.110572,psv:0.376788},
   {id:"2026-01",pun:0.124858,psv:0.403934},
   {id:"2025-12",pun:0.109359,psv:0.327985},
-  {id:"2025-11",pun:0.111583,psv:0.348704},
-  {id:"2025-10",pun:0.107552,psv:0.35367}
+  {id:"2025-11",pun:0.111583,psv:0.348704}
 ];
 function indexSeries(){
   const raw=PROMO_CATALOG&&PROMO_CATALOG.indices&&PROMO_CATALOG.indices.series;
