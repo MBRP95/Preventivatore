@@ -70,14 +70,56 @@ function mode(){
 }
 
 function clone(v){return JSON.parse(JSON.stringify(v))}
+const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const INDEX_SERIES_FALLBACK=[
+  {id:"2026-09",pun:0.208146,psv:0.843182},
+  {id:"2026-08",pun:0.182468,psv:0.686448},
+  {id:"2026-07",pun:0.1585,psv:0.606612},
+  {id:"2026-06",pun:0.135691,psv:0.499366},
+  {id:"2026-05",pun:0.124464,psv:0.501752},
+  {id:"2026-04",pun:0.123399,psv:0.492325},
+  {id:"2026-03",pun:0.143582,psv:0.5997699},
+  {id:"2026-02",pun:0.110572,psv:0.376788},
+  {id:"2026-01",pun:0.124858,psv:0.403934},
+  {id:"2025-12",pun:0.109359,psv:0.327985},
+  {id:"2025-11",pun:0.111583,psv:0.348704},
+  {id:"2025-10",pun:0.107552,psv:0.35367}
+];
+function monthTitle(id){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return String(id||"");
+  const name=MONTHS_IT[Number(m[2])-1]||"";
+  return name?name+" "+m[1]:String(id);
+}
+function shiftMonthId(id,delta){
+  const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
+  if(!m)return "";
+  const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+}
+function normalizeSeries(list){
+  const rows=Array.isArray(list)?list:[];
+  const clean=[];
+  for(const row of rows){
+    const id=String(row&&row.id||"");
+    if(!/^\d{4}-\d{2}$/.test(id))continue;
+    const pun=Number(row.pun), psv=Number(row.psv);
+    if(!Number.isFinite(pun)||pun<0||!Number.isFinite(psv)||psv<0)continue;
+    clean.push({id,pun,psv});
+  }
+  const src=clean.length?clean:INDEX_SERIES_FALLBACK.map(r=>({id:r.id,pun:r.pun,psv:r.psv}));
+  src.sort((a,b)=>a.id<b.id?1:-1);
+  return src.slice(0,12);
+}
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
   if(!m)throw Error("Questo file non contiene il listino.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
   if(!data.indices||typeof data.indices!=="object")data.indices={};
-  if(data.indices.pun==null||data.indices.pun==="")data.indices.pun=0.207542;
-  if(data.indices.psv==null||data.indices.psv==="")data.indices.psv=0.843182;
+  data.indices.series=normalizeSeries(data.indices.series);
+  data.indices.pun=Number(data.indices.series[0].pun);
+  data.indices.psv=Number(data.indices.series[0].psv);
   ensureOfferIds(data);
   return data;
 }
@@ -126,6 +168,13 @@ function numInput(path,value,step){
 }
 function textInput(path,value){
   return `<input type="text" data-path="${path}" value="${esc(value)}">`;
+}
+function indexRowsHtml(series){
+  return (series||[]).map((row,i)=>`<tr>
+    <td class="name">${monthTitle(row.id)}</td>
+    <td>${numInput(`indices.series.${i}.pun`,row.pun,"any")}</td>
+    <td>${numInput(`indices.series.${i}.psv`,row.psv,"any")}</td>
+  </tr>`).join("");
 }
 function dateInput(path,value){
   return `<input type="date" data-path="${path}" value="${esc(String(value||"").slice(0,10))}">`;
@@ -189,10 +238,10 @@ function renderEditor(){
       </tr></tbody></table>
       <p class="hint">${flatHint}</p>`:"";
   const indexHint=fileKind==="both"
-    ?"Questi valori valgono per tutti e due: nel gestionale sono il PUN e il PSV di partenza, nel preventivo cliente sono quelli del mese più recente."
+    ?"Questi mesi valgono per tutti e due. Nel preventivo cliente il valore si carica scegliendo il mese; nel gestionale il PUN e il PSV di partenza sono quelli del mese più recente. Con la fattura bimensile si sceglie solo il primo mese. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio."
     :fileKind==="cliente"
-    ?"Questi valori aggiornano il PUN e il PSV del mese più recente nel preventivo del cliente."
-    :"Questi valori compilano il PUN e il PSV di partenza nel gestionale.";
+    ?"Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si sceglie solo il primo mese: il successivo entra da solo e si usa la media. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio."
+    :"Il PUN e il PSV di partenza nel gestionale sono quelli del mese più recente. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio.";
   $("editor").innerHTML=`
     <section class="panel"><h2>Promo Energia FLAT</h2>
       ${flatShared}
@@ -200,12 +249,12 @@ function renderEditor(){
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
     <section class="panel"><h2>Fix e Flex</h2>
-      <h3>Indici di default</h3>
-      <table><thead><tr><th>PUN di default €/kWh</th><th>PSV di default €/Smc</th></tr></thead><tbody><tr>
-        <td>${numInput("indices.pun",c.indices.pun,"any")}</td>
-        <td>${numInput("indices.psv",c.indices.psv,"any")}</td>
-      </tr></tbody></table>
+      <h3>Indici PUN e PSV</h3>
+      <table><thead><tr><th>Mese</th><th>PUN €/kWh</th><th>PSV €/Smc</th></tr></thead><tbody>
+        ${indexRowsHtml(c.indices.series)}
+      </tbody></table>
       <p class="hint">${indexHint}</p>
+      <div class="add-row"><button type="button" id="addIndexMonth">Aggiungi mese successivo</button></div>
       ${commodityGroup("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityGroup("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
       ${commodityGroup("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
@@ -214,7 +263,28 @@ function renderEditor(){
   $("editor").classList.remove("hidden");
   $("editor").querySelectorAll("[data-add]").forEach(btn=>btn.addEventListener("click",()=>addPromo(btn.dataset.add)));
   $("editor").querySelectorAll("[data-remove]").forEach(btn=>btn.addEventListener("click",()=>removePromo(btn.dataset.remove)));
+  const addMonth=$("addIndexMonth");
+  if(addMonth) addMonth.addEventListener("click",addNextIndexMonth);
   $("editor").addEventListener("input",()=>{dirty=true});
+}
+function addNextIndexMonth(){
+  let next;
+  try{next=collectCatalog();syncSeries(next)}
+  catch(err){$("status").textContent=err&&err.message?err.message:String(err);return}
+  const series=next.indices.series;
+  const newest=series[0];
+  const id=shiftMonthId(newest.id,1);
+  if(series.some(r=>r.id===id)){$("status").textContent=monthTitle(id)+" è già in elenco.";return}
+  series.unshift({id,pun:"",psv:""});
+  let dropped="";
+  if(series.length>12){const old=series.pop();dropped=monthTitle(old.id)}
+  catalog=next;
+  dirty=true;
+  renderEditor();
+  const pun=document.querySelector('[data-path="indices.series.0.pun"]');
+  if(pun){pun.focus();pun.scrollIntoView({block:"center"})}
+  const scarica=fileKind==="both"?"poi scarica i due file.":"poi scarica il file.";
+  $("status").textContent=dropped?`Aggiunto ${monthTitle(id)}. ${dropped} esce dall'elenco. Inserisci PUN e PSV, ${scarica}`:`Aggiunto ${monthTitle(id)}. Inserisci PUN e PSV, ${scarica}`;
 }
 function applyInputs(next){
   for(const input of $("editor").querySelectorAll("[data-path]")){
@@ -340,13 +410,23 @@ function syncClientCatalog(data){
   for(const key of ["light","gas"]){
     for(const p of data.flat[key]||[]) p.expires=data.flat.expires;
   }
-  data.indices.pun=requireNum(data.indices.pun,"Il PUN deve essere un numero, zero o più.",true);
-  data.indices.psv=requireNum(data.indices.psv,"Il PSV deve essere un numero, zero o più.",true);
-  const series=data.indices.series;
-  if(Array.isArray(series)&&series.length){
-    const newest=[...series].sort((a,b)=>String(a.id)<String(b.id)?1:-1)[0];
-    if(newest){newest.pun=data.indices.pun;newest.psv=data.indices.psv}
+}
+function syncSeries(data){
+  if(!data.indices||typeof data.indices!=="object") data.indices={};
+  const rows=Array.isArray(data.indices.series)?data.indices.series:[];
+  if(!rows.length) throw Error("Elenco indici vuoto.");
+  const clean=[];
+  for(const row of rows){
+    const id=String(row&&row.id||"");
+    if(!/^\d{4}-\d{2}$/.test(id)) throw Error("Mese indice non valido.");
+    const pun=requireNum(row.pun,"Il PUN di "+monthTitle(id)+" deve essere un numero, zero o più.",true);
+    const psv=requireNum(row.psv,"Il PSV di "+monthTitle(id)+" deve essere un numero, zero o più.",true);
+    clean.push({id,pun,psv});
   }
+  clean.sort((a,b)=>a.id<b.id?1:-1);
+  data.indices.series=clean.slice(0,12);
+  data.indices.pun=data.indices.series[0].pun;
+  data.indices.psv=data.indices.series[0].psv;
 }
 function loadFileText(file){
   return new Promise((resolve,reject)=>{
@@ -479,6 +559,7 @@ $("download").addEventListener("click",()=>{
   try{
     const next=collectCatalog();
     syncClientCatalog(next);
+    syncSeries(next);
     const names=[];
     for(const slot of ["gestionale","cliente"]){
       const src=loaded[slot];
