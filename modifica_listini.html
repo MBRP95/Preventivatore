@@ -337,8 +337,9 @@ function flyerStatusText(){
   const areas=activeButtons();
   const missing=pages.filter((_,i)=>!validArea(areas[i])).length;
   const scarica=scaricaWord();
-  if(flyerPages&&missing)return `Nuovo PDF: ${pages.length} pagine. Disegna il riquadro del pulsante su ${missing===pages.length?"ogni pagina":missing+" "+(missing===1?"pagina":"pagine")} prima di scaricare.`;
-  if(flyerPages)return `Nuovo PDF pronto: ${pages.length} pagine, con il pulsante posizionato. ${scarica} per applicarlo.`;
+  const pagine=pages.length===1?"1 pagina":pages.length+" pagine";
+  if(flyerPages&&missing)return `Nuovo PDF: ${pagine}. Disegna il riquadro del pulsante su ${missing===pages.length?"ogni pagina":missing+" "+(missing===1?"pagina":"pagine")} prima di scaricare.`;
+  if(flyerPages)return `Nuovo PDF pronto: ${pagine}, con il pulsante posizionato. ${scarica} per applicarlo.`;
   if(buttonsDirty)return `Posizione dei pulsanti aggiornata. ${scarica} per applicarla.`;
   return "Il PDF attuale è quello già presente nel file. Trascina un riquadro per aggiungere il pulsante: poi puoi spostarlo, ingrandirlo o cancellarlo.";
 }
