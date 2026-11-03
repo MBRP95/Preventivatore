@@ -5,11 +5,16 @@ Cliente: /cliente, senza password.
 Shop assistant: password generale + PIN del negozio.
 Amministratore: password separata, gestisce negozi e pubblica le offerte.
 
-Avvio locale di prova:
+Avvio locale di prova, con negozio e amministratore:
   SITE_DEV=1 python3 site/server.py
 Password di prova: negozio / PIN 1001 (Modena) e 1002 (Verona). Admin: admin.
 
-In produzione imposta SHOP_PASSWORD e ADMIN_PASSWORD.
+Sito pubblico solo tablet, senza archivio clienti:
+  SITE_TABLET=1 python3 site/server.py
+Qui la pagina è il preventivatore del cliente. I consumi restano nel browser.
+Non esistono login, negozio, amministratore né preventivi salvati.
+
+In produzione del sito completo imposta SHOP_PASSWORD e ADMIN_PASSWORD.
 I dati stanno in site/data/ e non vanno pubblicati.
 """
 from __future__ import annotations
@@ -36,6 +41,8 @@ TABLET_FILE = ROOT / "PreventivatoreTablet.html"
 EDITOR_FILE = ROOT / "modifica_listini.html"
 
 DEV = os.environ.get("SITE_DEV") == "1"
+TABLET_ONLY = os.environ.get("SITE_TABLET") == "1"
+_TABLET_CACHE = {"mtime": None, "html": ""}
 LOCK = threading.Lock()
 FAILS: dict[str, list[float]] = {}
 
@@ -617,6 +624,10 @@ class App(BaseHTTPRequestHandler):
                 pass
 
     def dispatch(self, method: str, path: str, query: dict) -> None:
+        if TABLET_ONLY:
+            if method == "GET" and path in ("/", "/cliente"):
+                return self.send_html(tablet_file())
+            return self.send_json(404, {"error": "Pagina non trovata"})
         if method == "GET" and path == "/":
             return self.send_html((SITE / "index.html").read_text(encoding="utf-8"))
         if method == "GET" and path == "/accesso":
@@ -804,13 +815,24 @@ class App(BaseHTTPRequestHandler):
         return self.send_json(200, {"shops": shops_public()})
 
 
+def tablet_file() -> str:
+    mtime = TABLET_FILE.stat().st_mtime
+    if _TABLET_CACHE["mtime"] != mtime:
+        _TABLET_CACHE["mtime"] = mtime
+        _TABLET_CACHE["html"] = TABLET_FILE.read_text(encoding="utf-8")
+    return _TABLET_CACHE["html"]
+
+
 def main() -> None:
-    seed()
     port = int(os.environ.get("PORT") or "8080")
+    if TABLET_ONLY:
+        print(f"Solo tablet su http://127.0.0.1:{port}. Nessun archivio clienti.")
+    else:
+        seed()
+        print(f"Preventivatore su http://127.0.0.1:{port}")
+        if DEV:
+            print("Prova: password negozio, PIN Modena 1001, PIN Verona 1002, admin admin")
     server = ThreadingHTTPServer(("0.0.0.0", port), App)
-    print(f"Preventivatore su http://127.0.0.1:{port}")
-    if DEV:
-        print("Prova: password negozio, PIN Modena 1001, PIN Verona 1002, admin admin")
     server.serve_forever()
 
 
