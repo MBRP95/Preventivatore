@@ -52,7 +52,6 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
-  <p>Carica il gestionale e il preventivo cliente. Il listino si modifica una volta: se sono caricati tutti e due, il download aggiorna entrambi i file. Sotto Flat, Fix e Flex puoi aggiungere una promo o toglierne una. Nel preventivo cliente puoi sostituire il PDF dei volantini e spostare il pulsante «Calcola il preventivo per te!».</p>
 </header>
 <main>
   <section class="panel">
@@ -368,7 +367,7 @@ function flyerPanel(){
   const pages=currentFlyers();
   const handles=["nw","ne","sw","se"].map(h=>`<i class="flyer-handle ${h}" data-h="${h}"></i>`).join("");
   const stages=pages.length?pages.map((src,i)=>`<div class="flyer-pick"><p class="hint">Pagina ${i+1}. Trascina sulla pagina per disegnare il pulsante. Trascinalo per spostarlo, usa gli angoli per ingrandirlo o ridurlo.</p><div class="flyer-canvas" data-i="${i}"><img alt="Volantino ${i+1}" draggable="false" src="${src}"><div class="flyer-box" hidden><span class="flyer-label">Calcola il preventivo per te! →</span>${handles}</div></div><div class="actions" style="margin-top:8px"><button type="button" class="secondary flyer-clear">Cancella pulsante</button></div></div>`).join(""):`<p class="hint">Nessun volantino in questo file.</p>`;
-  return `<section class="panel"><h2>Volantini</h2><p class="hint">Sono la prima schermata del preventivo sul tablet. Su ogni pagina trascina un riquadro nella zona libera: il pulsante «Calcola il preventivo per te!» avrà esattamente quella posizione e quella dimensione. Puoi spostarlo, ingrandirlo o ridurlo dagli angoli, oppure cancellarlo. Carica un PDF quando le promo cambiano e ridisegna i riquadri. Il PDF e il pulsante restano nel preventivo cliente.</p>${stages}<div class="actions" style="margin-top:12px"><label class="file">Carica PDF volantini<input id="flyerFile" type="file" accept="application/pdf,.pdf"></label></div><p id="flyerStatus" class="hint">${flyerStatusText()}</p></section>`;
+  return `<section class="panel"><h2>Volantini</h2>${stages}<div class="actions" style="margin-top:12px"><label class="file">Carica PDF volantini<input id="flyerFile" type="file" accept="application/pdf,.pdf"></label></div><p id="flyerStatus" class="hint">${flyerStatusText()}</p></section>`;
 }
 function bindFlyerInput(){
   const input=$("flyerFile");
@@ -519,10 +518,10 @@ function renderEditor(){
       </tr></tbody></table>
       <p class="hint">${flatHint}</p>`;
   const indexHint=fileKind==="both"
-    ?"Questi mesi valgono per tutti e due. Nel preventivo cliente il valore si carica scegliendo il mese; nel gestionale il PUN e il PSV di partenza sono quelli del mese più recente. Con la fattura bimensile si sceglie solo il primo mese. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio."
+    ?"Con la fattura bimensile si sceglie solo il primo mese."
     :fileKind==="cliente"
-    ?"Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si sceglie solo il primo mese: il successivo entra da solo e si usa la media. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio."
-    :"Il PUN e il PSV di partenza nel gestionale sono quelli del mese più recente. Restano gli ultimi 12 mesi: il mese nuovo toglie il più vecchio.";
+    ?"Nel preventivo il valore si carica scegliendo il mese. Con la fattura bimensile si sceglie solo il primo mese: il successivo entra da solo e si usa la media."
+    :"";
   $("editor").innerHTML=`
     ${flyerPanel()}
     <section class="panel"><h2>Promo Energia FLAT</h2>
@@ -535,7 +534,7 @@ function renderEditor(){
       <table><thead><tr><th>Mese</th><th>PUN €/kWh</th><th>PSV €/Smc</th></tr></thead><tbody>
         ${indexRowsHtml(c.indices.series)}
       </tbody></table>
-      <p class="hint">${indexHint}</p>
+      ${indexHint?`<p class="hint">${indexHint}</p>`:""}
       <div class="add-row"><button type="button" id="addIndexMonth">Aggiungi mese successivo</button></div>
       ${commodityGroup("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityGroup("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
@@ -810,7 +809,7 @@ async function loadSlot(slot,file){
   const kind=kindOf(html);
   if(kind!==slot) throw Error(kind==="cliente"?"Questo è il preventivo del cliente: caricalo nell'altro spazio.":"Questo è il gestionale: caricalo nell'altro spazio.");
   const data=extractCatalog(html);
-  const name=file.name||(slot==="cliente"?"preventivo_cliente.html":"gestionale.html");
+  const name=file.name||(slot==="cliente"?"PreventivatoreTablet.html":"PreventivatoreStore.html");
   const had=!!loaded[slot];
   loaded[slot]={html,name,catalog:data};
   if(slot==="cliente"){flyerPages=null;flyerButtons=null;buttonsDirty=false}
