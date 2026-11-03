@@ -38,12 +38,12 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
-  <p>Carica il file HTML del gestionale. I valori attuali compaiono già compilati. Sotto Flat, Fix e Flex puoi aggiungere una promo o toglierne una: nome e parametri sono gli stessi delle altre. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
+  <p>Carica il file HTML del gestionale oppure del preventivo cliente. I valori attuali compaiono già compilati. Sotto Flat, Fix e Flex puoi aggiungere una promo o toglierne una: nome e parametri sono gli stessi delle altre. Dopo le modifiche scarica il file e usalo al posto di quello precedente.</p>
 </header>
 <main>
   <section class="panel">
     <div class="actions">
-      <label class="file">Carica gestionale HTML<input id="file" type="file" accept=".html,text/html"></label>
+      <label class="file">Carica HTML<input id="file" type="file" accept=".html,text/html"></label>
       <button id="download" class="secondary" disabled>Scarica HTML aggiornato</button>
       <button id="reset" class="secondary" disabled>Ripristina valori caricati</button>
     </div>
@@ -55,12 +55,15 @@
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-let sourceHtml="", fileName="gestionale.html", catalog=null, originalCatalog=null;
+let sourceHtml="", fileName="gestionale.html", catalog=null, originalCatalog=null, fileKind="gestionale";
+function kindOf(html){return String(html||"").includes('id="step"')?"cliente":"gestionale"}
+function kindName(){return fileKind==="cliente"?"il preventivo del cliente":"il gestionale"}
+function kindIn(){return fileKind==="cliente"?"nel preventivo del cliente":"nel gestionale"}
 
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
-  if(!m)throw Error("Questo file non contiene il listino del gestionale.");
+  if(!m)throw Error("Questo file non contiene il listino.");
   const data=JSON.parse(m[1]);
   if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
   if(!data.indices||typeof data.indices!=="object")data.indices={};
@@ -131,17 +134,21 @@ function setPath(obj,path,value){
   cur[parts[parts.length-1]]=value;
 }
 function flatTable(title,list,key,unit){
+  const shared=fileKind==="cliente";
   const rows=list.map((p,i)=>`<tr>
     <td class="name">${textInput(`flat.${key}.${i}.name`,p.name)}</td>
     <td>${numInput(`flat.${key}.${i}.plafond`,p.plafond,"1")}</td>
     <td>${numInput(`flat.${key}.${i}.monthly`,p.monthly,"0.01")}</td>
     <td>${numInput(`flat.${key}.${i}.convergence`,p.convergence||0,"0.01")}</td>
     <td>${numInput(`flat.${key}.${i}.price`,p.price,"0.001")}</td>
-    <td>${dateInput(`flat.${key}.${i}.expires`,p.expires)}</td>
+    ${shared?"":`<td>${dateInput(`flat.${key}.${i}.expires`,p.expires)}</td>`}
     <td>${removeBtn(`flat.${key}.${i}`)}</td>
   </tr>`).join("");
-  const body=rows||`<tr><td colspan="7" class="muted">Nessuna promo.</td></tr>`;
-  return `<h3>${title}</h3><table><thead><tr><th>Promo</th><th>Plafond annuo ${unit}</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th><th>Scadenza promo</th><th></th></tr></thead><tbody>${body}</tbody></table>${addBtn("flat."+key,"Aggiungi promo Flat")}`;
+  const body=rows||`<tr><td colspan="${shared?6:7}" class="muted">Nessuna promo.</td></tr>`;
+  const head=shared
+    ?`<th>Promo</th><th>Plafond annuo ${unit}</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th><th></th>`
+    :`<th>Promo</th><th>Plafond annuo ${unit}</th><th>Canone mensile €</th><th>Sconto convergenza €/mese</th><th>Costo extra soglia €/${unit}</th><th>Scadenza promo</th><th></th>`;
+  return `<h3>${title}</h3><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>${addBtn("flat."+key,"Aggiungi promo Flat")}`;
 }
 function commodityKindTable(list,path,kind){
   const label=kind==="fix"?"Fix":"Flex";
@@ -162,8 +169,19 @@ function commodityGroup(title,list,path){
 }
 function renderEditor(){
   const c=catalog;
+  const flatShared=fileKind==="cliente"?`
+      <h3>Scadenza e durata</h3>
+      <table><thead><tr><th>Scadenza promo Flat</th><th>Durata prezzo bloccato (anni)</th></tr></thead><tbody><tr>
+        <td>${dateInput("flat.expires",c.flat.expires||"")}</td>
+        <td>${numInput("flat.years",c.flat.years??2,"1")}</td>
+      </tr></tbody></table>
+      <p class="hint">La scadenza vale per tutte le promo Flat. La durata compare sul foglio come «PER N ANNI».</p>`:"";
+  const indexHint=fileKind==="cliente"
+    ?"Questi valori aggiornano il PUN e il PSV del mese più recente nel preventivo del cliente."
+    :"Questi valori compilano il PUN e il PSV di partenza nel gestionale.";
   $("editor").innerHTML=`
     <section class="panel"><h2>Promo Energia FLAT</h2>
+      ${flatShared}
       ${flatTable("Luce",c.flat.light,"light","kWh")}
       ${flatTable("Gas",c.flat.gas,"gas","Smc")}
     </section>
@@ -173,7 +191,7 @@ function renderEditor(){
         <td>${numInput("indices.pun",c.indices.pun,"any")}</td>
         <td>${numInput("indices.psv",c.indices.psv,"any")}</td>
       </tr></tbody></table>
-      <p class="hint">Questi valori compilano il PUN e il PSV di partenza nel gestionale.</p>
+      <p class="hint">${indexHint}</p>
       ${commodityGroup("Luce privata",c.commodity.light.private,"commodity.light.private")}
       ${commodityGroup("Luce P.IVA",c.commodity.light.piva,"commodity.light.piva")}
       ${commodityGroup("Gas privato",c.commodity.gas.private,"commodity.gas.private")}
@@ -212,7 +230,8 @@ function addPromo(spec){
     const key=spec.split(".")[1];
     const list=catalog.flat[key];
     const sample=list[list.length-1];
-    list.push({name:"",plafond:"",monthly:"",price:"",convergence:sample?sample.convergence:0,expires:sample?sample.expires:""});
+    const expires=fileKind==="cliente"?(catalog.flat.expires||""):(sample?sample.expires:"");
+    list.push({name:"",plafond:"",monthly:"",price:"",convergence:sample?sample.convergence:0,expires});
     focusPath=`flat.${key}.${list.length-1}.name`;
   }else{
     const parts=spec.split(".");
@@ -240,7 +259,7 @@ function removePromo(path){
   if(!confirm(name?`Togliere ${name} dal listino?`:"Togliere questa promo dal listino?"))return;
   list.splice(index,1);
   renderEditor();
-  $("status").textContent=name?`Tolta ${name}. Scarica il file per aggiornare il gestionale.`:"Promo tolta. Scarica il file per aggiornare il gestionale.";
+  $("status").textContent=name?`Tolta ${name}. Scarica il file per aggiornare ${kindName()}.`:`Promo tolta. Scarica il file per aggiornare ${kindName()}.`;
 }
 function asNum(value){
   if(value===""||value==null) return NaN;
@@ -294,6 +313,23 @@ function validate(data){
       }
   }
 }
+function syncClientCatalog(data){
+  if(fileKind!=="cliente")return;
+  const years=asNum(data.flat.years);
+  if(!Number.isInteger(years)||years<1) throw Error("La durata del prezzo bloccato è in anni interi, almeno 1.");
+  data.flat.years=years;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(data.flat.expires||""))) throw Error("Inserisci la scadenza delle promo Flat.");
+  for(const key of ["light","gas"]){
+    for(const p of data.flat[key]||[]) p.expires=data.flat.expires;
+  }
+  data.indices.pun=requireNum(data.indices.pun,"Il PUN deve essere un numero, zero o più.",true);
+  data.indices.psv=requireNum(data.indices.psv,"Il PSV deve essere un numero, zero o più.",true);
+  const series=data.indices.series;
+  if(Array.isArray(series)&&series.length){
+    const newest=[...series].sort((a,b)=>String(a.id)<String(b.id)?1:-1)[0];
+    if(newest){newest.pun=data.indices.pun;newest.psv=data.indices.psv}
+  }
+}
 function loadFileText(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -314,13 +350,14 @@ $("file").addEventListener("change",async e=>{
   if(!file)return;
   try{
     sourceHtml=await loadFileText(file);
+    fileKind=kindOf(sourceHtml);
     originalCatalog=extractCatalog(sourceHtml);
     catalog=clone(originalCatalog);
-    fileName=file.name||"gestionale.html";
+    fileName=file.name||(fileKind==="cliente"?"preventivo_cliente.html":"gestionale.html");
     renderEditor();
     $("download").disabled=false;
     $("reset").disabled=false;
-    $("status").textContent=`File caricato: ${fileName}. I valori sono quelli già presenti nel gestionale.`;
+    $("status").textContent=`File caricato: ${fileName}. I valori sono quelli già presenti ${kindIn()}.`;
   }catch(err){
     $("status").textContent="File non utilizzabile: "+(err&&err.message?err.message:err);
   }
@@ -334,6 +371,7 @@ $("reset").addEventListener("click",()=>{
 $("download").addEventListener("click",()=>{
   try{
     const next=collectCatalog();
+    syncClientCatalog(next);
     const html=replaceCatalog(sourceHtml,next);
     const blob=new Blob([html],{type:"text/html"});
     const a=document.createElement("a");
@@ -342,7 +380,7 @@ $("download").addEventListener("click",()=>{
     a.click();
     URL.revokeObjectURL(a.href);
     catalog=clone(next);
-    $("status").textContent=`Scaricato ${fileName}. Sostituisci il gestionale con questo file.`;
+    $("status").textContent=`Scaricato ${fileName}. Sostituisci ${kindName()} con questo file.`;
   }catch(err){
     $("status").textContent=err&&err.message?err.message:String(err);
   }
