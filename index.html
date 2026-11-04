@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-03T23:10:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T07:45:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -244,7 +244,7 @@ body:not(.locked) #gate{display:none}
 <p id="gateError" class="status hidden"></p>
 </form>
 </div>
-<script type="application/json" id="site-access">{"sha256":"ff12d72ce1fb1fe3d1b57ec1c560af038ac5cb7eb705c83040ddc70795768fbe"}</script>
+<script type="application/json" id="site-access">{"sha256":"ff12d72ce1fb1fe3d1b57ec1c560af038ac5cb7eb705c83040ddc70795768fbe","editorSha256":"333fe78cf6bf7882ba0c8e79d1bc8d5450a14b5da6336c92168199aed0b95df0"}</script>
 <script>
 "use strict";
 (function(){
@@ -283,23 +283,37 @@ function sha256Hex(str){
   return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>x.toString(16).padStart(8,"0")).join("");
 }
 const accessEl=document.getElementById("site-access");
-let expected="";
-try{expected=JSON.parse(accessEl.textContent).sha256||""}catch(e){expected=""}
+let expected="", editorExpected="";
+try{
+  const access=JSON.parse(accessEl.textContent);
+  expected=access.sha256||"";
+  editorExpected=access.editorSha256||"";
+}catch(e){expected="";editorExpected=""}
 const storageKey="preventivatore-accesso";
-function remembered(){try{return sessionStorage.getItem(storageKey)===expected}catch(e){return false}}
-function remember(){try{sessionStorage.setItem(storageKey,expected)}catch(e){}}
+function remembered(hash){try{return !!hash&&sessionStorage.getItem(storageKey)===hash}catch(e){return false}}
+function remember(hash){try{sessionStorage.setItem(storageKey,hash)}catch(e){}}
 function openGate(){
   document.body.classList.remove("locked");
   const gate=document.getElementById("gate");
   if(gate)gate.remove();
 }
-if(expected&&remembered()){openGate();return}
+function openEditorSoon(){
+  try{sessionStorage.setItem("preventivatore-modalita","editor")}catch(e){}
+  if(window.__openEditor){window.__openEditor();return}
+  window.__editorUnlock=true;
+  const gate=document.getElementById("gate");
+  if(gate)gate.style.display="none";
+}
+if(editorExpected&&remembered(editorExpected)){openEditorSoon();return}
+if(expected&&remembered(expected)){openGate();return}
 document.getElementById("gateForm").addEventListener("submit",function(ev){
   ev.preventDefault();
   const value=document.getElementById("gatePassword").value;
   const err=document.getElementById("gateError");
-  if(expected&&sha256Hex(value)===expected){remember();openGate();return}
-  err.textContent=expected?"Password non corretta.":"Password non configurata.";
+  const hash=sha256Hex(value);
+  if(expected&&hash===expected){remember(expected);openGate();return}
+  if(editorExpected&&hash===editorExpected){remember(editorExpected);openEditorSoon();return}
+  err.textContent=expected||editorExpected?"Password non corretta.":"Password non configurata.";
   err.classList.remove("hidden");
   document.getElementById("gatePassword").select();
 });
@@ -3243,8 +3257,55 @@ boot();
     doc.write(clienteHtml());
     doc.close();
   }
+  let editorOpening=false;
+  async function openEditor(){
+    if(editorOpening||document.getElementById("editorFrame"))return;
+    editorOpening=true;
+    try{sessionStorage.setItem(key,"editor")}catch(e){}
+    const pick=document.getElementById("modePick");
+    if(pick)pick.remove();
+    const note=document.getElementById("gateError");
+    if(note){note.textContent="Apro l'editor.";note.classList.remove("hidden")}
+    try{
+      let html="";
+      if(location.protocol!=="file:"){
+        try{
+          const localRes=await fetch(new URL("modifica_listini.html", location.href).href,{cache:"no-store"});
+          if(localRes.ok){
+            const text=await localRes.text();
+            if(text.includes('id="githubToken"')) html=text;
+          }
+        }catch(e){}
+      }
+      if(!html){
+        const meta=document.querySelector('meta[name="update-url"]');
+        const raw=String(meta&&meta.content||"").replace(/index\.html(?:\?.*)?$/,"modifica_listini.html");
+        if(!raw.includes("modifica_listini.html")) throw Error("Editor non raggiungibile.");
+        const remote=await fetch(raw+(raw.includes("?")?"&":"?")+"t="+Date.now());
+        if(!remote.ok) throw Error("Editor non raggiungibile.");
+        html=await remote.text();
+      }
+      if(!html.includes('id="download"')) throw Error("Editor non raggiungibile.");
+      const gate=document.getElementById("gate");
+      if(gate)gate.remove();
+      const frame=document.createElement("iframe");
+      frame.id="editorFrame";
+      frame.setAttribute("title","Modifica listini");
+      frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#fff8d8";
+      document.body.appendChild(frame);
+      const doc=frame.contentDocument;
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }catch(e){
+      editorOpening=false;
+      if(note){note.textContent="Editor non raggiungibile.";note.classList.remove("hidden")}
+    }
+  }
+  window.__openEditor=openEditor;
   let saved="";
   try{saved=sessionStorage.getItem(key)||""}catch(e){}
+  if(saved==="editor"||window.__editorUnlock){openEditor();return}
   if(saved==="seller"){openSeller();return}
   if(saved==="cliente"){openCliente();return}
   document.getElementById("pickCliente").addEventListener("click",openCliente);

@@ -72,6 +72,13 @@
     <p class="hint">Si chiede all'apertura del sito. Scrivila due volte e scarica il file per cambiarla. Se la lasci vuota, resta quella attuale.</p>
     <label class="pwd">Nuova password<input id="sitePassword" type="password" autocomplete="new-password"></label>
     <label class="pwd">Ripeti la password<input id="sitePassword2" type="password" autocomplete="new-password"></label>
+    <label class="pwd">Nuova password dell'editor<input id="editorPassword" type="password" autocomplete="new-password"></label>
+    <label class="pwd">Ripeti la password dell'editor<input id="editorPassword2" type="password" autocomplete="new-password"></label>
+  </section>
+  <section class="panel hidden" id="githubBox">
+    <h2>GitHub</h2>
+    <label class="pwd">Token<input id="githubToken" type="password" autocomplete="off" spellcheck="false"></label>
+    <p class="hint">Resta solo in questo browser e serve per pubblicare il file.</p>
   </section>
   <div id="editor" class="hidden"></div>
 </main>
@@ -130,7 +137,13 @@ const $=id=>document.getElementById(id);
 const loaded={gestionale:null,cliente:null};
 let catalog=null, fileKind="gestionale", dirty=false;
 let flyerPages=null, flyerButtons=null, buttonsDirty=false;
-function kindOf(html){return String(html||"").includes('id="step"')?"cliente":"gestionale"}
+let baselineCatalog=null, githubMode=false;
+function kindOf(html){
+  const s=String(html||"");
+  if(s.includes('id="cliente-app"')&&s.includes('id="site-access"')) return "unito";
+  if(s.includes('id="step"')) return "cliente";
+  return "gestionale";
+}
 function sharedFlat(){return fileKind==="cliente"||fileKind==="both"}
 function mode(){
   if(loaded.gestionale&&loaded.cliente)return "both";
@@ -141,6 +154,7 @@ function mode(){
 function clone(v){return JSON.parse(JSON.stringify(v))}
 const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 const INDEX_SERIES_FALLBACK=[
+  {id:"2026-10",pun:0.230817,psv:0.945436},
   {id:"2026-09",pun:0.208146,psv:0.843182},
   {id:"2026-08",pun:0.182468,psv:0.686448},
   {id:"2026-07",pun:0.1585,psv:0.606612},
@@ -151,8 +165,7 @@ const INDEX_SERIES_FALLBACK=[
   {id:"2026-02",pun:0.110572,psv:0.376788},
   {id:"2026-01",pun:0.124858,psv:0.403934},
   {id:"2025-12",pun:0.109359,psv:0.327985},
-  {id:"2025-11",pun:0.111583,psv:0.348704},
-  {id:"2025-10",pun:0.107552,psv:0.35367}
+  {id:"2025-11",pun:0.111583,psv:0.348704}
 ];
 function monthTitle(id){
   const m=String(id||"").match(/^(\d{4})-(\d{2})$/);
@@ -214,34 +227,58 @@ function sha256Hex(str){
   }
   return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>x.toString(16).padStart(8,"0")).join("");
 }
-function extractAccess(html){
+function parseAccess(html){
   const m=String(html||"").match(/<script type="application\/json" id="site-access">([\s\S]*?)<\/script>/);
-  if(!m)return "";
-  try{
-    const hash=String(JSON.parse(m[1]).sha256||"");
-    return /^[a-f0-9]{64}$/.test(hash)?hash:"";
-  }catch(e){return ""}
+  if(!m)return null;
+  try{return JSON.parse(m[1])}catch(e){return null}
+}
+function extractAccess(html){
+  const access=parseAccess(html);
+  const hash=String(access&&access.sha256||"");
+  return /^[a-f0-9]{64}$/.test(hash)?hash:"";
 }
 function stampPageRev(html){
   if(!String(html||"").includes('name="page-rev"'))return html;
-  const rev=new Date().toISOString();
+  let rev=new Date().toISOString();
+  const current=String(html).match(/name="page-rev" content="([^"]*)"/);
+  if(current&&current[1]&&rev<=current[1]){
+    const t=new Date(current[1]);
+    rev=new Date((Number.isNaN(t.getTime())?Date.now():t.getTime())+1000).toISOString();
+  }
   const next=html.replace(/name="page-rev" content="[^"]*"/,'name="page-rev" content="'+rev+'"');
-  if(next===html)throw Error("Impossibile aggiornare la revisione del file.");
+  if(next===html||!next.includes('content="'+rev+'"'))throw Error("Impossibile aggiornare la revisione del file.");
   return next;
 }
-function replaceAccess(html,hash){
-  const block='<script type="application/json" id="site-access">{"sha256":"'+hash+'"}</scr'+'ipt>';
-  const next=html.replace(/<script type="application\/json" id="site-access">[\s\S]*?<\/script>/,block);
+function replaceAccess(html,sellerHash,editorHash){
+  const cur=parseAccess(html)||{};
+  const sha=sellerHash||cur.sha256||"";
+  const editor=editorHash||cur.editorSha256||"";
+  if(!/^[a-f0-9]{64}$/.test(sha)) throw Error("Impossibile aggiornare la password nel file.");
+  if(editor&&!/^[a-f0-9]{64}$/.test(editor)) throw Error("Impossibile aggiornare la password nel file.");
+  if(editor&&sha===editor) throw Error("Le due password devono essere diverse.");
+  const obj={sha256:sha};
+  if(editor) obj.editorSha256=editor;
+  const block='<script type="application/json" id="site-access">'+JSON.stringify(obj)+'</scr'+'ipt>';
+  const next=String(html).replace(/<script type="application\/json" id="site-access">[\s\S]*?<\/script>/,block);
   if(next===html)throw Error("Impossibile aggiornare la password nel file.");
   return next;
 }
-function readNewPassword(){
-  if(!loaded.gestionale||!extractAccess(loaded.gestionale.html))return "";
-  const a=$("sitePassword").value, b=$("sitePassword2").value;
+function readPasswordPair(id1,id2,label){
+  const a=$(id1).value, b=$(id2).value;
   if(!a&&!b)return "";
-  if(a.length<4)throw Error("La password deve avere almeno 4 caratteri.");
+  if(a.length<4)throw Error(label+" deve avere almeno 4 caratteri.");
   if(a!==b)throw Error("Le due password non coincidono.");
   return sha256Hex(a);
+}
+function readNewPassword(){
+  if(!loaded.gestionale||!extractAccess(loaded.gestionale.html))return {seller:"",editor:""};
+  const seller=readPasswordPair("sitePassword","sitePassword2","La password del sito");
+  const editor=readPasswordPair("editorPassword","editorPassword2","La password dell'editor");
+  const access=parseAccess(loaded.gestionale.html)||{};
+  const nextSeller=seller||access.sha256||"";
+  const nextEditor=editor||access.editorSha256||"";
+  if(nextSeller&&nextEditor&&nextSeller===nextEditor) throw Error("Le due password devono essere diverse.");
+  return {seller,editor};
 }
 function extractCatalog(html){
   const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
@@ -296,9 +333,9 @@ function newOfferId(kind,service,segment){
 function replaceCatalog(html,data){
   const pretty=JSON.stringify(data,null,2);
   const block='<script type="application/json" id="promo-catalog">\n'+pretty+'\n</scr'+'ipt>';
-  const next=html.replace(/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/,block);
-  if(next===html)throw Error("Impossibile aggiornare il listino nel file.");
-  return next;
+  const re=/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/;
+  if(!re.test(html)) throw Error("Impossibile aggiornare il listino nel file.");
+  return html.replace(re,block);
 }
 function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
 function numInput(path,value,step){
@@ -401,7 +438,7 @@ function validArea(a){
   return nums.every(n=>typeof n==="number"&&n>=0&&n<=1)&&a.w>=0.02&&a.h>=0.015&&a.x+a.w<=1.001&&a.y+a.h<=1.001;
 }
 function activeButtons(){return flyerButtons||extractButtons(clientHtml())||[]}
-function scaricaWord(){return loaded.gestionale&&loaded.cliente?"Scarica i file":"Scarica l'HTML"}
+function scaricaWord(){return githubMode?"Salva su GitHub":(loaded.gestionale&&loaded.cliente?"Scarica i file":"Scarica l'HTML")}
 function flyerStatusText(){
   const pages=currentFlyers();
   const areas=activeButtons();
@@ -637,7 +674,7 @@ function addNextIndexMonth(){
   renderEditor();
   const pun=document.querySelector('[data-path="indices.series.0.pun"]');
   if(pun){pun.focus();pun.scrollIntoView({block:"center"})}
-  const scarica=fileKind==="both"?"poi scarica i due file.":"poi scarica il file.";
+  const scarica=githubMode?"poi salva su GitHub.":(fileKind==="both"?"poi scarica i due file.":"poi scarica il file.");
   $("status").textContent=dropped?`Aggiunto ${monthTitle(id)}. ${dropped} esce dall'elenco. Inserisci PUN e PSV, ${scarica}`:`Aggiunto ${monthTitle(id)}. Inserisci PUN e PSV, ${scarica}`;
 }
 function applyInputs(next){
@@ -689,7 +726,7 @@ function addPromo(spec){
   renderEditor();
   const el=document.querySelector(`[data-path="${focusPath}"]`);
   if(el){el.focus();el.scrollIntoView({block:"center"})}
-  $("status").textContent=fileKind==="both"?"Promo aggiunta. Scrivi nome e parametri, poi scarica i due file.":"Promo aggiunta. Scrivi nome e parametri, poi scarica il file.";
+  $("status").textContent=githubMode?"Promo aggiunta. Scrivi nome e parametri, poi salva su GitHub.":(fileKind==="both"?"Promo aggiunta. Scrivi nome e parametri, poi scarica i due file.":"Promo aggiunta. Scrivi nome e parametri, poi scarica il file.");
 }
 function removePromo(path){
   readEditor();
@@ -699,7 +736,7 @@ function removePromo(path){
   dirty=true;
   list.splice(index,1);
   renderEditor();
-  const where=fileKind==="both"?"Scarica i due file per aggiornare gestionale e preventivo cliente.":"Scarica il file per aggiornare "+(fileKind==="cliente"?"il preventivo del cliente.":"il gestionale.");
+  const where=githubMode?"Salva su GitHub per pubblicare seller e cliente.":(fileKind==="both"?"Scarica i due file per aggiornare gestionale e preventivo cliente.":"Scarica il file per aggiornare "+(fileKind==="cliente"?"il preventivo del cliente.":"il gestionale."));
   $("status").textContent=name?`Tolta ${name}. ${where}`:`Promo tolta. ${where}`;
 }
 function asNum(value){
@@ -829,11 +866,13 @@ function ensureShared(data){
   return data;
 }
 function workingCatalog(){
+  if(loaded.gestionale&&loaded.gestionale.combined) return clone(loaded.gestionale.catalog);
   if(loaded.cliente)return clone(loaded.cliente.catalog);
   return clone(loaded.gestionale.catalog);
 }
 function describeLoad(){
   const shop=loaded.gestionale, client=loaded.cliente;
+  if(shop&&shop.combined) return "File del sito caricato. Le modifiche valgono per seller e cliente.";
   if(shop&&client){
     const same=JSON.stringify(promoBody(shop.catalog))===JSON.stringify(promoBody(client.catalog));
     return same
@@ -850,12 +889,17 @@ function paintNames(){
     el.textContent=file?file.name:"non caricato";
     el.classList.toggle("muted",!file);
   }
-  $("download").textContent=loaded.gestionale&&loaded.cliente?"Scarica i due HTML":"Scarica HTML aggiornato";
+  if(loaded.gestionale&&loaded.gestionale.combined){
+    $("nameCliente").textContent="incluso";
+    $("nameCliente").classList.remove("muted");
+  }
+  $("download").textContent=githubMode?"Salva su GitHub":(loaded.gestionale&&loaded.cliente?"Scarica i due HTML":"Scarica HTML aggiornato");
   $("siteAccess").classList.toggle("hidden",!(loaded.gestionale&&extractAccess(loaded.gestionale.html)));
 }
 function showWorking(status){
   fileKind=mode();
   catalog=ensureShared(workingCatalog());
+  baselineCatalog=clone(catalog);
   dirty=false;
   renderEditor();
   $("download").disabled=false;
@@ -875,9 +919,25 @@ function keepEdits(status){
   paintNames();
   $("status").textContent=status;
 }
+function clearPasswords(){
+  $("sitePassword").value="";
+  $("sitePassword2").value="";
+  if($("editorPassword")){$("editorPassword").value="";$("editorPassword2").value=""}
+}
+function loadCombined(html,name){
+  const inner=decodeCliente(extractClienteBlob(html));
+  loaded.gestionale={html,name:name||"index.html",catalog:extractCatalog(html),combined:true};
+  loaded.cliente={html:inner,name:"Preventivo cliente",catalog:extractCatalog(inner),embedded:true};
+  flyerPages=null;
+  flyerButtons=null;
+  buttonsDirty=false;
+  clearPasswords();
+  showWorking();
+}
 async function loadSlot(slot,file){
   if(!file)return;
   const html=await loadFileText(file);
+  if(kindOf(html)==="unito"){loadCombined(html,file.name||"index.html");return}
   const kind=kindOf(html);
   if(kind!==slot) throw Error(kind==="cliente"?"Questo è il preventivo del cliente: caricalo nell'altro spazio.":"Questo è il gestionale: caricalo nell'altro spazio.");
   const data=extractCatalog(html);
@@ -885,7 +945,7 @@ async function loadSlot(slot,file){
   const had=!!loaded[slot];
   loaded[slot]={html,name,catalog:data};
   if(slot==="cliente"){flyerPages=null;flyerButtons=null;buttonsDirty=false}
-  if(slot==="gestionale"){$("sitePassword").value="";$("sitePassword2").value=""}
+  if(slot==="gestionale") clearPasswords();
   if(!catalog||!dirty) showWorking();
   else keepEdits(had?"File sostituito. Le modifiche già fatte restano.":"File aggiunto. Le modifiche già fatte restano e valgono anche per questo file.");
 }
@@ -924,26 +984,141 @@ $("reset").addEventListener("click",()=>{
   flyerPages=null;
   flyerButtons=null;
   buttonsDirty=false;
-  $("sitePassword").value="";
-  $("sitePassword2").value="";
+  clearPasswords();
   showWorking(loaded.gestionale&&loaded.cliente?"Valori riportati a quelli dei file caricati.":"Valori riportati a quelli del file caricato.");
 });
+function decodeCliente(blob){return String(blob).replace(/<\\\/script/gi,"<"+"/script")}
+function encodeCliente(html){return String(html).replace(/<\/script/gi,"<\\/script")}
+function extractClienteBlob(html){
+  const m=String(html||"").match(/<script type="text\/plain" id="cliente-app">([\s\S]*?)<\/script>/);
+  if(!m) throw Error("Manca il preventivo cliente nel file.");
+  return m[1];
+}
+function replaceClienteBlob(outer, innerHtml){
+  const block='<script type="text/plain" id="cliente-app">'+encodeCliente(innerHtml)+'</scr'+'ipt>';
+  const re=/<script type="text\/plain" id="cliente-app">[\s\S]*?<\/script>/;
+  if(!re.test(outer)) throw Error("Impossibile aggiornare il preventivo cliente.");
+  return String(outer).replace(re, block);
+}
+function offerMap(data){
+  const map=new Map();
+  if(!data||!data.commodity) return map;
+  for(const service of ["light","gas"]){
+    for(const segment of ["private","piva"]){
+      for(const o of (data.commodity[service]&&data.commodity[service][segment])||[]) map.set(service+"."+segment+"."+o.id,o);
+    }
+  }
+  return map;
+}
+function catalogForSlot(slot, edited){
+  const out=clone(edited);
+  const target=loaded[slot]&&loaded[slot].catalog;
+  const base=baselineCatalog||edited;
+  if(slot==="gestionale"&&target&&target.flat&&!Object.prototype.hasOwnProperty.call(target.flat,"years")) delete out.flat.years;
+  if(slot==="cliente"&&target&&target.flat&&Object.prototype.hasOwnProperty.call(target.flat,"years")){
+    const baseYears=base.flat?base.flat.years:undefined;
+    if(Number(out.flat.years)===Number(baseYears)) out.flat.years=target.flat.years;
+  }
+  const targetOffers=offerMap(target);
+  const baseOffers=offerMap(base);
+  for(const service of ["light","gas"]){
+    for(const segment of ["private","piva"]){
+      for(const o of (out.commodity[service]&&out.commodity[service][segment])||[]){
+        const key=service+"."+segment+"."+o.id;
+        const t=targetOffers.get(key), b=baseOffers.get(key);
+        if(t&&b&&Number(o.months)===Number(b.months)) o.months=t.months;
+      }
+    }
+  }
+  return out;
+}
+function buildCombined(next, accessChange){
+  let inner=replaceCatalog(loaded.cliente.html, catalogForSlot("cliente", next));
+  inner=applyClientExtras(inner);
+  let outer=replaceCatalog(loaded.gestionale.html, catalogForSlot("gestionale", next));
+  if(accessChange&&(accessChange.seller||accessChange.editor)) outer=replaceAccess(outer, accessChange.seller, accessChange.editor);
+  outer=replaceClienteBlob(outer, inner);
+  outer=stampPageRev(outer);
+  return {outer, inner};
+}
+function rememberBuilt(built){
+  loaded.gestionale.html=built.outer;
+  loaded.gestionale.catalog=extractCatalog(built.outer);
+  if(loaded.cliente){
+    loaded.cliente.html=built.inner;
+    loaded.cliente.catalog=extractCatalog(built.inner);
+  }
+  catalog=ensureShared(workingCatalog());
+  baselineCatalog=clone(catalog);
+  dirty=false;
+}
+function utf8ToBase64(str){
+  const bytes=new TextEncoder().encode(str);
+  let bin="";
+  const size=8192;
+  for(let i=0;i<bytes.length;i+=size) bin+=String.fromCharCode.apply(null, bytes.subarray(i, i+size));
+  return btoa(bin);
+}
+function githubTarget(url){
+  const m=String(url||"").match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(.+)\/index\.html(?:\?.*)?$/);
+  if(!m) return null;
+  return {owner:m[1], repo:m[2], branch:decodeURIComponent(m[3]), path:"index.html"};
+}
+let githubUrl="";
+async function githubPut(fileHtml){
+  const token=String($("githubToken").value||"").trim();
+  if(!token) throw Error("Incolla il token GitHub.");
+  try{localStorage.setItem("preventivatore-github-token", token)}catch(e){}
+  const target=githubTarget(githubUrl);
+  if(!target) throw Error("Indirizzo GitHub non riconosciuto.");
+  const headers={Accept:"application/vnd.github+json",Authorization:"Bearer "+token,"Content-Type":"application/json","X-GitHub-Api-Version":"2022-11-28"};
+  const api="https://api.github.com/repos/"+target.owner+"/"+target.repo+"/contents/"+target.path;
+  const cur=await fetch(api+"?ref="+encodeURIComponent(target.branch),{headers});
+  const info=await cur.json().catch(()=>({}));
+  if(cur.status===401) throw Error("Token GitHub rifiutato.");
+  if(cur.status===403||cur.status===404) throw Error("Il token non può leggere il file su GitHub.");
+  if(!cur.ok||!info.sha) throw Error(info.message||"Lettura da GitHub non riuscita.");
+  const put=await fetch(api,{method:"PUT",headers,body:JSON.stringify({message:"Aggiorna i listini.",content:utf8ToBase64(fileHtml),sha:info.sha,branch:target.branch})});
+  const data=await put.json().catch(()=>({}));
+  if(put.status===401) throw Error("Token GitHub rifiutato.");
+  if(put.status===409) throw Error("Il file su GitHub è cambiato. Ricarica la pagina.");
+  if(put.status===403||put.status===422) throw Error("Il token non può scrivere su GitHub.");
+  if(!put.ok) throw Error(data.message||"Salvataggio su GitHub non riuscito.");
+}
 $("download").addEventListener("click",async()=>{
+  const btn=$("download");
   try{
     const next=collectCatalog();
     syncClientCatalog(next);
     syncFlatExpiry(next);
     syncSeries(next);
-    const newHash=readNewPassword();
+    const accessChange=readNewPassword();
+    const passwordNote=(accessChange.seller||accessChange.editor)?" Password aggiornata.":"";
+    btn.disabled=true;
+    if(loaded.gestionale&&loaded.gestionale.combined){
+      const built=buildCombined(next, accessChange);
+      if(githubMode){
+        await githubPut(built.outer);
+        rememberBuilt(built);
+        clearPasswords();
+        $("status").textContent="Listini pubblicati su GitHub. Riapri la pagina del negozio per vederli."+passwordNote;
+        return;
+      }
+      downloadBlob(built.outer, loaded.gestionale.name||"index.html");
+      rememberBuilt(built);
+      clearPasswords();
+      $("status").textContent="Scaricato "+(loaded.gestionale.name||"index.html")+". Sostituisci il file del sito con questo."+passwordNote;
+      return;
+    }
     const built=[];
     for(const slot of ["gestionale","cliente"]){
       const src=loaded[slot];
       if(!src)continue;
-      let html=replaceCatalog(src.html,next);
-      if(slot==="cliente") html=applyClientExtras(html);
-      if(slot==="gestionale"&&newHash) html=replaceAccess(html,newHash);
-      if(slot==="gestionale") html=stampPageRev(html);
-      built.push({slot,name:src.name,html});
+      let fileHtml=replaceCatalog(src.html,next);
+      if(slot==="cliente") fileHtml=applyClientExtras(fileHtml);
+      if(slot==="gestionale"&&(accessChange.seller||accessChange.editor)) fileHtml=replaceAccess(fileHtml, accessChange.seller, accessChange.editor);
+      if(slot==="gestionale") fileHtml=stampPageRev(fileHtml);
+      built.push({slot,name:src.name,html:fileHtml});
     }
     if(window.__SITE){
       const body={};
@@ -952,23 +1127,24 @@ $("download").addEventListener("click",async()=>{
       const data=await res.json().catch(()=>({}));
       if(res.status===401){location.href="/accesso?admin=1";return}
       if(!res.ok)throw Error(data.error||"Pubblicazione non riuscita");
-      if(newHash) loaded.gestionale.html=replaceAccess(loaded.gestionale.html,newHash);
+      if(accessChange.seller||accessChange.editor) loaded.gestionale.html=replaceAccess(loaded.gestionale.html, accessChange.seller, accessChange.editor);
       catalog=clone(next);
       dirty=false;
-      if(newHash){$("sitePassword").value="";$("sitePassword2").value=""}
-      $("status").textContent="Offerte pubblicate. Negozi e tablet le vedono aggiornando la pagina."+(newHash?" Password del sito aggiornata.":"");
+      clearPasswords();
+      $("status").textContent="Offerte pubblicate. Negozi e tablet le vedono aggiornando la pagina."+passwordNote;
       return;
     }
     const names=[];
     for(const item of built){downloadBlob(item.html,item.name);names.push(item.name)}
-    if(newHash) loaded.gestionale.html=replaceAccess(loaded.gestionale.html,newHash);
+    if(accessChange.seller||accessChange.editor) loaded.gestionale.html=replaceAccess(loaded.gestionale.html, accessChange.seller, accessChange.editor);
     catalog=clone(next);
     dirty=false;
-    if(newHash){$("sitePassword").value="";$("sitePassword2").value=""}
-    const passwordNote=newHash?" Password del sito aggiornata.":"";
+    clearPasswords();
     $("status").textContent=(names.length===2?`Scaricati ${names[0]} e ${names[1]}. Sostituisci i due file con questi.`:`Scaricato ${names[0]}. Sostituisci ${fileKind==="cliente"?"il preventivo del cliente":"il gestionale"} con questo file.`)+passwordNote;
   }catch(err){
     $("status").textContent=err&&err.message?err.message:String(err);
+  }finally{
+    btn.disabled=!(loaded.gestionale||loaded.cliente);
   }
 });
 if(window.__SITE){
@@ -985,6 +1161,42 @@ if(window.__SITE){
       $("status").textContent=err&&err.message?err.message:String(err);
     }
   })();
+}
+
+function parentUpdateUrl(){
+  try{
+    if(window.parent&&window.parent!==window){
+      const meta=window.parent.document.querySelector('meta[name="update-url"]');
+      if(meta&&meta.content) return meta.content;
+    }
+  }catch(e){}
+  return "";
+}
+if(!window.__SITE){
+  githubUrl=parentUpdateUrl();
+  if(githubTarget(githubUrl)){
+    githubMode=true;
+    $("fileGestionale").closest("label").classList.add("hidden");
+    $("fileCliente").closest("label").classList.add("hidden");
+    $("githubBox").classList.remove("hidden");
+    $("download").textContent="Salva su GitHub";
+    const hint=document.querySelector("#siteAccess .hint");
+    if(hint) hint.textContent="Si chiede all'apertura del sito. Scrivila due volte e salva per cambiarla. Se la lasci vuota, resta quella attuale.";
+    try{$("githubToken").value=localStorage.getItem("preventivatore-github-token")||""}catch(e){}
+    $("githubToken").addEventListener("change",()=>{try{localStorage.setItem("preventivatore-github-token",$("githubToken").value.trim())}catch(e){}});
+    (async()=>{
+      try{
+        const res=await fetch(githubUrl+(githubUrl.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+        if(!res.ok) throw Error("File su GitHub non letto.");
+        const text=await res.text();
+        if(kindOf(text)!=="unito") throw Error("Il file su GitHub non è l'index del sito.");
+        loadCombined(text,"index.html");
+        $("status").textContent="Listino letto da GitHub. Salva per pubblicarlo.";
+      }catch(err){
+        $("status").textContent=err&&err.message?err.message:String(err);
+      }
+    })();
+  }
 }
 </script>
 </body>
