@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T08:46:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:04:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -307,8 +307,10 @@ function openEditorSoon(){
   const gate=document.getElementById("gate");
   if(gate)gate.style.display="none";
 }
-if(editorExpected&&remembered(editorExpected)){openEditorSoon();return}
-if(expected&&remembered(expected)){openGate();return}
+window.__unlockSeller=function(){
+  if(expected&&remembered(expected)){openGate();return true}
+  return false;
+};
 document.getElementById("gateForm").addEventListener("submit",function(ev){
   ev.preventDefault();
   const value=document.getElementById("gatePassword").value;
@@ -3450,6 +3452,7 @@ boot();
     try{sessionStorage.setItem(key,"seller")}catch(e){}
     closeOverlays();
     hidePick();
+    if(window.__unlockSeller&&window.__unlockSeller())return;
     const input=document.getElementById("gatePassword");
     if(input&&document.body.classList.contains("locked"))input.focus();
   }
@@ -3531,11 +3534,7 @@ boot();
   document.getElementById("pickSeller").addEventListener("click",openSeller);
   document.getElementById("modeBack").addEventListener("click",backToChoice);
   document.getElementById("sellerBack").addEventListener("click",backToChoice);
-  let saved="";
-  try{saved=sessionStorage.getItem(key)||""}catch(e){}
-  if(saved==="editor"||window.__editorUnlock){openEditor();return}
-  if(saved==="seller"){openSeller();return}
-  if(saved==="cliente"){openCliente();return}
+  try{sessionStorage.removeItem(key)}catch(e){}
 })();
 </script>
 </body></html>
