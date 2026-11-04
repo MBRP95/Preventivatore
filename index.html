@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T15:00:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T16:45:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -227,6 +227,23 @@ header .header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   #printArea .qpage{width:210mm;min-height:297mm;padding:10mm}
   #printArea .cpage{width:210mm;min-height:297mm;padding:10mm}
 }
+
+.mix-pick{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.mix-col{background:#fffdf0;border:1px solid var(--fw-border);border-radius:10px;padding:12px}
+.mix-col h3{margin:0 0 8px}
+#mixFlow #lightInputs>h3,#mixFlow #gasInputs>h3,#mixFlow #fxLightBox>h3,#mixFlow #fxGasBox>h3{display:none}
+#mixPreview{margin-top:16px}
+#mixPreview .quote-frame{background:#111;border-radius:12px;padding:10px;box-shadow:0 8px 24px #3e330d22;overflow:auto}
+#mixPreview .qpage,#mixPreview .cpage{margin:0 auto}
+.qpage.is-mixed{min-height:1216px}
+.qpage.is-mixed .qtitle{font-size:32px;letter-spacing:-1px;line-height:.95;max-width:560px}
+.qpage.is-mixed .qoffers{align-items:start}
+.qpage.is-mixed .qoffers>.ccard{margin:0;height:auto;box-sizing:border-box;min-width:0}
+.qpage.is-mixed .qoffers .ccard h3{font-size:16px;padding:8px}
+.qpage.is-mixed .cdisc{padding:8px 10px}
+.qpage.is-mixed .cdisc b{font-size:16px}
+.qpage.is-mixed .crow{font-size:12px}
+@media(max-width:700px){.mix-pick{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="locked">
@@ -344,6 +361,7 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 <div class="mode-switch" role="tablist">
 <button type="button" id="modeFlat" class="active">Promo Energia FLAT</button>
 <button type="button" id="modeCommodity">Fix e Flex</button>
+<button type="button" id="modeMix">Flat + Fix/Flex</button>
 </div>
 <div id="flatFlow">
 <section class="panel"><h2>3. Servizi da includere</h2><div class="checks"><label><input id="includeLight" type="checkbox" checked> Luce</label><label><input id="includeGas" type="checkbox"> Gas</label><label><input id="flatFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label></div>
@@ -431,6 +449,52 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 <section class="panel">
 <h2>Listini Fix e Flex</h2>
 <div class="fx-rates" style="overflow-x:auto"><table><thead><tr><th>Offerta</th><th>Cliente</th><th>Tipo</th><th>Energia / spread</th><th>Contributo fisso annuo</th><th>Contributo fisso mensile</th><th>Sconto convergenza</th><th>Durata</th><th>Scadenza</th></tr></thead><tbody id="fxOfferTable"></tbody></table></div>
+</section>
+</div>
+<div id="mixFlow" class="hidden">
+<section class="panel">
+<h2>Flat e Fix/Flex nello stesso PDF</h2>
+<p class="note">Per ogni servizio scegli la promo FLAT oppure un'offerta Fix/Flex. I dati si compilano come sempre. Un solo tasto calcola il preventivo e prepara un PDF unico.</p>
+<div class="mix-pick">
+<div class="mix-col">
+<h3>Luce</h3>
+<div class="checks">
+<label><input type="radio" name="mixLight" id="mixLightFlat" value="flat" checked> Flat</label>
+<label><input type="radio" name="mixLight" id="mixLightFx" value="fx"> Fix/Flex</label>
+<label><input type="radio" name="mixLight" id="mixLightOff" value="off"> Non inclusa</label>
+</div>
+<div id="mixLightSlot"></div>
+</div>
+<div class="mix-col">
+<h3>Gas</h3>
+<div class="checks">
+<label><input type="radio" name="mixGas" id="mixGasFlat" value="flat"> Flat</label>
+<label><input type="radio" name="mixGas" id="mixGasFx" value="fx" checked> Fix/Flex</label>
+<label><input type="radio" name="mixGas" id="mixGasOff" value="off"> Non inclusa</label>
+</div>
+<div id="mixGasSlot"></div>
+</div>
+</div>
+<div class="checks"><label><input id="mixFastweb" type="checkbox" checked> Già cliente Fastweb o Vodafone</label></div>
+<div class="checks" id="mixSegRow">
+<label><input type="radio" name="mixSeg" id="mixSegPrivate" value="private" checked> Privato</label>
+<label><input type="radio" name="mixSeg" id="mixSegPiva" value="piva"> P.IVA</label>
+</div>
+<p class="note" id="mixSegNote">Privato o P.IVA vale per il servizio in Fix/Flex.</p>
+<div class="actions">
+<button type="button" id="mixCalculate">Calcola preventivo</button>
+<button type="button" id="mixSave" disabled>Salva preventivo</button>
+<button type="button" class="secondary" id="mixPdf" disabled>Scarica PDF</button>
+<button type="button" class="secondary" id="mixHistory" disabled>Mostra storico</button>
+<button type="button" class="secondary" id="mixTrash" disabled>Apri cestino</button>
+</div>
+<div id="mixStatus" class="status">Compila i dati e calcola il preventivo.</div>
+<div id="mixResult" class="result hidden" aria-live="polite"></div>
+<div id="mixPreview" class="hidden">
+<h3 id="mixPreviewTitle">Anteprima preventivo</h3>
+<p class="note" id="mixPreviewNote"></p>
+<div class="quote-frame" id="mixFrame"></div>
+</div>
 </section>
 </div>
 <section class="panel hidden" id="archiveLists"><h2>Storico preventivi</h2><div id="history" class="hidden"></div><div id="trash" class="hidden"></div></section>
@@ -781,14 +845,19 @@ function flatToggleCompare(reset){
   if(gasHint)gasHint.classList.toggle("hidden",gasOn);
   if(!reset)return;
   currentQuote=null;
+  mixFxDraft=null;
   $("result").classList.add("hidden");
   $("result").innerHTML="";
+  if($("mixResult")){$("mixResult").classList.add("hidden");$("mixResult").innerHTML="";}
   $("calcStatus").classList.add("hidden");
   $("saveQuote").disabled=true;
   $("makePdf").disabled=true;
+  if($("mixSave")){$("mixSave").disabled=true;$("mixPdf").disabled=true;}
   hideQuotePreview();
   const any=($("includeLight").checked&&lightOn)||($("includeGas").checked&&gasOn);
-  $("saveStatus").textContent=any?"Compila i dati e calcola le promozioni.":"Scegli le promo: si stampano plafond annuo, canone e costo extra soglia.";
+  const hint=any?"Compila i dati e calcola le promozioni.":"Scegli le promo: si stampano plafond annuo, canone e costo extra soglia.";
+  $("saveStatus").textContent=hint;
+  if(toolMode==="mix")$("mixStatus").textContent=hint;
 }
 function promoMonthly(p,apply){const gross=Number(p&&p.monthly||0),on=apply===undefined?flatIsFw():!!apply,disc=on?Number(p&&p.convergence||0):0;return Math.max(0,gross-disc)}
 function promoExpiryLabel(iso){const p=String(iso||"").split("-");if(p.length!==3||p.some(x=>!x))return "";return `${p[2]}/${p[1]}/${p[0]}`}
@@ -807,7 +876,7 @@ function flatExpiryIso(cat){
 const FLAT_EXPIRES=flatExpiryIso(PROMO_CATALOG);
 const LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
 const GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
-const $=id=>document.getElementById(id);let folderHandle=null,currentQuote=null,quotes=[],trashQuotes=[],customers=[];
+const $=id=>document.getElementById(id);let folderHandle=null,currentQuote=null,quotes=[],trashQuotes=[],customers=[],toolMode="flat",mixFxDraft=null,mixSnap=null;
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n);
 const num=n=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(n);
 const today=new Date();$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
@@ -817,7 +886,7 @@ function applyFormIdentity(q){if(!q)return q;const data=readForm();q.customer=da
 function calcPromo(p,consumption,spend){const monthly=promoMonthly(p),delta=p.plafond-consumption,refund=Math.max(delta,0)*p.price,bonus=(consumption<p.plafond*.7&&delta>0)?delta*.02:0,excessCost=Math.max(-delta,0)*p.price,annualCost=monthly*12+(consumption-p.plafond)*p.price-bonus;return {delta,refund,bonus,excessCost,annualCost,saving:spend-annualCost,deviation:Math.abs(p.plafond-consumption)/consumption,eligible:Math.abs(p.plafond-consumption)/consumption<=.3+1e-10}}
 function calculate(){
  const includeLight=$("includeLight").checked,includeGas=$("includeGas").checked;
- if(!includeLight&&!includeGas){error("Seleziona almeno un servizio: luce, gas o entrambi.");return}
+ if(!includeLight&&!includeGas)return error("Seleziona almeno un servizio: luce, gas o entrambi.");
  const data=readForm();
  const lightExtraMonthly=(data.lightOptions.meterPower===4.5?5:data.lightOptions.meterPower===6?10:0)+(data.lightOptions.residency==="nonresident"?12:0);
  const sections={};
@@ -829,19 +898,27 @@ function calculate(){
     continue;
   }
   const cr=$(prefix+"Consumption").value,sr=$(prefix+"Spend").value,c=Number(cr),sp=Number(sr);
-  if(cr===""||sr===""||!Number.isFinite(c)||!Number.isFinite(sp)||c<=0||sp<0){error(`Inserisci consumo annuo maggiore di zero e spesa annua non negativa per ${prefix==="light"?"la luce":"il gas"}.`);return}
+  if(cr===""||sr===""||!Number.isFinite(c)||!Number.isFinite(sp)||c<=0||sp<0)return error(`Inserisci consumo annuo maggiore di zero e spesa annua non negativa per ${prefix==="light"?"la luce":"il gas"}.`);
   sections[prefix]={unit,compare:true,consumption:c,currentSpend:sp,evaluatedPromos:list.map(p=>{const r=calcPromo(p,c,sp);if(prefix==="light"){r.baseAnnualCost=r.annualCost;r.baseSaving=r.saving;r.extraMonthly=lightExtraMonthly;r.annualCost+=lightExtraMonthly*12;r.saving=sp-r.annualCost;}return {promo:p,...r,displayMonthly:promoMonthly(p)+(prefix==="light"?lightExtraMonthly:0),displayAnnual:promoMonthly(p)*12+(prefix==="light"?lightExtraMonthly*12:0)}}),selectedPromo:null,calculations:null};
  }
  const flags=Object.values(sections).map(s=>!!s.compare);
  const compare=flags.length&&flags.every(Boolean)?true:flags.some(Boolean)?"mixed":false;
  currentQuote={id:makeId(),quoteNumber:null,createdAt:new Date().toISOString(),customer:data.customer,shop:data.shop,blank:!customerReady(data.customer),lightOptions:data.lightOptions,isFastweb:flatIsFw(),compare,sections,status:"bozza",version:4};
- $("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();renderComparisons();$("saveStatus").textContent="Scegli una promozione per ogni servizio incluso, poi salva o genera il PDF.";
+ $("saveQuote").disabled=true;$("makePdf").disabled=true;
+ if($("mixSave")){$("mixSave").disabled=true;$("mixPdf").disabled=true;}
+ hideQuotePreview();renderComparisons();
+ const msg="Scegli una promozione per ogni servizio incluso, poi salva o genera il PDF.";
+ $("saveStatus").textContent=msg;
+ if(toolMode==="mix")$("mixStatus").textContent=mixFxDraft?"Scegli la promozione FLAT e conferma: il PDF unico si prepara dopo.":msg;
+ return true;
 }
-function error(msg){$("calcStatus").classList.remove("hidden");$("calcStatus").textContent=msg;$("result").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview()}
+function flatHost(){return toolMode==="mix"?$("mixResult"):$("result")}
+function flatStatus(){return toolMode==="mix"?$("mixStatus"):$("calcStatus")}
+function error(msg){const st=flatStatus();st.classList.remove("hidden");st.textContent=msg;flatHost().classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;if($("mixSave")){$("mixSave").disabled=true;$("mixPdf").disabled=true;}hideQuotePreview();return false}
 function renderComparisons(){
- const result=$("result");result.classList.remove("hidden");$("calcStatus").classList.add("hidden");let html="";
+ const result=flatHost();result.classList.remove("hidden");if(toolMode!=="mix")$("calcStatus").classList.add("hidden");let html="";
  for(const [key,title] of [["light","Confronto promozioni luce"],["gas","Confronto promozioni gas"]]){
-  const sec=currentQuote.sections[key];if(!sec)continue;
+  const sec=currentQuote.sections[key];if(!sec||sec.product==="commodity")continue;
   const noCmp=!sectionCompares(sec,currentQuote);
   if(noCmp){
     html+=`<h2>${key==="light"?"Promo luce":"Promo gas"}</h2><table><thead><tr><th>Seleziona</th><th>Promo</th><th>Plafond annuo</th><th>Canone/mese</th><th>Costo extra soglia</th></tr></thead><tbody>`;
@@ -853,21 +930,26 @@ function renderComparisons(){
   html+="</tbody></table>";
  }
  html+='<div class="actions"><button id="confirmSelections">Conferma promozioni selezionate</button></div>';
- $("result").innerHTML=html;
+ result.innerHTML=html;
  $("confirmSelections").addEventListener("click",()=>{
   let missing=[];
-  for(const key of Object.keys(currentQuote.sections)){const choice=$(`result`).querySelector(`input[name="pick_${key}"]:checked`);if(!choice){missing.push(key==="light"?"luce":"gas");continue}const sec=currentQuote.sections[key],x=sec.evaluatedPromos.find(a=>a.promo.name===choice.value);sec.selectedPromo=x.promo;sec.calculations={delta:x.delta,refund:x.refund,bonus:x.bonus,excessCost:x.excessCost,annualCost:x.annualCost,saving:x.saving,extraMonthly:x.extraMonthly||0,baseAnnualCost:x.baseAnnualCost??x.annualCost,baseSaving:x.baseSaving??x.saving,displayMonthly:x.displayMonthly??x.promo.monthly,displayAnnual:x.displayAnnual??x.promo.annual};}
+  for(const key of Object.keys(currentQuote.sections)){const sec0=currentQuote.sections[key];if(sec0&&sec0.product==="commodity")continue;const choice=result.querySelector(`input[name="pick_${key}"]:checked`);if(!choice){missing.push(key==="light"?"luce":"gas");continue}const sec=currentQuote.sections[key],x=sec.evaluatedPromos.find(a=>a.promo.name===choice.value);sec.selectedPromo=x.promo;sec.calculations={delta:x.delta,refund:x.refund,bonus:x.bonus,excessCost:x.excessCost,annualCost:x.annualCost,saving:x.saving,extraMonthly:x.extraMonthly||0,baseAnnualCost:x.baseAnnualCost??x.annualCost,baseSaving:x.baseSaving??x.saving,displayMonthly:x.displayMonthly??x.promo.monthly,displayAnnual:x.displayAnnual??x.promo.annual};}
   if(missing.length){alert("Seleziona una promozione per: "+missing.join(", "));return}
   applyFormIdentity(currentQuote);
+  if(toolMode==="mix"&&mixFxDraft)currentQuote=assembleMixed(currentQuote,mixFxDraft);
   const canSave=customerReady(currentQuote.customer);
   $("saveQuote").disabled=!canSave;$("makePdf").disabled=false;
-  renderSelected();$("saveStatus").textContent=canSave?"Promozioni selezionate. Puoi salvare il preventivo o generare il PDF.":"Preventivo senza dati del cliente: puoi generare il PDF, ma non salvarlo.";
+  if(toolMode==="mix"){$("mixSave").disabled=!canSave;$("mixPdf").disabled=false;}
+  renderSelected();
+  const done=canSave?"Promozioni selezionate. Puoi salvare il preventivo o generare il PDF.":"Preventivo senza dati del cliente: puoi generare il PDF, ma non salvarlo.";
+  $("saveStatus").textContent=done;
+  if(toolMode==="mix")$("mixStatus").textContent=currentQuote.kind==="mixed"?(canSave?"PDF unico pronto. Puoi salvarlo o scaricarlo.":"PDF unico pronto. Senza nome, email e cellulare puoi scaricarlo, ma non salvarlo."):done;
  });
 }
 function renderSelected(){
- const result=$("result");let html='<h2>Promozioni scelte</h2><div class="grid">';
+ const result=flatHost();let html='<h2>Promozioni scelte</h2><div class="grid">';
  for(const [key,title] of [["light","Luce"],["gas","Gas"]]){const sec=currentQuote.sections[key];if(!sec)continue;const p=sec.selectedPromo,r=sec.calculations;if(!p||!r)continue;html+=!sectionCompares(sec,currentQuote)?`<div class="kpi"><span>${title} · ${p.name}</span><strong>Plafond ${num(p.plafond)} ${sec.unit}</strong><p>Canone ${money(monthlyOf(sec))}/mese · extra soglia ${unitPrice(p.price,sec.unit)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`:`<div class="kpi"><span>${title} · ${p.name}</span><strong>${money(r.saving)} risparmio/anno</strong><p>Canone: ${money(r.displayMonthly??p.monthly)}/mese · costo stimato ${money(r.annualCost)}/anno · mensile percepito ${money(r.annualCost/12)}</p><button class="secondary" data-change="${key}">Cambia promozione</button></div>`}
- html+='</div>';result.innerHTML=html;result.querySelectorAll("[data-change]").forEach(b=>b.addEventListener("click",()=>{hideQuotePreview();for(const r of $("result").querySelectorAll(`input[name="pick_${b.dataset.change}"]`))r.checked=false;renderComparisons()}));
+ html+='</div>';result.innerHTML=html;result.querySelectorAll("[data-change]").forEach(b=>b.addEventListener("click",()=>{hideQuotePreview();for(const r of result.querySelectorAll(`input[name="pick_${b.dataset.change}"]`))r.checked=false;renderComparisons()}));
  showQuotePreview(currentQuote);
 }
 function makeId(){return "q-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8)}
@@ -887,7 +969,7 @@ async function ensureDir(parent,name){return parent.getDirectoryHandle(name,{cre
 async function writeJson(dir,name,data){const fh=await dir.getFileHandle(name,{create:true});const w=await fh.createWritable();await w.write(JSON.stringify(data,null,2));await w.close()}
 async function readJson(dir,name,fallback){try{const fh=await dir.getFileHandle(name);return JSON.parse(await(await fh.getFile()).text())}catch(e){return fallback}}
 const FIREFOX_ARCHIVE_DB="preventivi-firefox-archivio";
-function enableArchiveButtons(){$("loadArchive").disabled=false;$("showHistory").disabled=false;$("showTrash").disabled=false;$("fxHistory").disabled=false;$("fxTrash").disabled=false}
+function enableArchiveButtons(){$("loadArchive").disabled=false;$("showHistory").disabled=false;$("showTrash").disabled=false;$("fxHistory").disabled=false;$("fxTrash").disabled=false;if($("mixHistory"))$("mixHistory").disabled=false;if($("mixTrash"))$("mixTrash").disabled=false}
 function savedArchiveMessage(number,chromeMessage){return chromeMessage}
 function openFirefoxDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(FIREFOX_ARCHIVE_DB,1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains("archive"))db.createObjectStore("archive")};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function persistFirefoxStore(store){const db=await openFirefoxDb();await new Promise((resolve,reject)=>{const tx=db.transaction("archive","readwrite");tx.objectStore("archive").put({name:store.name,files:store.files,dirs:[...store.dirs]},"current");tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
@@ -910,7 +992,8 @@ function normalizeQuote(q){
  return q;
 }
 async function loadArchive(){if(window.__SITE)return loadArchiveSite();if(!folderHandle)return;try{const d=await ensureDir(folderHandle,"dati"),qdir=await ensureDir(d,"preventivi"),tdir=await ensureDir(d,"cestino");customers=await readJson(d,"clienti.json",[]);quotes=(await readJsonFiles(qdir)).map(x=>({...normalizeQuote(x.data),_filename:x.name}));trashQuotes=(await readJsonFiles(tdir)).map(x=>({...normalizeQuote(x.data),_filename:x.name}));quotes.sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));trashQuotes.sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));await rememberIssuedNumbers();let archiveMsg=`Cartella letta. Preventivi: ${quotes.length}. Nel cestino: ${trashQuotes.length}. Il prossimo numero è quello dopo l'ultimo, anche se un preventivo è stato cancellato.`;if(folderHandle.firefoxFallback){archiveMsg+=" Funzione non disponibile per Firefox.";if(folderHandle.store&&folderHandle.store.hint){archiveMsg+=" "+folderHandle.store.hint;folderHandle.store.hint=""}}$("folderStatus").textContent=archiveMsg;renderHistory();renderTrash()}catch(e){$("folderStatus").textContent="Errore lettura archivio: "+e.message}}
-async function saveQuote(){if(window.__SITE)return saveQuoteSite();if(!currentQuote)return;applyFormIdentity(currentQuote);if(!customerReady(currentQuote.customer)){alert("Senza nome, email e cellulare del cliente il preventivo non si può salvare. Puoi comunque scaricare il PDF.");$("saveQuote").disabled=true;return}for(const [k,s] of Object.entries(currentQuote.sections))if(!s.selectedPromo||!s.calculations){alert("Seleziona una promozione per ogni servizio incluso.");return}if(!folderHandle){alert("Seleziona la cartella archivio sul computer.");return}
+function sectionReady(s){if(!s)return false;if(s.product==="commodity")return !!s.offer;return !!(s.selectedPromo&&s.calculations)}
+async function saveQuote(){if(window.__SITE)return saveQuoteSite();if(!currentQuote)return;applyFormIdentity(currentQuote);if(!customerReady(currentQuote.customer)){alert("Senza nome, email e cellulare del cliente il preventivo non si può salvare. Puoi comunque scaricare il PDF.");$("saveQuote").disabled=true;return}for(const [k,s] of Object.entries(currentQuote.sections))if(!sectionReady(s)){alert("Seleziona una promozione per ogni servizio incluso.");return}if(!folderHandle){alert("Seleziona la cartella archivio sul computer.");return}
  try{const d=await ensureDir(folderHandle,"dati"),qdir=await ensureDir(d,"preventivi");currentQuote.quoteNumber=await assignQuoteNumber(currentQuote);currentQuote.status="salvato";currentQuote.savedAt=new Date().toISOString();await writeQuoteFile(qdir,currentQuote);const ci=customers.findIndex(c=>c.email.toLowerCase()===currentQuote.customer.email.toLowerCase());const cust={...currentQuote.customer,shop:currentQuote.shop};if(ci>=0)customers[ci]=cust;else customers.push(cust);await writeJson(d,"clienti.json",customers);await loadArchive();showQuotePreview(currentQuote);$("saveStatus").textContent=savedArchiveMessage(currentQuote.quoteNumber,`Salvato ${currentQuote.quoteNumber}. Il file è nella cartella, con il suo numero.`);$("makePdf").disabled=false}catch(e){$("saveStatus").textContent="Errore nel salvataggio: "+e.message}}
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 
@@ -1102,21 +1185,25 @@ function buildQuoteHtml(q){
   </div>`;
 }
 function showQuotePreview(q){
+  if(q&&q.kind==="mixed")return showMixedPreview(q);
   if(!q||!q.sections)return hideQuotePreview();
   const layout=quoteLayout(q);
   const html=buildQuoteHtml(q);
   if(!layout||!html)return hideQuotePreview();
-  $("quotePreviewTitle").textContent="Anteprima · "+layoutLabel(layout);
+  const pv=toolMode==="mix"?{box:$("mixPreview"),frame:$("mixFrame"),title:$("mixPreviewTitle"),note:$("mixPreviewNote")}:{box:$("quotePreview"),frame:$("quoteFrame"),title:$("quotePreviewTitle"),note:$("quotePreviewNote")};
+  pv.title.textContent="Anteprima · "+layoutLabel(layout);
   const lc=q.sections.light?sectionCompares(q.sections.light,q):false, gc=q.sections.gas?sectionCompares(q.sections.gas,q):false;
-  $("quotePreviewNote").textContent=(q.sections.light&&q.sections.gas&&lc&&!gc)?"Paragone fattura solo per la luce. Per il gas si stampano plafond annuo, canone e costo extra soglia.":(q.sections.light&&q.sections.gas&&gc&&!lc)?"Paragone fattura solo per il gas. Per la luce si stampano plafond annuo, canone e costo extra soglia.":(!lc&&!gc)?"Senza paragone fattura: si stampano plafond annuo, canone e costo extra soglia.":"Il PDF avrà solo questa pagina ("+layoutLabel(layout)+"), non entrambe le varianti.";
-  $("quoteFrame").innerHTML=html;
-  $("quotePreview").classList.remove("hidden");
+  pv.note.textContent=(q.sections.light&&q.sections.gas&&lc&&!gc)?"Paragone fattura solo per la luce. Per il gas si stampano plafond annuo, canone e costo extra soglia.":(q.sections.light&&q.sections.gas&&gc&&!lc)?"Paragone fattura solo per il gas. Per la luce si stampano plafond annuo, canone e costo extra soglia.":(!lc&&!gc)?"Senza paragone fattura: si stampano plafond annuo, canone e costo extra soglia.":"Il PDF avrà solo questa pagina ("+layoutLabel(layout)+"), non entrambe le varianti.";
+  pv.frame.innerHTML=html;
+  pv.box.classList.remove("hidden");
   $("printArea").innerHTML=html;
 }
+function hideMixPreview(){const box=$("mixPreview");if(!box)return;box.classList.add("hidden");$("mixFrame").innerHTML=""}
 function hideQuotePreview(){
   $("quotePreview").classList.add("hidden");
   $("quoteFrame").innerHTML="";
   $("printArea").innerHTML="";
+  hideMixPreview();
 }
 function pdfHtml(q){return buildQuoteHtml(q)}
 function downloadPdfFromCanvas(canvas){
@@ -1146,11 +1233,16 @@ function downloadPdfFromCanvas(canvas){
 async function makePdf(){
  if(!currentQuote)return;
  applyFormIdentity(currentQuote);
- for(const s of Object.values(currentQuote.sections||{})) if(!s.selectedPromo){alert("Seleziona una promozione per ogni servizio incluso.");return}
- const layout=quoteLayout(currentQuote);
- if(!layout){alert("Modello PDF non disponibile.");return}
- showQuotePreview(currentQuote);
- const node=$("quoteFrame").querySelector(".qpage");
+ if(currentQuote.kind==="mixed"){
+  for(const s of Object.values(currentQuote.sections||{})) if(!sectionReady(s)){alert(s&&s.product==="commodity"?"Manca l'offerta Fix/Flex.":"Seleziona una promozione FLAT.");return}
+  showMixedPreview(currentQuote);
+ }else{
+  for(const s of Object.values(currentQuote.sections||{})) if(!s.selectedPromo){alert("Seleziona una promozione per ogni servizio incluso.");return}
+  const layout=quoteLayout(currentQuote);
+  if(!layout){alert("Modello PDF non disponibile.");return}
+  showQuotePreview(currentQuote);
+ }
+ const node=(toolMode==="mix"?$("mixFrame"):$("quoteFrame")).querySelector(".qpage");
  if(!node){alert("Anteprima preventivo non disponibile.");return}
  try{
   const canvas=await html2canvas(node,{scale:2,backgroundColor:"#FFD000",useCORS:true,logging:false});
@@ -1161,11 +1253,14 @@ async function makePdf(){
  }
 }
 
+function quoteKindLabel(q){if(q.kind==="mixed")return "Flat + Fix/Flex";if(q.kind==="commodity")return "Fix/Flex";return "FLAT"}
 function quoteServicesLabel(q){
+  if(q.kind==="mixed")return ["light","gas"].filter(k=>q.sections&&q.sections[k]).map(k=>{const s=q.sections[k];const name=k==="light"?"Luce":"Gas";if(s.product==="commodity")return name+" "+(s.offer&&s.offer.name||"Fix/Flex");return name+" FLAT"+(s.selectedPromo&&s.selectedPromo.name?" "+s.selectedPromo.name:"")}).join(" + ");
   if(q.kind==="commodity")return Object.entries(q.sections||{}).map(([k,s])=>(k==="light"?"Luce":"Gas")+(s.offer?.name?" "+s.offer.name:"")).join(" + ");
   return Object.keys(q.sections||{}).map(k=>k==="light"?"Luce":"Gas").join(" + ");
 }
 function quoteSavingLabel(q){
+  if(q.kind==="mixed")return "—";
   if(q.kind==="commodity"){
     if(!q.compare)return "—";
     const sav=Object.values(q.sections||{}).reduce((a,s)=>a+(s.compare?Number(s.compare.saving)||0:0),0);
@@ -1175,7 +1270,7 @@ function quoteSavingLabel(q){
   if(!secs.some(s=>sectionCompares(s,q)))return "—";
   return money(secs.reduce((a,s)=>a+(sectionCompares(s,q)?Number(s.calculations?.saving)||0:0),0))+" /anno";
 }
-function renderHistory(){const host=$("history");const wrap=$("archiveLists");if(wrap)wrap.classList.remove("hidden");host.classList.remove("hidden");if(!quotes.length){host.innerHTML='<p class="note">Nessun preventivo salvato.</p>';return}host.innerHTML='<table><thead><tr><th>Numero</th><th>Data</th><th>Cliente</th>'+(window.__SITE?'<th>Negozio</th>':'')+'<th>Tipo</th><th>Servizi</th><th>Risparmio</th><th>Azioni</th></tr></thead><tbody>'+quotes.map((q,i)=>`<tr><td>${escapeHtml(q.quoteNumber||"—")}</td><td>${dateLabel(q.customer?.date)}</td><td>${escapeHtml(q.customer?.name||"")}</td>${window.__SITE?`<td>${escapeHtml(q.shop?.name||"")}</td>`:""}<td>${q.kind==="commodity"?"Fix/Flex":"FLAT"}</td><td>${escapeHtml(quoteServicesLabel(q))}</td><td>${quoteSavingLabel(q)}</td><td><button class="secondary" data-open="${i}">Apri</button>${q._own===false?"":` <button class="danger" data-trash="${i}">Sposta nel cestino</button>`}</td></tr>`).join("")+'</tbody></table>';host.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openQuote(quotes[+b.dataset.open])));host.querySelectorAll("[data-trash]").forEach(b=>b.addEventListener("click",()=>moveToTrash(quotes[+b.dataset.trash])))}
+function renderHistory(){const host=$("history");const wrap=$("archiveLists");if(wrap)wrap.classList.remove("hidden");host.classList.remove("hidden");if(!quotes.length){host.innerHTML='<p class="note">Nessun preventivo salvato.</p>';return}host.innerHTML='<table><thead><tr><th>Numero</th><th>Data</th><th>Cliente</th>'+(window.__SITE?'<th>Negozio</th>':'')+'<th>Tipo</th><th>Servizi</th><th>Risparmio</th><th>Azioni</th></tr></thead><tbody>'+quotes.map((q,i)=>`<tr><td>${escapeHtml(q.quoteNumber||"—")}</td><td>${dateLabel(q.customer?.date)}</td><td>${escapeHtml(q.customer?.name||"")}</td>${window.__SITE?`<td>${escapeHtml(q.shop?.name||"")}</td>`:""}<td>${quoteKindLabel(q)}</td><td>${escapeHtml(quoteServicesLabel(q))}</td><td>${quoteSavingLabel(q)}</td><td><button class="secondary" data-open="${i}">Apri</button>${q._own===false?"":` <button class="danger" data-trash="${i}">Sposta nel cestino</button>`}</td></tr>`).join("")+'</tbody></table>';host.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openQuote(quotes[+b.dataset.open])));host.querySelectorAll("[data-trash]").forEach(b=>b.addEventListener("click",()=>moveToTrash(quotes[+b.dataset.trash])))}
 function renderTrash(){const host=$("trash");if(host.classList.contains("hidden"))return;const wrap=$("archiveLists");if(wrap)wrap.classList.remove("hidden");if(!trashQuotes.length){host.innerHTML='<p class="note">Il cestino è vuoto.</p>';return}host.innerHTML='<table><thead><tr><th>Numero</th><th>Data</th><th>Cliente</th><th>Eliminato il</th><th>Azioni</th></tr></thead><tbody>'+trashQuotes.map((q,i)=>`<tr><td>${escapeHtml(q.quoteNumber||"—")}</td><td>${dateLabel(q.customer?.date)}</td><td>${escapeHtml(q.customer?.name||"")}</td><td>${q.deletedAt?new Date(q.deletedAt).toLocaleString("it-IT"):"—"}</td><td>${q._own===false?"":`<button class="secondary" data-restore="${i}">Ripristina</button> <button class="danger" data-purge="${i}">Elimina definitivamente</button>`}</td></tr>`).join("")+'</tbody></table>';host.querySelectorAll("[data-restore]").forEach(b=>b.addEventListener("click",()=>restoreTrash(trashQuotes[+b.dataset.restore])));host.querySelectorAll("[data-purge]").forEach(b=>b.addEventListener("click",()=>purgeTrash(trashQuotes[+b.dataset.purge])))}
 async function moveToTrash(q){if(window.__SITE)return moveToTrashSite(q);if(!folderHandle)return alert("Seleziona prima la cartella archivio.");if(!confirm(`Spostare nel cestino il preventivo ${q.quoteNumber||""} di ${q.customer?.name||""}? Il PDF già creato non verrà eliminato.`))return;try{const d=await ensureDir(folderHandle,"dati"),src=await ensureDir(d,"preventivi"),dest=await ensureDir(d,"cestino"),filename=q._filename||quoteFilename(q),data={...q,deletedAt:new Date().toISOString(),originalFilename:filename};delete data._filename;await writeJson(dest,filename,data);await src.removeEntry(filename);await loadArchive()}catch(e){alert("Spostamento nel cestino non riuscito: "+e.message)}}
 async function restoreTrash(q){if(window.__SITE)return restoreTrashSite(q);if(!folderHandle)return;const filename=q._filename||quoteFilename(q);if(!confirm(`Ripristinare ${q.quoteNumber||""} di ${q.customer?.name||""} nello storico?`))return;try{const d=await ensureDir(folderHandle,"dati"),src=await ensureDir(d,"cestino"),dest=await ensureDir(d,"preventivi");let data={...q};delete data._filename;delete data.deletedAt;delete data.originalFilename;let target=filename;try{await dest.getFileHandle(target);target="RIPRISTINATO-"+target}catch(e){}await writeJson(dest,target,data);await src.removeEntry(filename);await loadArchive()}catch(e){alert("Ripristino non riuscito: "+e.message)}}
@@ -1261,7 +1356,7 @@ async function saveCommodityQuote(){
     $("fxPdf").disabled=false;
   }catch(e){$("fxSaveStatus").textContent="Errore nel salvataggio: "+e.message}
 }
-function openQuote(q){if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("consultant").value=q.shop?.consultant||"";applyShopChoice(detectShopId(q.shop),q.shop);$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("flatFastweb").checked=q.isFastweb!==false;$("lightCompare").checked=q.sections?.light?sectionCompares(q.sections.light,q):true;$("gasCompare").checked=q.sections?.gas?sectionCompares(q.sections.gas,q):true;flatToggleCompare(false);$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption??"";$("lightSpend").value=q.sections.light.currentSpend??""}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption??"";$("gasSpend").value=q.sections.gas.currentSpend??""}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
+function openQuote(q){if(q&&q.kind==="mixed"){openMixedQuote(q);return}if(q&&q.kind==="commodity"){openCommodityQuote(q);return}setToolMode("flat");currentQuote=JSON.parse(JSON.stringify(q));$("name").value=q.customer?.name||"";$("fiscalCode").value=q.customer?.fiscalCode||"";$("date").value=q.customer?.date||"";$("email").value=q.customer?.email||"";$("phone").value=q.customer?.phone||"";$("customerAddress").value=q.customer?.address||"";$("consultant").value=q.shop?.consultant||"";applyShopChoice(detectShopId(q.shop),q.shop);$("includeLight").checked=!!q.sections?.light;$("includeGas").checked=!!q.sections?.gas;$("flatFastweb").checked=q.isFastweb!==false;$("lightCompare").checked=q.sections?.light?sectionCompares(q.sections.light,q):true;$("gasCompare").checked=q.sections?.gas?sectionCompares(q.sections.gas,q):true;flatToggleCompare(false);$("lightInputs").classList.toggle("hidden",!q.sections?.light);$("gasInputs").classList.toggle("hidden",!q.sections?.gas);if(q.sections?.light){$("lightConsumption").value=q.sections.light.consumption??"";$("lightSpend").value=q.sections.light.currentSpend??""}$("meterPower").value=String(q.lightOptions?.meterPower||3);$("residency").value=q.lightOptions?.residency||"resident";if(q.sections?.gas){$("gasConsumption").value=q.sections.gas.consumption??"";$("gasSpend").value=q.sections.gas.currentSpend??""}renderSelected();$("saveQuote").disabled=true;$("makePdf").disabled=false;$("saveStatus").textContent=`Preventivo ${q.quoteNumber||"bozza"} caricato in sola lettura.`}
 function clearForm(){["name","fiscalCode","email","phone","customerAddress","shopName","shopAddress","consultant","shopEmail","shopPhone","lightConsumption","lightSpend","gasConsumption","gasSpend"].forEach(id=>$(id).value="");$("shopPick").value="";setShopFieldsLocked(false);$("date").value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;$("includeLight").checked=true;$("includeGas").checked=false;$("flatFastweb").checked=true;$("lightCompare").checked=true;$("gasCompare").checked=true;flatToggleCompare(false);$("lightInputs").classList.remove("hidden");$("gasInputs").classList.add("hidden");$("meterPower").value="3";$("residency").value="resident";currentQuote=null;$("result").classList.add("hidden");$("calcStatus").classList.add("hidden");$("saveQuote").disabled=true;$("makePdf").disabled=true;hideQuotePreview();$("saveStatus").textContent="Compila i dati e calcola le promozioni.";if(window.__SITE)applySiteShop()}
 let currentCommodityQuote=null;
 const MONTHS_IT=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -1347,19 +1442,267 @@ function fxEnergyText(offer,indexUsed){
   if(indexUsed==null)return idxName+" + "+spreadTxt;
   return idxName+" "+unitPrice(indexUsed,offer.unit)+" + "+spreadTxt;
 }
-function setToolMode(mode){
-  const commodity=mode==="commodity";
-  $("modeFlat").classList.toggle("active",!commodity);
-  $("modeCommodity").classList.toggle("active",commodity);
-  $("flatFlow").classList.toggle("hidden",commodity);
-  $("commodityFlow").classList.toggle("hidden",!commodity);
-  if(commodity)hideQuotePreview();
-  else{
+
+const mixHomes={};
+function rememberMixHomes(){
+  for(const id of ["lightInputs","gasInputs","fxLightBox","fxGasBox"]){
+    const el=$(id);
+    if(el&&!mixHomes[id])mixHomes[id]={parent:el.parentNode,next:el.nextSibling};
+  }
+}
+function restoreMixField(id){
+  const el=$(id), home=mixHomes[id];
+  if(!el||!home||!home.parent||el.parentNode===home.parent)return;
+  const next=home.next&&home.next.parentNode===home.parent?home.next:null;
+  home.parent.insertBefore(el,next);
+}
+function restoreMixFields(){["gasInputs","lightInputs","fxGasBox","fxLightBox"].forEach(restoreMixField)}
+function mixChoice(service){
+  const picked=document.querySelector('input[name="'+(service==="light"?"mixLight":"mixGas")+'"]:checked');
+  return picked?picked.value:"off";
+}
+function mixUsesFx(){return mixChoice("light")==="fx"||mixChoice("gas")==="fx"}
+function syncMixFlags(){
+  const light=mixChoice("light"), gas=mixChoice("gas");
+  $("includeLight").checked=light==="flat";
+  $("includeGas").checked=gas==="flat";
+  $("fxIncludeLight").checked=light==="fx";
+  $("fxIncludeGas").checked=gas==="fx";
+  $("flatFastweb").checked=$("mixFastweb").checked;
+  $("fxFastweb").checked=$("mixFastweb").checked;
+  if(mixUsesFx()){
+    $("fxSegPiva").checked=$("mixSegPiva").checked;
+    $("fxSegPrivate").checked=!$("mixSegPiva").checked;
+  }
+  $("mixSegRow").classList.toggle("hidden",!mixUsesFx());
+  $("mixSegNote").classList.toggle("hidden",!mixUsesFx());
+}
+function placeMixFields(){
+  rememberMixHomes();
+  if(toolMode!=="mix"){
+    restoreMixFields();
+    $("lightInputs").classList.toggle("hidden",!$("includeLight").checked);
+    $("gasInputs").classList.toggle("hidden",!$("includeGas").checked);
+    fxToggleBoxes();
+    return;
+  }
+  syncMixFlags();
+  const put=(service,mode)=>{
+    const slot=$(service==="light"?"mixLightSlot":"mixGasSlot");
+    const flatId=service==="light"?"lightInputs":"gasInputs";
+    const fxId=service==="light"?"fxLightBox":"fxGasBox";
+    const flat=$(flatId), fx=$(fxId);
+    if(mode==="flat"){slot.appendChild(flat);flat.classList.remove("hidden");restoreMixField(fxId);fx.classList.add("hidden")}
+    else if(mode==="fx"){slot.appendChild(fx);fx.classList.remove("hidden");restoreMixField(flatId);flat.classList.add("hidden")}
+    else{restoreMixField(flatId);flat.classList.add("hidden");restoreMixField(fxId);fx.classList.add("hidden")}
+  };
+  put("light",mixChoice("light"));
+  put("gas",mixChoice("gas"));
+  fxToggleBoxes();
+}
+function captureMixSnap(){
+  mixSnap={includeLight:$("includeLight").checked,includeGas:$("includeGas").checked,fxLight:$("fxIncludeLight").checked,fxGas:$("fxIncludeGas").checked,flatFw:$("flatFastweb").checked,fxFw:$("fxFastweb").checked,piva:$("fxSegPiva").checked};
+}
+function restoreMixSnap(){
+  if(!mixSnap)return;
+  $("includeLight").checked=mixSnap.includeLight;
+  $("includeGas").checked=mixSnap.includeGas;
+  $("fxIncludeLight").checked=mixSnap.fxLight;
+  $("fxIncludeGas").checked=mixSnap.fxGas;
+  $("flatFastweb").checked=mixSnap.flatFw;
+  $("fxFastweb").checked=mixSnap.fxFw;
+  $("fxSegPiva").checked=mixSnap.piva;
+  $("fxSegPrivate").checked=!mixSnap.piva;
+  mixSnap=null;
+}
+function mixedTitle(q){
+  const bit=k=>{const s=q.sections&&q.sections[k];if(!s)return "";const name=k==="light"?"LUCE":"GAS";if(s.product==="commodity")return name+" "+(s.offer&&s.offer.kind==="fix"?"FIX":"FLEX");return name+" FLAT"};
+  return ["light","gas"].map(bit).filter(Boolean).join(" + ");
+}
+function assembleMixed(flat,fx){
+  const sections={};
+  for(const key of ["light","gas"]){
+    const mode=mixChoice(key);
+    if(mode==="flat"&&flat.sections&&flat.sections[key]&&flat.sections[key].product!=="commodity")sections[key]={...flat.sections[key],product:"flat"};
+    else if(mode==="flat"&&flat.sections&&flat.sections[key]&&flat.sections[key].selectedPromo)sections[key]={...flat.sections[key],product:"flat"};
+    if(mode==="fx"&&fx&&fx.sections&&fx.sections[key])sections[key]={...fx.sections[key],product:"commodity"};
+    else if(mode==="fx"&&flat.sections&&flat.sections[key]&&flat.sections[key].product==="commodity")sections[key]={...flat.sections[key],product:"commodity"};
+  }
+  const fxSide=fx||{};
+  return {kind:"mixed",id:flat.id,quoteNumber:flat.quoteNumber||null,createdAt:flat.createdAt,customer:flat.customer,shop:flat.shop,blank:flat.blank,lightOptions:flat.lightOptions,isFastweb:flat.isFastweb!==false,isPiva:!!fxSide.isPiva,pun:fxSide.pun,psv:fxSide.psv,sections,status:flat.status||"bozza",version:5,_filename:flat._filename};
+}
+function buildMixedHtml(q){
+  const customer=q.customer||{}, shop=q.shop||{}, sections=q.sections||{};
+  const date=(customer.date||"").split("-").reverse().join("/")||dateLabel(new Date().toISOString().slice(0,10));
+  const cust=infoCardHtml("DATI CLIENTE",ICO.user,[["Nome e Cognome:",customer.name||""],["Telefono:",customer.phone||""],["Email:",customer.email||""],["Indirizzo:",customer.address||""]]);
+  const shopC=infoCardHtml("PUNTO VENDITA",ICO.shop,[["Negozio:",shop.name||shop.store||shop.shopName||""],["Consulente:",shop.consultant||""],["Telefono:",shop.phone||""],["Email:",shop.email||""],["Indirizzo:",shop.address||""]]);
+  const order=["light","gas"].filter(k=>sections[k]);
+  const cards=order.map(k=>{const sec=sections[k];return sec.product==="commodity"?fxServiceCard(q,k,k==="light"?"Luce":"Gas",true):offerHtml(k,sec,q,false)}).join("");
+  const items=[];
+  for(const k of order){const sec=sections[k];if(sec.product!=="commodity"&&sectionCompares(sec,q))items.push(...offerStatsHtml(k,sec,q))}
+  const notes=[];
+  for(const k of order){const sec=sections[k];if(sec.product!=="commodity"&&sectionCompares(sec,q)){const line=calcNoteLine(k,sec);if(line)notes.push("<p>"+escapeHtml(line)+"</p>")}}
+  if(order.some(k=>sections[k].product==="commodity"))notes.push("<p>Per l'offerta Fix/Flex la stima riguarda la sola materia prima e il corrispettivo di commercializzazione. Non comprende rete, oneri di sistema, imposte e IVA.</p>");
+  const flag=order.some(k=>sections[k].product==="commodity")?'<div class="cflags"><span class="cflag">'+(q.isPiva?"Cliente con P.IVA":"Cliente privato")+"</span></div>":"";
+  return '<div class="qpage is-mixed" data-layout="mixed"><div class="qhead"><div class="qtitle">'+escapeHtml(mixedTitle(q))+'</div><div class="qmeta">Preventivo n. <b>'+escapeHtml(q.quoteNumber||"BOZZA")+"</b><br>Data: "+escapeHtml(date)+"</div></div>"+flag+'<div class="qinfo">'+cust+shopC+'</div><div class="qoffers">'+cards+"</div>"+(items.length?statsHtml(items):"")+(notes.length?'<div class="qcalc">'+notes.join("")+"</div>":"")+"</div>";
+}
+function showMixedPreview(q){
+  if(!q||q.kind!=="mixed")return hideQuotePreview();
+  const html=buildMixedHtml(q);
+  const mix=toolMode==="mix"&&$("mixFrame");
+  const frame=mix?$("mixFrame"):$("quoteFrame");
+  const box=mix?$("mixPreview"):$("quotePreview");
+  const titleEl=mix?$("mixPreviewTitle"):$("quotePreviewTitle");
+  const noteEl=mix?$("mixPreviewNote"):$("quotePreviewNote");
+  titleEl.textContent="Anteprima · "+mixedTitle(q);
+  noteEl.textContent="Un solo PDF: la promo FLAT e l'offerta Fix/Flex stanno sulla stessa pagina.";
+  frame.innerHTML=html;
+  box.classList.remove("hidden");
+  $("printArea").innerHTML=html;
+}
+function calculateMix(){
+  mixFxDraft=null;
+  $("mixSave").disabled=true;
+  $("mixPdf").disabled=true;
+  hideMixPreview();
+  syncMixFlags();
+  if(mixUsesFx())fxFillOfferSelects();
+  placeMixFields();
+  const light=mixChoice("light"), gas=mixChoice("gas");
+  if(light==="off"&&gas==="off")return error("Seleziona almeno un servizio: luce, gas o entrambi.");
+  const wantFlat=light==="flat"||gas==="flat";
+  const wantFx=light==="fx"||gas==="fx";
+  if(wantFx){
+    if(calculateCommodity()===false)return error($("fxStatus").textContent||"Controlla i dati Fix/Flex.");
+    mixFxDraft=currentCommodityQuote;
     hideCommodityPreview();
-    if(currentQuote)showQuotePreview(currentQuote);
+  }else currentCommodityQuote=null;
+  if(wantFlat)return calculate()!==false;
+  currentQuote=null;
+  showCommodityPreview(mixFxDraft);
+  const canSave=customerReady(mixFxDraft.customer);
+  $("mixSave").disabled=!canSave;
+  $("mixPdf").disabled=false;
+  $("fxSave").disabled=!canSave;
+  $("fxPdf").disabled=false;
+  $("mixStatus").textContent=canSave?"Puoi salvare il preventivo o scaricare il PDF.":"Senza nome, email e cellulare puoi scaricare il PDF, ma non salvarlo.";
+}
+function onMixShapeChange(){
+  if(toolMode!=="mix")return;
+  placeMixFields();
+  if(mixUsesFx())fxFillOfferSelects();
+  mixFxDraft=null;
+  currentQuote=null;
+  currentCommodityQuote=null;
+  $("mixSave").disabled=true;
+  $("mixPdf").disabled=true;
+  $("mixResult").classList.add("hidden");
+  $("mixResult").innerHTML="";
+  hideMixPreview();
+  $("mixStatus").textContent="Compila i dati e calcola il preventivo.";
+}
+async function saveMixQuote(){
+  if(currentQuote){
+    await saveQuote();
+    $("mixStatus").textContent=$("saveStatus").textContent;
+    $("mixSave").disabled=$("saveQuote").disabled;
+    $("mixPdf").disabled=$("makePdf").disabled;
+    return;
+  }
+  if(currentCommodityQuote){
+    await saveCommodityQuote();
+    $("mixStatus").textContent=$("fxSaveStatus").textContent;
+    $("mixSave").disabled=$("fxSave").disabled;
+    $("mixPdf").disabled=$("fxPdf").disabled;
+  }
+}
+function pdfMix(){if(currentQuote)return makePdf();if(currentCommodityQuote)return makeCommodityPdf()}
+function openMixedQuote(q){
+  q=JSON.parse(JSON.stringify(q));
+  const modeOf=key=>{const s=q.sections&&q.sections[key];if(!s)return "off";return s.product==="commodity"?"fx":"flat"};
+  for(const key of ["light","gas"]){
+    const val=modeOf(key);
+    const el=$((key==="light"?"mixLight":"mixGas")+(val==="flat"?"Flat":val==="fx"?"Fx":"Off"));
+    if(el)el.checked=true;
+  }
+  $("mixFastweb").checked=q.isFastweb!==false;
+  $("mixSegPiva").checked=!!q.isPiva;
+  $("mixSegPrivate").checked=!q.isPiva;
+  setToolMode("mix");
+  fillIdentity(q);
+  if(q.sections&&q.sections.light&&q.sections.light.product!=="commodity"){
+    $("lightCompare").checked=sectionCompares(q.sections.light,q);
+    $("lightConsumption").value=q.sections.light.consumption??"";
+    $("lightSpend").value=q.sections.light.currentSpend??"";
+    $("meterPower").value=String(q.lightOptions&&q.lightOptions.meterPower||3);
+    $("residency").value=(q.lightOptions&&q.lightOptions.residency)||"resident";
+  }
+  if(q.sections&&q.sections.gas&&q.sections.gas.product!=="commodity"){
+    $("gasCompare").checked=sectionCompares(q.sections.gas,q);
+    $("gasConsumption").value=q.sections.gas.consumption??"";
+    $("gasSpend").value=q.sections.gas.currentSpend??"";
+  }
+  flatToggleCompare(false);
+  fxFillOfferSelects();
+  for(const key of ["light","gas"]){
+    const sec=q.sections&&q.sections[key];
+    if(!sec||sec.product!=="commodity")continue;
+    const sel=$(key==="light"?"fxLightOffer":"fxGasOffer");
+    if(sec.offer&&sec.offer.id&&[...sel.options].some(o=>o.value===sec.offer.id))sel.value=sec.offer.id;
+    const cmp=$(key==="light"?"fxLightCompareOn":"fxGasCompareOn");
+    cmp.checked=!!sec.compare;
+    if(sec.compare){
+      const pfx=key==="light"?"fxLight":"fxGas";
+      $(pfx+"FixedNow").value=sec.compare.fixedNow??"";
+      $(pfx+"EnergyNow").value=sec.compare.consumptionQuota??"";
+      $(key==="light"?"fxLightMonthKwh":"fxGasMonthSmc").value=sec.compare.consumption??"";
+      $(pfx+"Bimonthly").checked=!!sec.compare.bimonthly;
+      const months=sec.compare.refMonths;
+      const mSel=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth");
+      if(months&&months[0]&&[...mSel.options].some(o=>o.value===months[0]))mSel.value=months[0];
+    }
+  }
+  fxToggleBoxes();
+  placeMixFields();
+  currentQuote=q;
+  currentCommodityQuote=null;
+  mixFxDraft=null;
+  const canSave=customerReady(q.customer);
+  $("saveQuote").disabled=!canSave;
+  $("makePdf").disabled=false;
+  $("mixSave").disabled=!canSave;
+  $("mixPdf").disabled=false;
+  if(["light","gas"].some(k=>q.sections[k]&&q.sections[k].product!=="commodity"&&q.sections[k].evaluatedPromos))renderSelected();
+  else showMixedPreview(q);
+  $("mixStatus").textContent="Preventivo "+(q.quoteNumber||"bozza")+" caricato.";
+}
+function setToolMode(mode){
+  const next=mode==="commodity"||mode==="mix"?mode:"flat";
+  const prev=toolMode;
+  if(prev!=="mix"&&next==="mix")captureMixSnap();
+  if(prev==="mix"&&next!=="mix"){restoreMixSnap();mixFxDraft=null;if($("mixResult")){$("mixResult").classList.add("hidden");$("mixResult").innerHTML=""}}
+  toolMode=next;
+  $("modeFlat").classList.toggle("active",next==="flat");
+  $("modeCommodity").classList.toggle("active",next==="commodity");
+  $("modeMix").classList.toggle("active",next==="mix");
+  $("flatFlow").classList.toggle("hidden",next!=="flat");
+  $("commodityFlow").classList.toggle("hidden",next!=="commodity");
+  $("mixFlow").classList.toggle("hidden",next!=="mix");
+  placeMixFields();
+  if(next==="commodity")hideQuotePreview();
+  else if(next==="mix"){
+    $("quotePreview").classList.add("hidden");
+    if($("fxPreview"))$("fxPreview").classList.add("hidden");
+    if(currentQuote&&currentQuote.kind==="mixed")showMixedPreview(currentQuote);
+  }else{
+    hideCommodityPreview();
+    hideMixPreview();
+    if(currentQuote&&currentQuote.kind!=="mixed")showQuotePreview(currentQuote);
+    else $("quotePreview").classList.add("hidden");
   }
 }
 function fxFillOfferSelects(){
+  if(toolMode==="mix")syncMixFlags();
   for(const [svc,id] of [["light","fxLightOffer"],["gas","fxGasOffer"]]){
     const sel=$(id); if(!sel)continue;
     const prev=sel.value;
@@ -1485,18 +1828,20 @@ function fxError(msg){
   $("fxStatus").textContent=msg;
   $("fxResult").classList.add("hidden");
   $("fxPdf").disabled=true;
+  $("fxSave").disabled=true;
   hideCommodityPreview();
+  return false;
 }
 function calculateCommodity(){
   const data=readForm();
   const includeLight=$("fxIncludeLight").checked, includeGas=$("fxIncludeGas").checked;
-  if(!includeLight&&!includeGas){fxError("Seleziona almeno un servizio: luce, gas o entrambi.");return}
+  if(!includeLight&&!includeGas){return fxError("Seleziona almeno un servizio: luce, gas o entrambi.")}
   const isPiva=fxSeg()==="piva", isFw=fxIsFw();
   const sections={};
   for(const [on,key] of [[includeLight,"light"],[includeGas,"gas"]]){
     if(!on)continue;
     const offer=fxSelectedOffer(key);
-    if(!offer){fxError("Seleziona un'offerta per "+(key==="light"?"la luce":"il gas")+".");return}
+    if(!offer){return fxError("Seleziona un'offerta per "+(key==="light"?"la luce":"il gas")+".")}
     let compare=null;
     if(fxServiceCompareOn(key)){
       const prefix=key==="light"?"fxLight":"fxGas";
@@ -1504,22 +1849,22 @@ function calculateCommodity(){
       const fixedNow=Number($(prefix+"FixedNow").value);
       const unitNow=Number($(prefix+"EnergyNow").value);
       const cons=Number($(key==="light"?"fxLightMonthKwh":"fxGasMonthSmc").value);
-      if(!Number.isFinite(fixedNow)||fixedNow<0){fxError("Inserisci la quota fissa del contratto attuale per "+svcLabel+".");return}
-      if(!Number.isFinite(unitNow)||unitNow<0){fxError("Inserisci la quota consumi totale del contratto attuale per "+svcLabel+".");return}
-      if(!Number.isFinite(cons)||cons<=0){fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".");return}
+      if(!Number.isFinite(fixedNow)||fixedNow<0){return fxError("Inserisci la quota fissa del contratto attuale per "+svcLabel+".")}
+      if(!Number.isFinite(unitNow)||unitNow<0){return fxError("Inserisci la quota consumi totale del contratto attuale per "+svcLabel+".")}
+      if(!Number.isFinite(cons)||cons<=0){return fxError("Inserisci la quantità del mese maggiore di zero per "+svcLabel+".")}
       let indexValue=null, refMonth=null, refMonths=null;
       if(offer.kind==="flex"){
         const id=$(key==="light"?"fxLightRefMonth":"fxGasRefMonth").value;
         const row=indexById(id);
         const label=key==="light"?"PUN":"PSV";
         const field=key==="light"?"pun":"psv";
-        if(!row){fxError("Scegli il mese di riferimento del "+label+".");return}
+        if(!row){return fxError("Scegli il mese di riferimento del "+label+".")}
         const ids=[id];
         indexValue=Number(row[field]);
         if($(prefix+"Bimonthly").checked){
           const id2=nextMonthId(id);
           const row2=indexById(id2);
-          if(!row2){fxError("Per la fattura bimensile scegli il primo dei due mesi. Il successivo si aggiunge da solo e deve essere in elenco.");return}
+          if(!row2){return fxError("Per la fattura bimensile scegli il primo dei due mesi. Il successivo si aggiunge da solo e deve essere in elenco.")}
           indexValue=(indexValue+Number(row2[field]))/2;
           ids.push(id2);
         }
@@ -1537,12 +1882,14 @@ function calculateCommodity(){
     customer:data.customer, shop:data.shop, blank:!customerReady(data.customer), sections, status:"bozza"
   };
   $("fxStatus").classList.add("hidden");
+  if(toolMode==="mix")return true;
   renderCommodityResult(currentCommodityQuote);
   showCommodityPreview(currentCommodityQuote);
   $("fxPdf").disabled=false;
   const canSave=customerReady(data.customer);
   $("fxSave").disabled=!canSave;
   $("fxSaveStatus").textContent=canSave?"Puoi salvare il preventivo o scaricare il PDF.":"Senza nome, email e cellulare puoi scaricare il PDF, ma non salvarlo.";
+  return true;
 }
 function fxComparedKeys(q){return [["light","luce"],["gas","gas"]].filter(([k])=>q.sections?.[k]?.compare)}
 function renderCommodityResult(q){
@@ -1657,6 +2004,16 @@ function alignCommodityPair(root){
 function showCommodityPreview(q){
   if(!q||q.kind!=="commodity")return hideCommodityPreview();
   const html=buildCommodityHtml(q);
+  if(toolMode==="mix"){
+    $("mixPreviewTitle").textContent="Anteprima · "+Object.values(q.sections).map(s=>s.offer.name).join(" + ");
+    const compared=fxComparedKeys(q);
+    $("mixPreviewNote").textContent=!compared.length?"Si stampa solo l'offerta scelta (imposte escluse).":compared.length===Object.keys(q.sections).length?"Offerta scelta con paragone della bolletta attuale (imposte escluse).":"Paragone bolletta solo per "+compared.map(([,l])=>l==="luce"?"la luce":"il gas").join(" e ")+". L'altro servizio stampa solo l'offerta.";
+    $("mixFrame").innerHTML=html;
+    $("mixPreview").classList.remove("hidden");
+    $("printArea").innerHTML=html;
+    alignCommodityPair($("mixFrame"));
+    return;
+  }
   $("fxPreviewTitle").textContent="Anteprima · "+Object.values(q.sections).map(s=>s.offer.name).join(" + ");
   const compared=fxComparedKeys(q);
   $("fxPreviewNote").textContent=!compared.length?"Si stampa solo l'offerta scelta (imposte escluse).":compared.length===Object.keys(q.sections).length?"Offerta scelta con paragone della bolletta attuale (imposte escluse).":"Paragone bolletta solo per "+compared.map(([,l])=>l==="luce"?"la luce":"il gas").join(" e ")+". L'altro servizio stampa solo l'offerta.";
@@ -1675,7 +2032,7 @@ async function makeCommodityPdf(){
   if(!currentCommodityQuote){alert("Calcola prima il preventivo Fix/Flex.");return}
   applyFormIdentity(currentCommodityQuote);
   showCommodityPreview(currentCommodityQuote);
-  const node=$("fxFrame").querySelector(".cpage");
+  const node=(toolMode==="mix"?$("mixFrame"):$("fxFrame")).querySelector(".cpage");
   if(!node){alert("Anteprima non disponibile.");return}
   try{
     const canvas=await html2canvas(node,{scale:2,backgroundColor:"#FFD000",useCORS:true,logging:false});
@@ -1762,7 +2119,7 @@ async function saveQuoteSite(){
   applySiteShop();
   applyFormIdentity(currentQuote);
   if(!customerReady(currentQuote.customer)){alert("Senza nome, email e cellulare del cliente il preventivo non si può salvare. Puoi comunque scaricare il PDF.");$("saveQuote").disabled=true;return}
-  for(const [k,s] of Object.entries(currentQuote.sections||{}))if(!s.selectedPromo||!s.calculations){alert("Seleziona una promozione per ogni servizio incluso.");return}
+  for(const [k,s] of Object.entries(currentQuote.sections||{}))if(!sectionReady(s)){alert("Seleziona una promozione per ogni servizio incluso.");return}
   if(currentQuote._own===false){alert("Puoi modificare solo i preventivi del tuo negozio.");return}
   try{
     const saved=await siteSend("/api/quotes",sitePayload(currentQuote));
@@ -1867,6 +2224,13 @@ function renderFlatPriceTables(){const row=(p,unit)=>`<tr><td>${escapeHtml(p.nam
 renderFlatPriceTables();
 $("modeFlat").addEventListener("click",()=>setToolMode("flat"));
 $("modeCommodity").addEventListener("click",()=>setToolMode("commodity"));
+$("modeMix").addEventListener("click",()=>setToolMode("mix"));
+$("mixCalculate").addEventListener("click",calculateMix);
+$("mixSave").addEventListener("click",saveMixQuote);
+$("mixPdf").addEventListener("click",pdfMix);
+for(const id of ["mixLightFlat","mixLightFx","mixLightOff","mixGasFlat","mixGasFx","mixGasOff","mixSegPrivate","mixSegPiva","mixFastweb","fxLightOffer","fxGasOffer","fxLightCompareOn","fxGasCompareOn","fxLightBimonthly","fxGasBimonthly","fxLightRefMonth","fxGasRefMonth"])$(id).addEventListener("change",onMixShapeChange);
+$("mixHistory").addEventListener("click",()=>{if(folderHandle)loadArchive();else alert("Seleziona prima la cartella archivio")});
+$("mixTrash").addEventListener("click",()=>{if(!folderHandle){alert("Seleziona prima la cartella archivio");return}$("trash").classList.toggle("hidden");if(!$("trash").classList.contains("hidden"))loadArchive()});
 $("fxIncludeLight").addEventListener("change",fxToggleBoxes);
 $("fxIncludeGas").addEventListener("change",fxToggleBoxes);
 $("fxSegPrivate").addEventListener("change",fxFillOfferSelects);
