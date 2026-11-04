@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:40:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:50:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -3624,7 +3624,7 @@ boot();
   <section class="panel hidden" id="githubBox">
     <h2>GitHub</h2>
     <label class="pwd">Token<input id="githubToken" type="password" autocomplete="off" spellcheck="false"></label>
-    <p class="hint">Resta solo in questo browser e serve per pubblicare il file.</p>
+    <p class="hint">Token con Contents: Read and write sul repository Preventivatore-Pubblico. Resta solo in questo browser.</p>
   </section>
   <div id="editor" class="hidden"></div>
 </main>
@@ -4622,13 +4622,13 @@ async function githubPut(fileHtml){
   const cur=await fetch(api+"?ref="+encodeURIComponent(target.branch),{headers});
   const info=await cur.json().catch(()=>({}));
   if(cur.status===401) throw Error("Token GitHub rifiutato.");
-  if(cur.status===403||cur.status===404) throw Error("Il token non può leggere il file su GitHub.");
+  if(cur.status===403||cur.status===404) throw Error("Il token non può leggere Preventivatore-Pubblico. Abilita Contents: Read and write su quel repository.");
   if(!cur.ok||!info.sha) throw Error(info.message||"Lettura da GitHub non riuscita.");
   const put=await fetch(api,{method:"PUT",headers,body:JSON.stringify({message:"Aggiorna i listini.",content:utf8ToBase64(fileHtml),sha:info.sha,branch:target.branch})});
   const data=await put.json().catch(()=>({}));
   if(put.status===401) throw Error("Token GitHub rifiutato.");
   if(put.status===409) throw Error("Il file su GitHub è cambiato. Ricarica la pagina.");
-  if(put.status===403||put.status===422) throw Error("Il token non può scrivere su GitHub.");
+  if(put.status===403||put.status===422) throw Error("Il token non può scrivere su Preventivatore-Pubblico. Abilita Contents: Read and write su quel repository.");
   if(!put.ok) throw Error(data.message||"Salvataggio su GitHub non riuscito.");
 }
 $("download").addEventListener("click",async()=>{
@@ -4714,6 +4714,20 @@ if(editorBack&&window.parent&&window.parent!==window&&typeof window.parent.__bac
   editorBack.hidden=false;
   editorBack.addEventListener("click",()=>window.parent.__backToChoice());
 }
+async function shellWithCatalog(githubText){
+  if(String(githubText).includes('id="editor-app"')&&String(githubText).includes("Preventivatore-Pubblico/main/index.html")) return githubText;
+  let pageUrl="";
+  try{if(window.parent&&window.parent!==window) pageUrl=String(window.parent.location.href||"")}catch(e){return githubText}
+  pageUrl=pageUrl.split("#")[0];
+  if(!pageUrl||pageUrl.indexOf("http")!==0) return githubText;
+  try{
+    const res=await fetch(pageUrl,{cache:"no-store"});
+    if(!res.ok) return githubText;
+    const page=await res.text();
+    if(kindOf(page)!=="unito"||!page.includes('id="editor-app"')||!page.includes("Preventivatore-Pubblico/main/index.html")) return githubText;
+    return replaceCatalog(page, extractCatalog(githubText));
+  }catch(e){return githubText}
+}
 function parentUpdateUrl(){
   try{
     if(window.parent&&window.parent!==window){
@@ -4741,7 +4755,7 @@ if(!window.__SITE){
         if(!res.ok) throw Error("File su GitHub non letto.");
         const text=await res.text();
         if(kindOf(text)!=="unito") throw Error("Il file su GitHub non è l'index del sito.");
-        loadCombined(text,"index.html");
+        loadCombined(await shellWithCatalog(text),"index.html");
         $("status").textContent="Listino letto da GitHub. Salva per pubblicarlo.";
       }catch(err){
         $("status").textContent=err&&err.message?err.message:String(err);
