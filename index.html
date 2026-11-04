@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T12:10:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T12:15:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -1993,16 +1993,17 @@ body.fit-result .progress,body.fit-result .stepcount,body.fit-result #step h2,bo
 body.fit-result .nav,body.fit-result .err{flex:none}
 body.fit-result #quotePreview{position:relative;flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;overflow:hidden;margin:0}
 body.fit-result .quote-frame{width:100%;height:100%;overflow:auto;background:#FFD000;padding:0;display:flex;align-items:center;justify-content:center;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
-body.fit-result .nav{margin-top:4px;gap:6px}
-body.fit-result #step .nav button{padding:8px 10px;font-size:14px;border-radius:10px}
-.quote-zoom{display:flex;gap:6px;flex:none}
-.quote-zoom button{width:44px;height:44px;padding:0;border:2px solid #111;border-radius:12px;background:#ffe500;color:#111;font:900 22px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:0 2px 0 #00000033}
+body.fit-result .nav{margin-top:4px;gap:6px;align-items:center;height:30px}
+body.fit-result #step .nav button{flex:1;height:28px;padding:0 8px;font-size:13px;line-height:1;border-radius:8px;min-height:0}
+.quote-zoom{display:flex;gap:4px;flex:none;height:28px}
+.quote-zoom button{flex:none;width:28px;height:28px;padding:0;border:2px solid #111;border-radius:8px;background:#ffe500;color:#111;font:900 16px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:none}
 @media (orientation:landscape) and (max-height:500px){
   body.fit-result main{padding:2px 6px 2px}
-  body.fit-result #step{padding:2px 4px 2px}
-  body.fit-result .nav{margin-top:2px;gap:4px}
-  body.fit-result #step .nav button{padding:6px 8px;font-size:13px}
-  .quote-zoom button{width:36px;height:36px;font-size:18px}
+  body.fit-result #step{padding:0 4px 2px}
+  body.fit-result .nav{margin-top:2px;gap:4px;height:26px}
+  body.fit-result #step .nav button{height:24px;padding:0 6px;font-size:12px}
+  .quote-zoom{height:24px}
+  .quote-zoom button{width:24px;height:24px;font-size:15px}
 }
 body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:#FFD000}
 body.fit-flyers header,body.fit-flyers footer{display:none}
