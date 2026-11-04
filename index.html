@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T18:30:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T19:30:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -444,12 +444,12 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 <div id="mixFlow">
 <section class="panel">
 <h2>Flat e Fix/Flex nello stesso PDF</h2>
-<p class="note">Per ogni servizio scegli la promo FLAT oppure un'offerta Fix/Flex. I dati si compilano come sempre. Un solo tasto calcola il preventivo e prepara un PDF unico.</p>
+<p class="note">I dati si compilano come sempre. Un solo tasto calcola il preventivo e prepara un PDF unico.</p>
 <div class="checks" id="mixSegRow">
 <label><input type="radio" name="mixSeg" id="mixSegPrivate" value="private" checked> Privato</label>
 <label><input type="radio" name="mixSeg" id="mixSegPiva" value="piva"> P.IVA</label>
 </div>
-<p class="note" id="mixSegNote">Privato o P.IVA vale per il servizio in Fix/Flex.</p>
+<p class="note" id="mixSegNote">Privato: per ogni servizio puoi scegliere Flat o Fix/Flex. P.IVA: solo Fix/Flex.</p>
 <div class="mix-pick">
 <div class="mix-col">
 <h3>Luce</h3>
@@ -1468,7 +1468,18 @@ function mixChoice(service){
   return picked?picked.value:"off";
 }
 function mixUsesFx(){return mixChoice("light")==="fx"||mixChoice("gas")==="fx"}
+function applyPivaChoices(){
+  const piva=$("mixSegPiva").checked;
+  for(const key of ["light","gas"]){
+    const flat=$(key==="light"?"mixLightFlat":"mixGasFlat");
+    const fx=$(key==="light"?"mixLightFx":"mixGasFx");
+    const label=flat.closest("label");
+    if(label)label.classList.toggle("hidden",piva);
+    if(piva&&flat.checked)fx.checked=true;
+  }
+}
 function syncMixFlags(){
+  applyPivaChoices();
   const light=mixChoice("light"), gas=mixChoice("gas");
   $("includeLight").checked=light==="flat";
   $("includeGas").checked=gas==="flat";
@@ -1476,12 +1487,8 @@ function syncMixFlags(){
   $("fxIncludeGas").checked=gas==="fx";
   $("flatFastweb").checked=$("mixFastweb").checked;
   $("fxFastweb").checked=$("mixFastweb").checked;
-  if(mixUsesFx()){
-    $("fxSegPiva").checked=$("mixSegPiva").checked;
-    $("fxSegPrivate").checked=!$("mixSegPiva").checked;
-  }
-  $("mixSegRow").classList.toggle("hidden",!mixUsesFx());
-  $("mixSegNote").classList.toggle("hidden",!mixUsesFx());
+  $("fxSegPiva").checked=$("mixSegPiva").checked;
+  $("fxSegPrivate").checked=!$("mixSegPiva").checked;
 }
 function placeMixFields(){
   rememberMixHomes();
