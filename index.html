@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T21:30:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T22:45:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -26,13 +26,29 @@ body.ask-pass #gate{display:flex}
 #gate p{margin:0 0 14px;color:var(--fw-muted);font-size:14px;line-height:1.4}
 #gate .status{margin-top:12px}
 body:not(.locked) #gate{display:none}
-#modePick{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;background:#fff7a8}
-#modePick .card{width:min(520px,100%);background:#fff;border:1px solid var(--fw-border);border-top:4px solid var(--fw-yellow);border-radius:12px;padding:22px;box-shadow:0 3px 12px #3e330d0a}
-#modePick h1{margin:0 0 8px;font-size:22px}
-#modePick p{margin:0 0 16px;color:var(--fw-muted);font-size:14px;line-height:1.4}
-#modePick .choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-#modePick button{min-height:72px;font-size:18px}
-@media(max-width:700px){#modePick .choices{grid-template-columns:1fr}}
+#modePick{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:28px 20px;overflow:auto;background:#fffdf8}
+#modePick .pick-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#modePick .pick-wrap{position:relative;z-index:2;width:min(920px,100%)}
+#modePick .hero{position:relative;text-align:center;margin:0 auto 28px;max-width:640px;padding:0 8px}
+#modePick h1{margin:0;font-size:42px;line-height:1.05;font-weight:900;letter-spacing:-.8px;color:#1a1a1a}
+#modePick h1::after{content:"";display:block;width:72px;height:4px;margin:12px auto 0;border-radius:4px;background:#ffe500}
+#modePick .hero p{margin:14px 0 0;color:#5c584e;font-size:16px;line-height:1.4}
+#modePick .hero-house{position:absolute;right:4%;top:8%;width:150px;height:130px;z-index:1;pointer-events:none}
+#modePick .choices{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+#modePick .entry{position:relative;background:#fff;border-radius:22px;padding:28px 24px 22px;text-align:center;box-shadow:0 16px 40px #3e330d1f;overflow:hidden}
+#modePick .entry::before{content:"";position:absolute;left:0;top:0;border-style:solid;border-width:28px 28px 0 0;border-color:#fff6c2 transparent transparent transparent}
+#modePick .entry-icon{display:flex;justify-content:center;margin-bottom:8px}
+#modePick .entry h2{margin:8px 0 8px;font-size:26px;font-weight:900;letter-spacing:-.3px;color:#1a1a1a}
+#modePick .entry p{margin:0 0 18px;color:#6a655c;font-size:15px;line-height:1.45;min-height:44px}
+#modePick button{width:100%;min-height:48px;border:0;border-radius:999px;font-size:15px;font-weight:800;box-shadow:none}
+#modePick #pickCliente{background:#ffe500;color:#1a1a1a}
+#modePick #pickSeller{background:#1a1a1a;color:#fff}
+@media(max-width:760px){
+  #modePick h1{font-size:32px}
+  #modePick .hero-house{display:none}
+  #modePick .choices{grid-template-columns:1fr}
+  #modePick .entry p{min-height:0}
+}
 #modeBack{display:none;position:fixed;top:12px;left:12px;z-index:60;min-height:44px;padding:8px 14px;background:#fff;border:2px solid #111;border-radius:10px;font-weight:800;box-shadow:0 2px 8px #3e330d33}
 #modePick.hidden~#modeBack{display:inline-block}
 body:not(.locked) #modeBack,body:has(#editorFrame) #modeBack{display:none!important}
@@ -248,12 +264,37 @@ header .header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 </head>
 <body class="locked">
 <div id="modePick">
-<div class="card">
-<h1>Preventivatore</h1>
-<p>Scegli come aprirlo.</p>
+<svg class="hero-house" viewBox="0 0 120 104" aria-hidden="true">
+<path d="M18 50 L60 16 L102 50 V92 H18 Z" fill="none" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+<path d="M48 92 V66 H72 V92" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+<path d="M78 58c8 2 12 8 12 14M84 64h10M90 58v12" fill="none" stroke="#1a1a1a" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M34 62c6-8 16-8 18 2-6 2-12 8-10 14 8-2 12-10 8-16" fill="none" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<svg class="pick-bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<path d="M0 620C220 520 380 760 640 680C920 590 1100 430 1440 520V900H0Z" fill="#ffe500"/>
+<path d="M0 760C260 680 480 840 760 780C1040 720 1200 640 1440 700V900H0Z" fill="#ffd000"/>
+<path d="M860-40C1040 80 980 260 1180 300C1320 328 1400 220 1500 180V-40Z" fill="#ffe14a"/>
+<path d="M0 0H1440V520C1180 430 980 560 760 500C500 430 280 180 0 260Z" fill="#fffdf8"/>
+<path d="M-40 180C180 80 260 260 520 200C760 146 860 40 1120 90" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" opacity=".85"/>
+</svg>
+<div class="pick-wrap">
+<div class="hero">
+<h1>Preventivatore Energia</h1>
+<p>Crea, confronta e gestisci i preventivi di Luce e Gas.</p>
+</div>
 <div class="choices">
-<button type="button" id="pickCliente">Cliente</button>
-<button type="button" id="pickSeller">Shop assistant</button>
+<article class="entry">
+<div class="entry-icon"><svg viewBox="0 0 72 64" width="72" height="64" aria-hidden="true"><circle cx="26" cy="20" r="9" fill="none" stroke="#1a1a1a" stroke-width="2.6"/><path d="M8 52c2-10 8-16 18-16s16 6 18 16" fill="none" stroke="#1a1a1a" stroke-width="2.6" stroke-linecap="round"/><circle cx="46" cy="26" r="8" fill="#ffe500" stroke="#1a1a1a" stroke-width="2.4"/><path d="M32 54c1.6-8 6.4-12 14-12s12.4 4 14 12" fill="none" stroke="#1a1a1a" stroke-width="2.4" stroke-linecap="round"/><path d="M58 12l2.2-6M62 18h6M58 24l2.2 5" stroke="#ffe500" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+<h2>Cliente</h2>
+<p>Calcola il tuo risparmio e scopri le offerte Luce e Gas più adatte a te.</p>
+<button type="button" id="pickCliente">Accedi come Cliente →</button>
+</article>
+<article class="entry">
+<div class="entry-icon"><svg viewBox="0 0 72 64" width="72" height="64" aria-hidden="true"><path d="M14 30h44v26H14Z" fill="none" stroke="#1a1a1a" stroke-width="2.6"/><path d="M10 30c3.2 7 8 7 11.2 0C24.4 37 29.2 37 32.4 30 35.6 37 40.4 37 43.6 30 46.8 37 51.6 37 54.8 30 58 37 62 37 66 30" fill="none" stroke="#1a1a1a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 56V40h10v16" fill="none" stroke="#1a1a1a" stroke-width="2.4"/><path d="M54 10l2-5M58 16h6M54 22l2 4" stroke="#ffe500" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+<h2>Shop Assistant</h2>
+<p>Crea e gestisci i preventivi del tuo negozio.</p>
+<button type="button" id="pickSeller">Accedi come Shop Assistant →</button>
+</article>
 </div>
 </div>
 </div>
