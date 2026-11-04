@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T12:00:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T12:10:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -1995,8 +1995,15 @@ body.fit-result #quotePreview{position:relative;flex:1;min-height:0;display:flex
 body.fit-result .quote-frame{width:100%;height:100%;overflow:auto;background:#FFD000;padding:0;display:flex;align-items:center;justify-content:center;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 body.fit-result .nav{margin-top:4px;gap:6px}
 body.fit-result #step .nav button{padding:8px 10px;font-size:14px;border-radius:10px}
-.quote-zoom{position:absolute;right:8px;bottom:8px;z-index:6;display:flex;gap:6px}
+.quote-zoom{display:flex;gap:6px;flex:none}
 .quote-zoom button{width:44px;height:44px;padding:0;border:2px solid #111;border-radius:12px;background:#ffe500;color:#111;font:900 22px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:0 2px 0 #00000033}
+@media (orientation:landscape) and (max-height:500px){
+  body.fit-result main{padding:2px 6px 2px}
+  body.fit-result #step{padding:2px 4px 2px}
+  body.fit-result .nav{margin-top:2px;gap:4px}
+  body.fit-result #step .nav button{padding:6px 8px;font-size:13px}
+  .quote-zoom button{width:36px;height:36px;font-size:18px}
+}
 body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:#FFD000}
 body.fit-flyers header,body.fit-flyers footer{display:none}
 body.fit-flyers main{flex:1;min-height:0;width:100%;max-width:none;margin:0;padding:0;display:flex}
@@ -3215,7 +3222,7 @@ const VIEWS={
   result(){
     const html=buildSheets();
     const hint=outcomeNote();
-    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-zoom"><button type="button" id="zoomOut" aria-label="Riduci">−</button><button type="button" id="zoomIn" aria-label="Ingrandisci">+</button></div><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button><button type="button" class="secondary" id="restartBtn">Ricomincia</button></div><p class="err" id="err" role="alert"></p>`,mount(){
+    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><div class="quote-zoom"><button type="button" id="zoomOut" aria-label="Riduci">−</button><button type="button" id="zoomIn" aria-label="Ingrandisci">+</button></div><button type="button" id="pdfBtn">Apri il PDF</button><button type="button" class="secondary" id="restartBtn">Ricomincia</button></div><p class="err" id="err" role="alert"></p>`,mount(){
       $("printArea").innerHTML=`<div class="quote-pair">${html}</div>`;
       bindBack();
       $("restartBtn").addEventListener("click",restart);
@@ -3298,19 +3305,28 @@ function restart(){
   $("printArea").innerHTML=""; render.lastId=""; document.body.classList.remove("fit-result"); render();
 }
 let quoteZoom=1;
+let fittingQuote=false;
+function pinResultScreen(){
+  if(!document.body.classList.contains("fit-result")){document.body.style.height="";return}
+  const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  document.body.style.height=Math.round(h)+"px";
+}
 function fitQuote(){
+  if(fittingQuote)return;
   const frame=$("quoteFrame"), slot=$("quoteSlot");
   const pair=slot&&slot.querySelector(".quote-pair");
   if(!frame||!pair)return;
+  fittingQuote=true;
+  pinResultScreen();
   pair.style.transform="none";
   pair.style.position="static";
   pair.style.flexDirection="";
   pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
   const pw=pair.offsetWidth, ph=pair.offsetHeight;
   const fw=frame.clientWidth, fh=frame.clientHeight;
-  if(!pw||!ph||!fw||!fh)return;
-  const base=Math.min(fw/pw, fh/ph);
-  const scale=base*quoteZoom;
+  if(!pw||!ph||!fw||!fh){fittingQuote=false;return}
+  const fit=Math.min(fw/pw, fh/ph);
+  const scale=fit*quoteZoom;
   pair.style.transform=`scale(${scale})`;
   pair.style.transformOrigin="top left";
   pair.style.position="absolute";
@@ -3321,6 +3337,7 @@ function fitQuote(){
   slot.style.height=sh+"px";
   frame.style.justifyContent=sw<=fw+1?"center":"flex-start";
   frame.style.alignItems=sh<=fh+1?"center":"flex-start";
+  fittingQuote=false;
 }
 function setQuoteZoom(next){
   quoteZoom=Math.max(1, Math.min(3, next));
@@ -3330,9 +3347,18 @@ function bindFit(){
   if(window.__fitQuote)window.removeEventListener("resize",window.__fitQuote);
   window.__fitQuote=()=>{if(document.body.classList.contains("fit-result"))fitQuote()};
   window.addEventListener("resize",window.__fitQuote);
+  if(!window.__fitQuoteOrientation){
+    window.__fitQuoteOrientation=()=>{quoteZoom=1; setTimeout(fitQuote,60); setTimeout(fitQuote,280)};
+    window.addEventListener("orientationchange",window.__fitQuoteOrientation);
+    if(window.visualViewport)window.visualViewport.addEventListener("resize",()=>{if(document.body.classList.contains("fit-result"))fitQuote()});
+  }
   const frame=$("quoteFrame");
   if(frame&&!frame.dataset.zoom){
     frame.dataset.zoom="1";
+    if(window.ResizeObserver){
+      const ro=new ResizeObserver(()=>{if(document.body.classList.contains("fit-result"))fitQuote()});
+      ro.observe(frame);
+    }
     let startDist=0, startZoom=1;
     const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
     frame.addEventListener("touchstart",ev=>{
@@ -3454,7 +3480,7 @@ function bindFullscreen(){
     }
     syncFsBtn();
   });
-  const onChange=()=>{syncFsBtn();if(window.__fitFlyer)window.__fitFlyer();if(window.__fitQuote)window.__fitQuote()};
+  const onChange=()=>{syncFsBtn();quoteZoom=1;if(window.__fitFlyer)window.__fitFlyer();setTimeout(fitQuote,60);setTimeout(fitQuote,280)};
   document.addEventListener("fullscreenchange",onChange);
   document.addEventListener("webkitfullscreenchange",onChange);
   syncFsBtn();
