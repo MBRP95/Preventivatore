@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T08:41:35.531Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T08:46:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -32,6 +32,10 @@ body:not(.locked) #gate{display:none}
 #modePick .choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #modePick button{min-height:72px;font-size:18px}
 @media(max-width:700px){#modePick .choices{grid-template-columns:1fr}}
+#modeBack{display:none;position:fixed;top:12px;left:12px;z-index:60;min-height:44px;padding:8px 14px;background:#fff;border:2px solid #111;border-radius:10px;font-weight:800;box-shadow:0 2px 8px #3e330d33}
+#modePick.hidden~#modeBack{display:inline-block}
+body:not(.locked) #modeBack,body:has(#editorFrame) #modeBack{display:none!important}
+header .header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #quotePreview{margin-top:16px}
 #quotePreview .quote-frame{background:#111;border-radius:12px;padding:10px;box-shadow:0 8px 24px #3e330d22;overflow:auto}
 #quotePreview .qpage{margin:0 auto}
@@ -235,6 +239,7 @@ body:not(.locked) #gate{display:none}
 </div>
 </div>
 </div>
+<button type="button" id="modeBack">Indietro</button>
 <div id="gate">
 <form id="gateForm">
 <h1>Gestionale preventivi</h1>
@@ -294,8 +299,6 @@ function remembered(hash){try{return !!hash&&sessionStorage.getItem(storageKey)=
 function remember(hash){try{sessionStorage.setItem(storageKey,hash)}catch(e){}}
 function openGate(){
   document.body.classList.remove("locked");
-  const gate=document.getElementById("gate");
-  if(gate)gate.remove();
 }
 function openEditorSoon(){
   try{sessionStorage.setItem("preventivatore-modalita","editor")}catch(e){}
@@ -319,7 +322,7 @@ document.getElementById("gateForm").addEventListener("submit",function(ev){
 });
 })();
 </script>
-<header><h1>Gestionale preventivi energia</h1><button type="button" id="downloadHtml">Scarica HTML per uso locale</button></header>
+<header><h1>Gestionale preventivi energia</h1><div class="header-actions"><button type="button" id="sellerBack">Indietro</button><button type="button" id="downloadHtml">Scarica HTML per uso locale</button></div></header>
 <main>
 <section class="panel"><h2>1. Archivio sul computer</h2>
 <div class="actions"><button id="chooseFolder">Seleziona cartella sul computer</button><button class="secondary" id="loadArchive" disabled>Carica archivio</button><button class="secondary" id="exportBackup">Esporta backup JSON</button><button class="secondary" id="importBackup">Importa backup JSON</button><input id="backupFile" type="file" accept=".json,application/json" class="hidden"><input id="folderPickerFallback" type="file" class="hidden" webkitdirectory multiple></div><div id="folderStatus" class="status">Nessuna cartella selezionata. Lo storico resta sul computer del negozio. Puoi comunque fare calcoli e stampare il PDF.</div></section>
@@ -3436,17 +3439,24 @@ boot();
     const el=document.getElementById("cliente-app");
     return el?el.textContent.replace(/<\\\/script/gi,"</script"):"";
   }
+  function hidePick(){
+    const pick=document.getElementById("modePick");
+    if(pick)pick.classList.add("hidden");
+  }
+  function closeOverlays(){
+    document.querySelectorAll('iframe[title="Preventivatore cliente"],#editorFrame').forEach(el=>el.remove());
+  }
   function openSeller(){
     try{sessionStorage.setItem(key,"seller")}catch(e){}
-    const pick=document.getElementById("modePick");
-    if(pick)pick.remove();
+    closeOverlays();
+    hidePick();
     const input=document.getElementById("gatePassword");
     if(input&&document.body.classList.contains("locked"))input.focus();
   }
   function openCliente(){
     try{sessionStorage.setItem(key,"cliente")}catch(e){}
-    const pick=document.getElementById("modePick");
-    if(pick)pick.remove();
+    closeOverlays();
+    hidePick();
     const frame=document.createElement("iframe");
     frame.setAttribute("title","Preventivatore cliente");
     frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:30;background:#fff7a8";
@@ -3456,13 +3466,12 @@ boot();
     doc.write(clienteHtml());
     doc.close();
   }
-  let editorOpening=false;
+  let editorSeq=0;
   async function openEditor(){
-    if(editorOpening||document.getElementById("editorFrame"))return;
-    editorOpening=true;
+    if(document.getElementById("editorFrame"))return;
+    const seq=++editorSeq;
     try{sessionStorage.setItem(key,"editor")}catch(e){}
-    const pick=document.getElementById("modePick");
-    if(pick)pick.remove();
+    hidePick();
     const note=document.getElementById("gateError");
     if(note){note.textContent="Apro l'editor.";note.classList.remove("hidden")}
     try{
@@ -3472,10 +3481,11 @@ boot();
           const localRes=await fetch(new URL("modifica_listini.html", location.href).href,{cache:"no-store"});
           if(localRes.ok){
             const text=await localRes.text();
-            if(text.includes('id="githubToken"')) html=text;
+            if(text.includes('id="githubToken"')&&text.includes('id="editorBack"')) html=text;
           }
         }catch(e){}
       }
+      if(seq!==editorSeq)return;
       if(!html){
         const meta=document.querySelector('meta[name="update-url"]');
         const raw=String(meta&&meta.content||"").replace(/index\.html(?:\?.*)?$/,"modifica_listini.html");
@@ -3484,9 +3494,8 @@ boot();
         if(!remote.ok) throw Error("Editor non raggiungibile.");
         html=await remote.text();
       }
+      if(seq!==editorSeq)return;
       if(!html.includes('id="download"')) throw Error("Editor non raggiungibile.");
-      const gate=document.getElementById("gate");
-      if(gate)gate.remove();
       const frame=document.createElement("iframe");
       frame.id="editorFrame";
       frame.setAttribute("title","Modifica listini");
@@ -3497,18 +3506,36 @@ boot();
       doc.write(html);
       doc.close();
     }catch(e){
-      editorOpening=false;
+      if(seq!==editorSeq)return;
       if(note){note.textContent="Editor non raggiungibile.";note.classList.remove("hidden")}
     }
   }
+  function backToChoice(){
+    editorSeq++;
+    try{sessionStorage.removeItem(key)}catch(e){}
+    try{sessionStorage.removeItem("preventivatore-accesso")}catch(e){}
+    closeOverlays();
+    document.body.classList.add("locked");
+    const gate=document.getElementById("gate");
+    if(gate)gate.style.display="";
+    const err=document.getElementById("gateError");
+    if(err){err.textContent="";err.classList.add("hidden")}
+    const input=document.getElementById("gatePassword");
+    if(input)input.value="";
+    const pick=document.getElementById("modePick");
+    if(pick)pick.classList.remove("hidden");
+  }
   window.__openEditor=openEditor;
+  window.__backToChoice=backToChoice;
+  document.getElementById("pickCliente").addEventListener("click",openCliente);
+  document.getElementById("pickSeller").addEventListener("click",openSeller);
+  document.getElementById("modeBack").addEventListener("click",backToChoice);
+  document.getElementById("sellerBack").addEventListener("click",backToChoice);
   let saved="";
   try{saved=sessionStorage.getItem(key)||""}catch(e){}
   if(saved==="editor"||window.__editorUnlock){openEditor();return}
   if(saved==="seller"){openSeller();return}
   if(saved==="cliente"){openCliente();return}
-  document.getElementById("pickCliente").addEventListener("click",openCliente);
-  document.getElementById("pickSeller").addEventListener("click",openSeller);
 })();
 </script>
 </body></html>

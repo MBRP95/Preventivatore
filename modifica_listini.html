@@ -7,7 +7,7 @@
 <style>
   :root{color-scheme:light}
   body{margin:0;background:#fff8d8;color:#111;font-family:Arial,Helvetica,sans-serif}
-  header{background:#FFD000;border-bottom:4px solid #111;padding:16px 22px}
+  header{background:#FFD000;border-bottom:4px solid #111;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   header h1{margin:0;font-size:26px}
   header p{margin:6px 0 0;max-width:760px;line-height:1.4}
   main{max-width:1100px;margin:0 auto;padding:18px}
@@ -54,6 +54,7 @@
 <body>
 <header>
   <h1>Modifica listini</h1>
+  <button type="button" id="editorBack" class="secondary" hidden>Indietro</button>
 </header>
 <main>
   <section class="panel">
@@ -1163,6 +1164,11 @@ if(window.__SITE){
   })();
 }
 
+const editorBack=$("editorBack");
+if(editorBack&&window.parent&&window.parent!==window&&typeof window.parent.__backToChoice==="function"){
+  editorBack.hidden=false;
+  editorBack.addEventListener("click",()=>window.parent.__backToChoice());
+}
 function parentUpdateUrl(){
   try{
     if(window.parent&&window.parent!==window){
