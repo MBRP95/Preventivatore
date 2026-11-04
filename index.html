@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T11:55:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T12:00:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -3306,18 +3306,11 @@ function fitQuote(){
   pair.style.position="static";
   pair.style.flexDirection="";
   pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
-  let pw=pair.offsetWidth, ph=pair.offsetHeight;
+  const pw=pair.offsetWidth, ph=pair.offsetHeight;
   const fw=frame.clientWidth, fh=frame.clientHeight;
   if(!pw||!ph||!fw||!fh)return;
-  const pages=pair.querySelectorAll(".qpage,.cpage").length;
-  let base=Math.min(fw/pw, fh/ph);
-  if(base<0.85){
-    if(pages>1)pair.style.flexDirection="column";
-    pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
-    pw=pair.offsetWidth; ph=pair.offsetHeight;
-    base=fw/pw;
-  }
-  const scale=Math.max(0.2, Math.min(base*quoteZoom, 3));
+  const base=Math.min(fw/pw, fh/ph);
+  const scale=base*quoteZoom;
   pair.style.transform=`scale(${scale})`;
   pair.style.transformOrigin="top left";
   pair.style.position="absolute";
