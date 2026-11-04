@@ -47,6 +47,7 @@
   .flyer-handle.sw{left:-8px;bottom:-8px;cursor:nesw-resize}
   .flyer-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize}
   .hidden{display:none}
+  #liveFrom{max-width:220px}
   footer{max-width:1100px;margin:0 auto;padding:8px 18px 22px;display:flex;justify-content:flex-end}
   footer .credit{text-align:right;font-style:italic;font-size:12px;color:#756f58}
 </style>
@@ -80,6 +81,11 @@
     <h2>GitHub</h2>
     <label class="pwd">Token<input id="githubToken" type="password" autocomplete="off" spellcheck="false"></label>
     <p class="hint">Token con Contents: Read and write sul repository Preventivatore-Pubblico. Resta solo in questo browser.</p>
+  </section>
+  <section class="panel hidden" id="scheduleBox">
+    <h2>Entra in vigore</h2>
+    <label class="pwd">Data<input id="liveFrom" type="date"></label>
+    <p class="hint" id="scheduleHint">Lascia vuoto per applicare subito il listino che vedi. Con una data futura i negozi tengono il listino di oggi fino a quella mezzanotte (ora di Roma) e poi passano a questo.</p>
   </section>
   <div id="editor" class="hidden"></div>
 </main>
@@ -281,11 +287,7 @@ function readNewPassword(){
   if(nextSeller&&nextEditor&&nextSeller===nextEditor) throw Error("Le due password devono essere diverse.");
   return {seller,editor};
 }
-function extractCatalog(html){
-  const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
-  if(!m)throw Error("Questo file non contiene il listino.");
-  const data=JSON.parse(m[1]);
-  if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
+function finishCatalog(data){
   if(!data.indices||typeof data.indices!=="object")data.indices={};
   data.indices.series=normalizeSeries(data.indices.series);
   data.indices.pun=Number(data.indices.series[0].pun);
@@ -293,6 +295,23 @@ function extractCatalog(html){
   ensureOfferIds(data);
   ensureFlatExpiry(data);
   return data;
+}
+function extractCatalog(html){
+  const m=String(html||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\/script>/);
+  if(!m)throw Error("Questo file non contiene il listino.");
+  const data=JSON.parse(m[1]);
+  if(!data.flat||!data.commodity)throw Error("Listino non riconosciuto.");
+  return finishCatalog(data);
+}
+function extractScheduled(html){
+  const m=String(html||"").match(/<script type="application\/json" id="promo-catalog-next">([\s\S]*?)<\/script>/);
+  if(!m)return null;
+  let data;
+  try{data=JSON.parse(m[1])}catch(e){return null}
+  const from=String(data.liveFrom||"").slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(from)||!data.flat||!data.commodity)return null;
+  delete data.liveFrom;
+  return {liveFrom:from,catalog:finishCatalog(data)};
 }
 function ensureFlatExpiry(data){
   const direct=String(data.flat&&data.flat.expires||"").slice(0,10);
@@ -337,6 +356,113 @@ function replaceCatalog(html,data){
   const re=/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/;
   if(!re.test(html)) throw Error("Impossibile aggiornare il listino nel file.");
   return html.replace(re,block);
+}
+function romeOffsetMin(utcMs){
+  const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Rome",hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(utcMs));
+  const n=t=>Number(parts.find(p=>p.type===t).value);
+  return Math.round((Date.UTC(n("year"),n("month")-1,n("day"),n("hour"),n("minute"),n("second"))-utcMs)/60000);
+}
+function romeMidnightMs(iso){
+  const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m)return NaN;
+  const guess=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]));
+  let off=romeOffsetMin(guess);
+  let ms=guess-off*60000;
+  const off2=romeOffsetMin(ms);
+  if(off2!==off)ms=guess-off2*60000;
+  return ms;
+}
+function fmtDate(iso){
+  const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?m[3]+"/"+m[2]+"/"+m[1]:String(iso||"");
+}
+function liveFromChoice(){
+  const raw=String(($("liveFrom")&&$("liveFrom").value)||"").slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(raw))return "";
+  return romeMidnightMs(raw)>Date.now()?raw:"";
+}
+function scheduleSentence(from){
+  if(!from)return "";
+  return " I negozi tengono il listino di oggi fino al "+fmtDate(from)+" a mezzanotte (ora di Roma), poi usano questo. Non serve un altro aggiornamento.";
+}
+function scheduleSource(){
+  if(loaded.gestionale&&loaded.gestionale.combined)return loaded.gestionale;
+  if(loaded.cliente)return loaded.cliente;
+  return loaded.gestionale;
+}
+function scheduleLoadedNote(){
+  const src=scheduleSource();
+  if(!src)return "";
+  if(src.scheduleState==="future"&&src.scheduledFrom)return " Questo listino entra in vigore il "+fmtDate(src.scheduledFrom)+" a mezzanotte (ora di Roma). Fino ad allora i negozi tengono quello di oggi.";
+  if(src.scheduleState==="due")return " Il listino programmato è già in vigore: è quello che vedi. Salva per fissarlo come listino attuale.";
+  return "";
+}
+function paintScheduleHint(){
+  const el=$("scheduleHint");
+  if(!el)return;
+  const raw=String(($("liveFrom")&&$("liveFrom").value)||"");
+  const from=liveFromChoice();
+  if(from){
+    el.textContent="I negozi tengono il listino di oggi fino al "+fmtDate(from)+" a mezzanotte (ora di Roma). Poi usano questo, senza un altro aggiornamento.";
+    return;
+  }
+  const src=scheduleSource();
+  if(src&&src.scheduleState==="future"&&!/^\d{4}-\d{2}-\d{2}$/.test(raw)){
+    el.textContent="Senza data, al salvataggio questo listino sostituisce subito quello di oggi.";
+    return;
+  }
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)){
+    el.textContent="Questa data è già passata: al salvataggio i prezzi entrano subito.";
+    return;
+  }
+  el.textContent="Lascia vuoto per applicare subito il listino che vedi. Con una data futura i negozi tengono il listino di oggi fino a quella mezzanotte (ora di Roma) e poi passano a questo.";
+}
+function applyScheduleField(){
+  const src=scheduleSource();
+  if($("liveFrom"))$("liveFrom").value=(src&&src.scheduledFrom)||"";
+  paintScheduleHint();
+}
+function catalogPayload(data,liveFrom){
+  const body=clone(data);
+  delete body.liveFrom;
+  const out={liveFrom};
+  for(const key of Object.keys(body))out[key]=body[key];
+  return out;
+}
+function removeScheduled(html){
+  return String(html).replace(/\n?<script type="application\/json" id="promo-catalog-next">[\s\S]*?<\/script>/g,"");
+}
+function upsertScheduled(html,data,liveFrom){
+  const pretty=JSON.stringify(catalogPayload(data,liveFrom),null,2);
+  const block='<script type="application/json" id="promo-catalog-next">\n'+pretty+'\n</scr'+'ipt>';
+  const stripped=removeScheduled(html);
+  const cat=/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/;
+  if(!cat.test(stripped))throw Error("Impossibile programmare il listino.");
+  return stripped.replace(cat,m=>m+"\n"+block);
+}
+function writeCatalogPlan(html,edited,from){
+  if(from)return upsertScheduled(html,edited,from);
+  return removeScheduled(replaceCatalog(html,edited));
+}
+function scheduledBlock(html){
+  const m=String(html||"").match(/<script type="application\/json" id="promo-catalog-next">[\s\S]*?<\/script>/);
+  return m?m[0]:"";
+}
+function applyScheduledBlock(html,block){
+  const stripped=removeScheduled(html);
+  if(!block)return stripped;
+  const cat=/<script type="application\/json" id="promo-catalog">[\s\S]*?<\/script>/;
+  if(!cat.test(stripped))return html;
+  return stripped.replace(cat,m=>m+"\n"+block);
+}
+function adoptFile(html){
+  const live=extractCatalog(html);
+  const next=extractScheduled(html);
+  if(next&&romeMidnightMs(next.liveFrom)>Date.now()){
+    return {catalog:next.catalog,heldLive:clone(live),scheduledFrom:next.liveFrom,scheduleState:"future"};
+  }
+  if(next)return {catalog:next.catalog,heldLive:clone(next.catalog),scheduledFrom:"",scheduleState:"due"};
+  return {catalog:live,heldLive:clone(live),scheduledFrom:"",scheduleState:""};
 }
 function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
 function numInput(path,value,step){
@@ -873,16 +999,16 @@ function workingCatalog(){
 }
 function describeLoad(){
   const shop=loaded.gestionale, client=loaded.cliente;
-  if(shop&&shop.combined) return "File del sito caricato. Le modifiche valgono per seller e cliente.";
-  if(shop&&client){
+  let text="Nessun file caricato.";
+  if(shop&&shop.combined) text="File del sito caricato. Le modifiche valgono per seller e cliente.";
+  else if(shop&&client){
     const same=JSON.stringify(promoBody(shop.catalog))===JSON.stringify(promoBody(client.catalog));
-    return same
+    text=same
       ?"Gestionale e preventivo cliente caricati. Le modifiche valgono per tutti e due."
       :"Gestionale e preventivo cliente caricati. I listini non coincidono: qui vedi quello del cliente e, al download, anche il gestionale diventa uguale.";
-  }
-  if(shop) return "Caricato "+shop.name+". Carica anche il preventivo cliente per modificarli insieme.";
-  if(client) return "Caricato "+client.name+". Carica anche il gestionale per modificarli insieme.";
-  return "Nessun file caricato.";
+  }else if(shop) text="Caricato "+shop.name+". Carica anche il preventivo cliente per modificarli insieme.";
+  else if(client) text="Caricato "+client.name+". Carica anche il gestionale per modificarli insieme.";
+  return text+scheduleLoadedNote();
 }
 function paintNames(){
   for(const [slot,id] of [["gestionale","nameGestionale"],["cliente","nameCliente"]]){
@@ -896,6 +1022,7 @@ function paintNames(){
   }
   $("download").textContent=githubMode?"Salva su GitHub":(loaded.gestionale&&loaded.cliente?"Scarica i due HTML":"Scarica HTML aggiornato");
   $("siteAccess").classList.toggle("hidden",!(loaded.gestionale&&extractAccess(loaded.gestionale.html)));
+  $("scheduleBox").classList.toggle("hidden",!(loaded.gestionale||loaded.cliente));
 }
 function showWorking(status){
   fileKind=mode();
@@ -906,6 +1033,7 @@ function showWorking(status){
   $("download").disabled=false;
   $("reset").disabled=false;
   paintNames();
+  applyScheduleField();
   $("status").textContent=status||describeLoad();
 }
 function keepEdits(status){
@@ -927,8 +1055,10 @@ function clearPasswords(){
 }
 function loadCombined(html,name){
   const inner=decodeCliente(extractClienteBlob(html));
-  loaded.gestionale={html,name:name||"index.html",catalog:extractCatalog(html),combined:true};
-  loaded.cliente={html:inner,name:"Preventivo cliente",catalog:extractCatalog(inner),embedded:true};
+  const shop=adoptFile(html);
+  const client=adoptFile(inner);
+  loaded.gestionale={html,name:name||"index.html",catalog:shop.catalog,heldLive:shop.heldLive,scheduledFrom:shop.scheduledFrom,scheduleState:shop.scheduleState,combined:true};
+  loaded.cliente={html:inner,name:"Preventivo cliente",catalog:client.catalog,heldLive:client.heldLive,scheduledFrom:client.scheduledFrom,scheduleState:client.scheduleState,embedded:true};
   flyerPages=null;
   flyerButtons=null;
   buttonsDirty=false;
@@ -941,10 +1071,10 @@ async function loadSlot(slot,file){
   if(kindOf(html)==="unito"){loadCombined(html,file.name||"index.html");return}
   const kind=kindOf(html);
   if(kind!==slot) throw Error(kind==="cliente"?"Questo è il preventivo del cliente: caricalo nell'altro spazio.":"Questo è il gestionale: caricalo nell'altro spazio.");
-  const data=extractCatalog(html);
+  const part=adoptFile(html);
   const name=file.name||(slot==="cliente"?"PreventivatoreTablet.html":"PreventivatoreStore.html");
   const had=!!loaded[slot];
-  loaded[slot]={html,name,catalog:data};
+  loaded[slot]={html,name,catalog:part.catalog,heldLive:part.heldLive,scheduledFrom:part.scheduledFrom,scheduleState:part.scheduleState};
   if(slot==="cliente"){flyerPages=null;flyerButtons=null;buttonsDirty=false}
   if(slot==="gestionale") clearPasswords();
   if(!catalog||!dirty) showWorking();
@@ -1034,24 +1164,51 @@ function catalogForSlot(slot, edited){
   return out;
 }
 function buildCombined(next, accessChange){
-  let inner=replaceCatalog(loaded.cliente.html, catalogForSlot("cliente", next));
+  const from=liveFromChoice();
+  let inner=writeCatalogPlan(loaded.cliente.html, catalogForSlot("cliente", next), from);
   inner=applyClientExtras(inner);
-  let outer=replaceCatalog(loaded.gestionale.html, catalogForSlot("gestionale", next));
+  let outer=writeCatalogPlan(loaded.gestionale.html, catalogForSlot("gestionale", next), from);
   if(accessChange&&(accessChange.seller||accessChange.editor)) outer=replaceAccess(outer, accessChange.seller, accessChange.editor);
   outer=replaceClienteBlob(outer, inner);
   outer=stampPageRev(outer);
-  return {outer, inner};
+  return {outer, inner, from};
 }
-function rememberBuilt(built){
+function rememberBuilt(built, edited, from){
+  const when=from||"";
+  const gCat=when?catalogForSlot("gestionale", edited):extractCatalog(built.outer);
+  const cCat=loaded.cliente?(when?catalogForSlot("cliente", edited):extractCatalog(built.inner)):null;
   loaded.gestionale.html=built.outer;
-  loaded.gestionale.catalog=extractCatalog(built.outer);
+  loaded.gestionale.catalog=gCat;
+  loaded.gestionale.heldLive=extractCatalog(built.outer);
+  loaded.gestionale.scheduledFrom=when;
+  loaded.gestionale.scheduleState=when?"future":"";
   if(loaded.cliente){
     loaded.cliente.html=built.inner;
-    loaded.cliente.catalog=extractCatalog(built.inner);
+    loaded.cliente.catalog=cCat;
+    loaded.cliente.heldLive=extractCatalog(built.inner);
+    loaded.cliente.scheduledFrom=when;
+    loaded.cliente.scheduleState=when?"future":"";
   }
   catalog=ensureShared(workingCatalog());
   baselineCatalog=clone(catalog);
   dirty=false;
+  applyScheduleField();
+}
+function rememberLoose(items, next, from){
+  const when=from||"";
+  for(const item of items){
+    const src=loaded[item.slot];
+    if(!src)continue;
+    src.html=item.html;
+    src.catalog=clone(next);
+    src.scheduledFrom=when;
+    src.scheduleState=when?"future":"";
+    if(!when)src.heldLive=clone(next);
+  }
+  catalog=ensureShared(workingCatalog());
+  baselineCatalog=clone(catalog);
+  dirty=false;
+  applyScheduleField();
 }
 function utf8ToBase64(str){
   const bytes=new TextEncoder().encode(str);
@@ -1066,7 +1223,7 @@ function githubTarget(url){
   return {owner:m[1], repo:m[2], branch:decodeURIComponent(m[3]), path:"index.html"};
 }
 let githubUrl="";
-async function githubPut(fileHtml){
+async function githubPut(fileHtml, message){
   const token=String($("githubToken").value||"").trim();
   if(!token) throw Error("Incolla il token GitHub.");
   try{localStorage.setItem("preventivatore-github-token", token)}catch(e){}
@@ -1079,7 +1236,7 @@ async function githubPut(fileHtml){
   if(cur.status===401) throw Error("Token GitHub rifiutato.");
   if(cur.status===403||cur.status===404) throw Error("Il token non può leggere Preventivatore-Pubblico. Abilita Contents: Read and write su quel repository.");
   if(!cur.ok||!info.sha) throw Error(info.message||"Lettura da GitHub non riuscita.");
-  const put=await fetch(api,{method:"PUT",headers,body:JSON.stringify({message:"Aggiorna i listini.",content:utf8ToBase64(fileHtml),sha:info.sha,branch:target.branch})});
+  const put=await fetch(api,{method:"PUT",headers,body:JSON.stringify({message:message||"Aggiorna i listini.",content:utf8ToBase64(fileHtml),sha:info.sha,branch:target.branch})});
   const data=await put.json().catch(()=>({}));
   if(put.status===401) throw Error("Token GitHub rifiutato.");
   if(put.status===409) throw Error("Il file su GitHub è cambiato. Ricarica la pagina.");
@@ -1098,24 +1255,26 @@ $("download").addEventListener("click",async()=>{
     btn.disabled=true;
     if(loaded.gestionale&&loaded.gestionale.combined){
       const built=buildCombined(next, accessChange);
+      const lead=built.from?"Listini pubblicati su GitHub.":"Listini pubblicati su GitHub. Riapri la pagina del negozio per vederli.";
       if(githubMode){
-        await githubPut(built.outer);
-        rememberBuilt(built);
+        await githubPut(built.outer, built.from?"Aggiorna i listini dal "+built.from+".":"Aggiorna i listini.");
+        rememberBuilt(built, next, built.from);
         clearPasswords();
-        $("status").textContent="Listini pubblicati su GitHub. Riapri la pagina del negozio per vederli."+passwordNote;
+        $("status").textContent=lead+scheduleSentence(built.from)+passwordNote;
         return;
       }
       downloadBlob(built.outer, loaded.gestionale.name||"index.html");
-      rememberBuilt(built);
+      rememberBuilt(built, next, built.from);
       clearPasswords();
-      $("status").textContent="Scaricato "+(loaded.gestionale.name||"index.html")+". Sostituisci il file del sito con questo."+passwordNote;
+      $("status").textContent="Scaricato "+(loaded.gestionale.name||"index.html")+". Sostituisci il file del sito con questo."+scheduleSentence(built.from)+passwordNote;
       return;
     }
+    const from=liveFromChoice();
     const built=[];
     for(const slot of ["gestionale","cliente"]){
       const src=loaded[slot];
       if(!src)continue;
-      let fileHtml=replaceCatalog(src.html,next);
+      let fileHtml=writeCatalogPlan(src.html,next,from);
       if(slot==="cliente") fileHtml=applyClientExtras(fileHtml);
       if(slot==="gestionale"&&(accessChange.seller||accessChange.editor)) fileHtml=replaceAccess(fileHtml, accessChange.seller, accessChange.editor);
       if(slot==="gestionale") fileHtml=stampPageRev(fileHtml);
@@ -1128,20 +1287,16 @@ $("download").addEventListener("click",async()=>{
       const data=await res.json().catch(()=>({}));
       if(res.status===401){location.href="/accesso?admin=1";return}
       if(!res.ok)throw Error(data.error||"Pubblicazione non riuscita");
-      if(accessChange.seller||accessChange.editor) loaded.gestionale.html=replaceAccess(loaded.gestionale.html, accessChange.seller, accessChange.editor);
-      catalog=clone(next);
-      dirty=false;
+      rememberLoose(built, next, from);
       clearPasswords();
-      $("status").textContent="Offerte pubblicate. Negozi e tablet le vedono aggiornando la pagina."+passwordNote;
+      $("status").textContent=(from?"Offerte pronte.":"Offerte pubblicate. Negozi e tablet le vedono aggiornando la pagina.")+scheduleSentence(from)+passwordNote;
       return;
     }
     const names=[];
     for(const item of built){downloadBlob(item.html,item.name);names.push(item.name)}
-    if(accessChange.seller||accessChange.editor) loaded.gestionale.html=replaceAccess(loaded.gestionale.html, accessChange.seller, accessChange.editor);
-    catalog=clone(next);
-    dirty=false;
+    rememberLoose(built, next, from);
     clearPasswords();
-    $("status").textContent=(names.length===2?`Scaricati ${names[0]} e ${names[1]}. Sostituisci i due file con questi.`:`Scaricato ${names[0]}. Sostituisci ${fileKind==="cliente"?"il preventivo del cliente":"il gestionale"} con questo file.`)+passwordNote;
+    $("status").textContent=(names.length===2?`Scaricati ${names[0]} e ${names[1]}. Sostituisci i due file con questi.`:`Scaricato ${names[0]}. Sostituisci ${fileKind==="cliente"?"il preventivo del cliente":"il gestionale"} con questo file.`)+scheduleSentence(from)+passwordNote;
   }catch(err){
     $("status").textContent=err&&err.message?err.message:String(err);
   }finally{
@@ -1180,7 +1335,7 @@ async function shellWithCatalog(githubText){
     if(!res.ok) return githubText;
     const page=await res.text();
     if(kindOf(page)!=="unito"||!page.includes('id="editor-app"')||!page.includes("Preventivatore-Pubblico/main/index.html")) return githubText;
-    return replaceCatalog(page, extractCatalog(githubText));
+    return applyScheduledBlock(replaceCatalog(page, extractCatalog(githubText)), scheduledBlock(githubText));
   }catch(e){return githubText}
 }
 function parentUpdateUrl(){
@@ -1211,12 +1366,16 @@ if(!window.__SITE){
         const text=await res.text();
         if(kindOf(text)!=="unito") throw Error("Il file su GitHub non è l'index del sito.");
         loadCombined(await shellWithCatalog(text),"index.html");
-        $("status").textContent="Listino letto da GitHub. Salva per pubblicarlo.";
+        $("status").textContent="Listino letto da GitHub. Salva per pubblicarlo."+scheduleLoadedNote();
       }catch(err){
         $("status").textContent=err&&err.message?err.message:String(err);
       }
     })();
   }
+}
+if($("liveFrom")){
+  $("liveFrom").addEventListener("input",paintScheduleHint);
+  $("liveFrom").addEventListener("change",paintScheduleHint);
 }
 </script>
 </body>
