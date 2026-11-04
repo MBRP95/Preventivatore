@@ -863,7 +863,7 @@ function removePromo(path){
   dirty=true;
   list.splice(index,1);
   renderEditor();
-  const where=githubMode?"Salva su GitHub per pubblicare seller e cliente.":(fileKind==="both"?"Scarica i due file per aggiornare gestionale e preventivo cliente.":"Scarica il file per aggiornare "+(fileKind==="cliente"?"il preventivo del cliente.":"il gestionale."));
+  const where=githubMode?"Salva su GitHub per pubblicare shop assistant e cliente.":(fileKind==="both"?"Scarica i due file per aggiornare gestionale e preventivo cliente.":"Scarica il file per aggiornare "+(fileKind==="cliente"?"il preventivo del cliente.":"il gestionale."));
   $("status").textContent=name?`Tolta ${name}. ${where}`:`Promo tolta. ${where}`;
 }
 function asNum(value){
@@ -1000,7 +1000,7 @@ function workingCatalog(){
 function describeLoad(){
   const shop=loaded.gestionale, client=loaded.cliente;
   let text="Nessun file caricato.";
-  if(shop&&shop.combined) text="File del sito caricato. Le modifiche valgono per seller e cliente.";
+  if(shop&&shop.combined) text="File del sito caricato. Le modifiche valgono per shop assistant e cliente.";
   else if(shop&&client){
     const same=JSON.stringify(promoBody(shop.catalog))===JSON.stringify(promoBody(client.catalog));
     text=same
