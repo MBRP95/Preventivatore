@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:04:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/netlify-archivio-locale-0247/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:25:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore/cursor/index-preventivatore-0247/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -19,7 +19,8 @@ footer{max-width:1100px;margin:0 auto;padding:8px 16px 22px;display:flex;justify
 footer .credit{margin-left:auto;text-align:right;font-style:italic;font-size:12px;color:#756f58;white-space:nowrap}
 @media(max-width:700px){.grid,.grid3,.kpis{grid-template-columns:1fr}header{padding:18px}.panel{padding:14px}footer{flex-direction:column;align-items:flex-end}footer .credit{white-space:normal}}
 body.locked>header,body.locked>main,body.locked>footer{display:none!important}
-#gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:#fff7a8}
+#gate{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:24px;background:#fff7a8}
+body.ask-pass #gate{display:flex}
 #gate form{width:min(420px,100%);background:#fff;border:1px solid var(--fw-border);border-top:4px solid var(--fw-yellow);border-radius:12px;padding:22px;box-shadow:0 3px 12px #3e330d0a}
 #gate h1{margin:0 0 8px;font-size:22px}
 #gate p{margin:0 0 14px;color:var(--fw-muted);font-size:14px;line-height:1.4}
@@ -298,7 +299,7 @@ const storageKey="preventivatore-accesso";
 function remembered(hash){try{return !!hash&&sessionStorage.getItem(storageKey)===hash}catch(e){return false}}
 function remember(hash){try{sessionStorage.setItem(storageKey,hash)}catch(e){}}
 function openGate(){
-  document.body.classList.remove("locked");
+  document.body.classList.remove("locked","ask-pass");
 }
 function openEditorSoon(){
   try{sessionStorage.setItem("preventivatore-modalita","editor")}catch(e){}
@@ -1857,7 +1858,7 @@ if(window.__SITE)initSite();
 <script>
 (function(){
   const REPO="MBRP95/Preventivatore";
-  const BRANCH="cursor/netlify-archivio-locale-0247";
+  const BRANCH="cursor/index-preventivatore-0247";
   const FILE="index.html";
   let started=false;
   document.addEventListener("keydown",()=>{started=true},true);
@@ -3453,6 +3454,7 @@ boot();
     closeOverlays();
     hidePick();
     if(window.__unlockSeller&&window.__unlockSeller())return;
+    document.body.classList.add("ask-pass");
     const input=document.getElementById("gatePassword");
     if(input&&document.body.classList.contains("locked"))input.focus();
   }
@@ -3518,6 +3520,7 @@ boot();
     try{sessionStorage.removeItem(key)}catch(e){}
     try{sessionStorage.removeItem("preventivatore-accesso")}catch(e){}
     closeOverlays();
+    document.body.classList.remove("ask-pass");
     document.body.classList.add("locked");
     const gate=document.getElementById("gate");
     if(gate)gate.style.display="";
