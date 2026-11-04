@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T09:50:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-04T11:40:00.000Z"><meta name="update-url" content="https://raw.githubusercontent.com/MBRP95/Preventivatore-Pubblico/main/index.html">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -1986,16 +1986,17 @@ footer .credit{margin-left:auto;text-align:right;font-style:italic;white-space:n
 .quote-slot{position:relative;flex:none}
 .quote-pair{display:flex;flex-direction:row;flex-wrap:nowrap;gap:12px;align-items:flex-start;width:max-content}
 body.fit-result{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
-body.fit-result header{flex:none;padding:8px 16px 0;max-width:none}
-body.fit-result header h1{font-size:22px;margin:0}
-body.fit-result header p,body.fit-result footer{display:none}
-body.fit-result main{flex:1;min-height:0;width:100%;max-width:none;margin:0;height:auto;padding:6px 16px 8px;display:flex;align-self:stretch}
-body.fit-result #step{flex:1;width:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:8px 12px}
-body.fit-result .progress,body.fit-result .stepcount,body.fit-result #step h2,body.fit-result .hint{display:none}
-body.fit-result .nav,body.fit-result .restart,body.fit-result .err{flex:none}
-body.fit-result #quotePreview{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0}
-body.fit-result .quote-frame{width:100%;height:100%;overflow:hidden;background:transparent;padding:0;display:flex;align-items:center;justify-content:center}
-body.fit-result .nav{margin-top:8px}
+body.fit-result header,body.fit-result footer{display:none}
+body.fit-result main{flex:1;min-height:0;width:100%;max-width:none;margin:0;height:auto;padding:4px 8px 6px;display:flex;align-self:stretch}
+body.fit-result #step{flex:1;width:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:4px 6px 6px}
+body.fit-result .progress,body.fit-result .stepcount,body.fit-result #step h2,body.fit-result .hint,body.fit-result .kicker{display:none}
+body.fit-result .nav,body.fit-result .err{flex:none}
+body.fit-result #quotePreview{position:relative;flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;overflow:hidden;margin:0}
+body.fit-result .quote-frame{width:100%;height:100%;overflow:auto;background:transparent;padding:0;display:flex;align-items:flex-start;justify-content:flex-start;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+body.fit-result .nav{margin-top:4px;gap:6px}
+body.fit-result #step .nav button{padding:8px 10px;font-size:14px;border-radius:10px}
+.quote-zoom{position:absolute;right:8px;bottom:8px;z-index:6;display:flex;gap:6px}
+.quote-zoom button{width:44px;height:44px;padding:0;border:2px solid #111;border-radius:12px;background:#ffe500;color:#111;font:900 22px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:0 2px 0 #00000033}
 body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:#FFD000}
 body.fit-flyers header,body.fit-flyers footer{display:none}
 body.fit-flyers main{flex:1;min-height:0;width:100%;max-width:none;margin:0;padding:0;display:flex}
@@ -3214,12 +3215,13 @@ const VIEWS={
   result(){
     const html=buildSheets();
     const hint=outcomeNote();
-    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button></div><p class="err" id="err" role="alert"></p><p class="restart"><button type="button" class="link" id="restartBtn">Ricomincia</button></p>`,mount(){
+    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-zoom"><button type="button" id="zoomOut" aria-label="Riduci">−</button><button type="button" id="zoomIn" aria-label="Ingrandisci">+</button></div><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button><button type="button" class="secondary" id="restartBtn">Ricomincia</button></div><p class="err" id="err" role="alert"></p>`,mount(){
       $("printArea").innerHTML=`<div class="quote-pair">${html}</div>`;
       bindBack();
       $("restartBtn").addEventListener("click",restart);
       $("pdfBtn").addEventListener("click",()=>openPdf($("pdfBtn")));
       $("quoteSlot").querySelectorAll(".cpage").forEach(alignCommodityPair);
+      quoteZoom=1;
       bindFit();
     }};
   }
@@ -3295,29 +3297,66 @@ function restart(){
   stepIndex=0; flyerIndex=0; currentQuote=null; answers=blankAnswers();
   $("printArea").innerHTML=""; render.lastId=""; document.body.classList.remove("fit-result"); render();
 }
+let quoteZoom=1;
 function fitQuote(){
   const frame=$("quoteFrame"), slot=$("quoteSlot");
   const pair=slot&&slot.querySelector(".quote-pair");
   if(!frame||!pair)return;
   pair.style.transform="none";
   pair.style.position="static";
+  pair.style.flexDirection="";
   pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
-  const pw=pair.offsetWidth, ph=pair.offsetHeight;
+  let pw=pair.offsetWidth, ph=pair.offsetHeight;
   const fw=frame.clientWidth, fh=frame.clientHeight;
   if(!pw||!ph||!fw||!fh)return;
-  const scale=Math.min(fw/pw, fh/ph);
+  const pages=pair.querySelectorAll(".qpage,.cpage").length;
+  let base=Math.min(fw/pw, fh/ph);
+  if(base<0.85){
+    if(pages>1)pair.style.flexDirection="column";
+    pair.querySelectorAll(".cpage").forEach(alignCommodityPair);
+    pw=pair.offsetWidth; ph=pair.offsetHeight;
+    base=fw/pw;
+  }
+  const scale=Math.max(0.2, Math.min(base*quoteZoom, 3));
   pair.style.transform=`scale(${scale})`;
   pair.style.transformOrigin="top left";
   pair.style.position="absolute";
   pair.style.left="0";
   pair.style.top="0";
-  slot.style.width=(pw*scale)+"px";
-  slot.style.height=(ph*scale)+"px";
+  slot.style.width=Math.ceil(pw*scale)+"px";
+  slot.style.height=Math.ceil(ph*scale)+"px";
+}
+function setQuoteZoom(next){
+  quoteZoom=Math.max(1, Math.min(3, next));
+  fitQuote();
 }
 function bindFit(){
   if(window.__fitQuote)window.removeEventListener("resize",window.__fitQuote);
   window.__fitQuote=()=>{if(document.body.classList.contains("fit-result"))fitQuote()};
   window.addEventListener("resize",window.__fitQuote);
+  const frame=$("quoteFrame");
+  if(frame&&!frame.dataset.zoom){
+    frame.dataset.zoom="1";
+    let startDist=0, startZoom=1;
+    const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+    frame.addEventListener("touchstart",ev=>{
+      if(ev.touches.length===2){startDist=dist(ev.touches);startZoom=quoteZoom}
+    },{passive:true});
+    frame.addEventListener("touchmove",ev=>{
+      if(ev.touches.length!==2||!startDist)return;
+      ev.preventDefault();
+      setQuoteZoom(startZoom*dist(ev.touches)/startDist);
+    },{passive:false});
+    frame.addEventListener("touchend",()=>{startDist=0});
+    frame.addEventListener("wheel",ev=>{
+      if(!ev.ctrlKey&&!ev.metaKey)return;
+      ev.preventDefault();
+      setQuoteZoom(quoteZoom*(ev.deltaY<0?1.12:1/1.12));
+    },{passive:false});
+  }
+  const zoomIn=$("zoomIn"), zoomOut=$("zoomOut");
+  if(zoomIn)zoomIn.addEventListener("click",()=>setQuoteZoom(quoteZoom*1.25));
+  if(zoomOut)zoomOut.addEventListener("click",()=>setQuoteZoom(quoteZoom/1.25));
   requestAnimationFrame(()=>requestAnimationFrame(fitQuote));
 }
 function downloadPdfBlob(canvas){
