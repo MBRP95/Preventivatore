@@ -36,22 +36,42 @@ service cloud.firestore {
       allow delete: if isPreventivatoreAdmin() && docId == 'passwords';
     }
 
-    // Listino offerte (JSON): lettura pubblica come l'HTML; scrittura solo admin.
+    // Listino offerte + metadati volantini: lettura pubblica come l'HTML; scrittura solo admin.
+    // Le immagini dei volantini stanno in listini/flyer-0, flyer-1, ... (una pagina per documento).
     match /listini/{docId} {
       allow get: if true;
       allow list: if false;
-      allow create, update: if isPreventivatoreAdmin()
-        && docId == 'published'
-        && request.resource.data.keys().hasOnly(['catalog', 'next', 'updatedAt', 'rev'])
-        && request.resource.data.catalog is string
-        && request.resource.data.catalog.size() >= 100
-        && request.resource.data.catalog.size() < 500000
-        && request.resource.data.next is string
-        && request.resource.data.next.size() < 500000
-        && request.resource.data.rev is string
-        && request.resource.data.rev.size() > 0
-        && request.resource.data.rev.size() < 80;
-      allow delete: if isPreventivatoreAdmin() && docId == 'published';
+      allow create, update: if isPreventivatoreAdmin() && (
+        (
+          docId == 'published'
+          && request.resource.data.keys().hasOnly(['catalog', 'next', 'updatedAt', 'rev', 'flyerCount', 'flyerButtons'])
+          && request.resource.data.catalog is string
+          && request.resource.data.catalog.size() >= 100
+          && request.resource.data.catalog.size() < 500000
+          && request.resource.data.next is string
+          && request.resource.data.next.size() < 500000
+          && request.resource.data.rev is string
+          && request.resource.data.rev.size() > 0
+          && request.resource.data.rev.size() < 80
+          && request.resource.data.flyerCount is int
+          && request.resource.data.flyerCount >= 0
+          && request.resource.data.flyerCount <= 20
+          && request.resource.data.flyerButtons is string
+          && request.resource.data.flyerButtons.size() < 20000
+        )
+        || (
+          docId.matches('flyer-[0-9]+')
+          && request.resource.data.keys().hasOnly(['data', 'rev'])
+          && request.resource.data.data is string
+          && request.resource.data.data.size() >= 32
+          && request.resource.data.data.size() < 900000
+          && request.resource.data.rev is string
+          && request.resource.data.rev.size() > 0
+          && request.resource.data.rev.size() < 80
+        )
+      );
+      allow delete: if isPreventivatoreAdmin()
+        && (docId == 'published' || docId.matches('flyer-[0-9]+'));
     }
   }
 }

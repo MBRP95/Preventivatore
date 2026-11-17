@@ -1229,6 +1229,16 @@ function catalogScriptJson(html, id){
   JSON.parse(raw);
   return raw;
 }
+function extractClienteFlyers(fileHtml){
+  try{
+    const inner=decodeCliente(extractClienteBlob(fileHtml));
+    const pages=extractFlyers(inner);
+    const buttons=extractButtons(inner)||[];
+    return {flyers:Array.isArray(pages)?pages:[], flyerButtons:Array.isArray(buttons)?buttons:[]};
+  }catch(e){
+    return {flyers:[], flyerButtons:[]};
+  }
+}
 async function publishFirebase(fileHtml){
   if(!(editorParent&&typeof editorParent.__publishListinoFirebase==="function")){
     throw Error("Pubblicazione online non disponibile. Ricarica la pagina e accedi di nuovo come Admin.");
@@ -1237,7 +1247,13 @@ async function publishFirebase(fileHtml){
   if(!catalog) throw Error("Listino non trovato nel file da pubblicare.");
   let next="";
   try{ next=catalogScriptJson(fileHtml,"promo-catalog-next"); }catch(e){ next=""; }
-  await editorParent.__publishListinoFirebase({catalog, next});
+  const extras=extractClienteFlyers(fileHtml);
+  await editorParent.__publishListinoFirebase({
+    catalog,
+    next,
+    flyers:extras.flyers,
+    flyerButtons:extras.flyerButtons
+  });
 }
 function applyRemoteListinoToPage(page, remote){
   if(!remote||!remote.catalog) return page;
@@ -1257,6 +1273,14 @@ function applyRemoteListinoToPage(page, remote){
     }
   }else{
     html=removeScheduled(html);
+  }
+  if(Array.isArray(remote.flyers)&&remote.flyers.length){
+    try{
+      let inner=decodeCliente(extractClienteBlob(html));
+      inner=replaceFlyers(inner, remote.flyers);
+      if(Array.isArray(remote.flyerButtons)) inner=replaceButtons(inner, remote.flyerButtons);
+      html=replaceClienteBlob(html, inner);
+    }catch(e){}
   }
   return html;
 }
