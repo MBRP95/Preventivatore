@@ -57,7 +57,9 @@ body:not(.locked) #gate{display:none}
 }
 #modeBack{display:none;position:fixed;top:12px;left:12px;z-index:60;min-height:44px;padding:8px 14px;background:#fff;border:2px solid #111;border-radius:10px;font-weight:800;box-shadow:0 2px 8px #3e330d33}
 #modePick.hidden~#modeBack{display:inline-block}
-body:not(.locked) #modeBack,body:has(#editorFrame) #modeBack{display:none!important}
+body:not(.locked) #modeBack,
+body:has(#editorFrame) #modeBack,
+body:has(#clienteFrame) #modeBack{display:none!important}
 header .header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #quotePreview{margin-top:16px}
 #quotePreview .quote-frame{background:#111;border-radius:12px;padding:10px;box-shadow:0 8px 24px #3e330d22;overflow:auto}
@@ -1707,7 +1709,14 @@ if (!firebaseConfigured()) {
     var el=document.getElementById("cliente-app");
     if(!el||jsonText==null) return false;
     var text=el.textContent;
-    var re=new RegExp('<script type="application\\/json" id="'+id+'">[\\s\\S]*?<\\\\?\\/script>','i');
+    var re=new RegExp('\\n?<script type="application\\/json" id="'+id+'">[\\s\\S]*?<\\\\?\\/script>','i');
+    // Stringa vuota = rimuovi il blocco (non inserire un next vuoto che confonde il boot).
+    if(!String(jsonText)){
+      if(id==="promo-catalog") return false;
+      if(!re.test(text)) return false;
+      el.textContent=text.replace(re, "");
+      return true;
+    }
     var block='<script type="application/json" id="'+id+'">\n'+jsonText+'\n<\\/script>';
     if(re.test(text)){
       el.textContent=text.replace(re, block);
@@ -1842,11 +1851,19 @@ function armCatalogSwitch(){
   const when=romeMidnightMs(from);
   if(!Number.isFinite(when))return;
   const delay=when-Date.now();
-  if(delay<=0)return;
+  if(!(delay>0))return;
   const wait=Math.min(delay,6*60*60*1000);
   setTimeout(function(){
     if(Date.now()+1000>=when){
-      try{if(window.top&&window.top!==window){window.top.location.reload();return}}catch(e){}
+      // Soft-apply: evita reload che chiude Cliente/editor se aperti.
+      try{
+        if(typeof window.__refreshClienteCatalog==="function"&&document.getElementById("clienteFrame")){
+          window.__refreshClienteCatalog();
+          return;
+        }
+      }catch(e){}
+      try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+      if(document.getElementById("editorFrame")||document.getElementById("clienteFrame")) return;
       location.reload();
     }else armCatalogSwitch();
   },wait+250);
@@ -3660,10 +3677,20 @@ setToolMode("mix");
       const sameCatalog=catalogNorm(remote.catalog)===localCat;
       const sameNext=catalogNorm(next||"")===catalogNorm(localNext||"");
       if(sameCatalog&&sameNext&&!remote.promoted) return;
-      // Se il listino programmato è scaduto/dovuto, ricarica anche a pagina già aperta.
-      if(started&&!document.body.classList.contains("locked")&&!remote.promoted&&!next) return;
       sessionStorage.setItem(key,payload);
       sessionStorage.setItem(key+"-try","1");
+      // Mai ricaricare se l'utente ha già scelto Cliente/Seller/editor: il reload
+      // chiude l'iframe Cliente (body resta locked → il vecchio guard non bastava).
+      const modeBusy=!!(
+        document.getElementById("clienteFrame")
+        || document.getElementById("editorFrame")
+        || (document.getElementById("modePick")&&document.getElementById("modePick").classList.contains("hidden"))
+        || started
+      );
+      if(modeBusy){
+        try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+        return;
+      }
       location.reload();
     }catch(e){}
   })();
@@ -5348,12 +5375,19 @@ function armCatalogSwitch(){
   const when=romeMidnightMs(from);
   if(!Number.isFinite(when))return;
   const delay=when-Date.now();
-  if(delay<=0)return;
+  if(!(delay>0))return;
   const wait=Math.min(delay,6*60*60*1000);
   setTimeout(function(){
     if(Date.now()+1000>=when){
-      try{if(window.top&&window.top!==window){window.top.location.reload();return}}catch(e){}
-      location.reload();
+      // Non ricaricare window.top: chiude subito la pagina Cliente.
+      try{
+        const parent=window.parent&&window.parent!==window?window.parent:null;
+        if(parent&&typeof parent.__refreshClienteCatalog==="function"){
+          parent.__refreshClienteCatalog();
+          return;
+        }
+      }catch(e){}
+      try{ location.reload(); }catch(e){}
     }else armCatalogSwitch();
   },wait+250);
 }
@@ -5382,7 +5416,14 @@ boot();
     if(pick)pick.classList.add("hidden");
   }
   function closeOverlays(){
-    document.querySelectorAll('iframe[title="Preventivatore cliente"],#editorFrame').forEach(el=>el.remove());
+    document.querySelectorAll("#clienteFrame,iframe[title=\"Preventivatore cliente\"],#editorFrame").forEach(el=>el.remove());
+  }
+  function writeClienteFrame(frame){
+    if(!frame)return;
+    const doc=frame.contentDocument;
+    doc.open();
+    doc.write(clienteHtml());
+    doc.close();
   }
   async function openSeller(){
     try{sessionStorage.setItem(key,"seller")}catch(e){}
@@ -5403,18 +5444,26 @@ boot();
     try{sessionStorage.setItem(key,"cliente")}catch(e){}
     closeOverlays();
     hidePick();
-    if(typeof window.__ensurePublishedFlyers==="function"){
-      try{ await window.__ensurePublishedFlyers(); }catch(e){}
-    }
+    // Mostra subito l'iframe: attendere Firestore prima apriva una race col reload listino.
     const frame=document.createElement("iframe");
+    frame.id="clienteFrame";
     frame.setAttribute("title","Preventivatore cliente");
-    frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:30;background:#FFD000";
+    frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#FFD000";
     document.body.appendChild(frame);
-    const doc=frame.contentDocument;
-    doc.open();
-    doc.write(clienteHtml());
-    doc.close();
+    writeClienteFrame(frame);
+    if(typeof window.__ensurePublishedFlyers==="function"){
+      try{
+        await window.__ensurePublishedFlyers();
+        if(document.getElementById("clienteFrame")===frame) writeClienteFrame(frame);
+      }catch(e){}
+    }
   }
+  window.__refreshClienteCatalog=function(){
+    try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+    const frame=document.getElementById("clienteFrame");
+    if(frame) writeClienteFrame(frame);
+    else openCliente();
+  };
   let editorSeq=0;
   async function openEditor(){
     if(document.getElementById("editorFrame"))return;
