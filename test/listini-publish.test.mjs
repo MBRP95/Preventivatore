@@ -49,6 +49,10 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /catalogJsonForFirebase/);
   assert.match(indexSrc, /__ensurePublishedFlyers/);
   assert.match(indexSrc, /usableFlyerPages/);
+  assert.match(indexSrc, /id="clienteFrame"/);
+  assert.match(indexSrc, /__refreshClienteCatalog/);
+  assert.match(indexSrc, /modeBusy/);
+  assert.doesNotMatch(indexSrc, /window\.top\.location\.reload\(\)/);
   const rules = fs.readFileSync(path.join(root, "firestore.rules"), "utf8");
   assert.match(rules, /match \/listini\/\{docId\}/);
   assert.match(rules, /docId == 'published'/);
