@@ -2421,9 +2421,10 @@ function offerHtml(type,sec,q,single){
     ${single&&!noCmp?statsHtml(offerStatsHtml(type,sec,q)):""}
   </article>`;
 }
+function flatLockedLabel(){const n=Number(PROMO_CATALOG&&PROMO_CATALOG.flat&&PROMO_CATALOG.flat.years);const years=Number.isInteger(n)&&n>=1?n:2;return years===1?"PER 1 ANNO":"PER "+years+" ANNI"}
 function footerHtml(){
   const items=[
-    [ICO.shield,"PREZZO BLOCCATO","PER 2 ANNI"],
+    [ICO.shield,"PREZZO BLOCCATO",flatLockedLabel()],
     [ICO.piggy,"BONUS CONSUMO SMART","SE UTILIZZI MENO DEL 70% DEL TUO CONSUMO ANNUO"],
     [ICO.leaf,"SCELTA SOSTENIBILE","ENERGIA PIÙ PULITA PER UN FUTURO MIGLIORE"],
     [ICO.head,"ASSISTENZA SEMPRE CON TE","VIA APP, TELEFONO O NEI NOSTRI NEGOZI"]
@@ -2742,6 +2743,11 @@ function applySellerCatalog(cat){
   try{ renderFlatPriceTables(); }catch(e){}
   try{ fxFillOfferSelects(); }catch(e){}
   try{ renderCommodityRateTables(); }catch(e){}
+  try{
+    if(currentQuote&&typeof showQuotePreview==="function"&&currentQuote.kind!=="mixed"&&currentQuote.kind!=="commodity"){
+      showQuotePreview(currentQuote);
+    }
+  }catch(e){}
   return true;
 }
 window.__refreshSellerCatalog=function(){
