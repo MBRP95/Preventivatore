@@ -1040,15 +1040,24 @@ if (!firebaseConfigured()) {
       applyFlyersToDom(cached.flyers, cached.flyerButtons||[]);
     }
     try{
-      if(typeof window.__readPublishedListino!=="function") return cached||null;
+      if(typeof window.__readPublishedListino!=="function"){
+        return cached?{flyers:cached.flyers,flyerButtons:cached.flyerButtons||[],rev:cached.rev||""}:null;
+      }
       const remote=await window.__readPublishedListino();
+      if(remote&&remote.catalog){
+        try{
+          sessionStorage.setItem(listinoStorageKey(), JSON.stringify({catalog:remote.catalog, next:remote.next||""}));
+          if(window.__applyPublishedListino) window.__applyPublishedListino();
+        }catch(e){}
+      }
       if(remote&&Array.isArray(remote.flyers)&&remote.flyers.length){
         applyFlyersToDom(remote.flyers, remote.flyerButtons||[]);
         await saveFlyerCache(remote.flyers, remote.flyerButtons||[], remote.rev||"");
         return remote;
       }
+      if(remote) return remote;
     }catch(e){}
-    return cached||null;
+    return cached?{flyers:cached.flyers,flyerButtons:cached.flyerButtons||[],rev:cached.rev||""}:null;
   };
   function applyListinoPayload(payload){
     if(!payload||typeof payload.catalog!=="string"||!payload.catalog) return;
@@ -4646,6 +4655,7 @@ function flatExpiryIso(cat){
   return "";
 }
 function applyCatalog(cat){
+  if(!(cat&&cat.flat&&Array.isArray(cat.flat.light)&&Array.isArray(cat.flat.gas))) return false;
   PROMO_CATALOG=cat;
   const exp=flatExpiryIso(cat);
   const stamp=p=>({...p,expires:exp||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)});
@@ -4656,6 +4666,7 @@ function applyCatalog(cat){
     light:{private:commodityFromCatalog(c.light&&c.light.private),piva:commodityFromCatalog(c.light&&c.light.piva)},
     gas:{private:commodityFromCatalog(c.gas&&c.gas.private),piva:commodityFromCatalog(c.gas&&c.gas.piva)}
   };
+  return true;
 }
 function offersFor(service){
   const seg=answers.segment==="piva"?"piva":"private";
@@ -5392,11 +5403,23 @@ function armCatalogSwitch(){
   },wait+250);
 }
 function boot(){
-  applyCatalog(activeCatalog());
+  try{ applyCatalog(activeCatalog()); }catch(e){}
   armCatalogSwitch();
   bindFullscreen();
-  render();
+  try{ render(); }catch(e){}
 }
+window.__clienteSetFlyers=function(pages, buttons){
+  try{
+    if(!(Array.isArray(pages)&&pages.length)) return false;
+    const el=document.getElementById("flyer-pages");
+    if(!el) return false;
+    el.textContent=JSON.stringify(pages);
+    const btn=document.getElementById("flyer-buttons");
+    if(btn) btn.textContent=JSON.stringify(Array.isArray(buttons)?buttons:[]);
+    restart();
+    return true;
+  }catch(e){ return false; }
+};
 boot();
 <\/script>
 </body>
@@ -5407,6 +5430,7 @@ boot();
 (function(){
   if(window.__applyPublishedListino) window.__applyPublishedListino();
   const key="preventivatore-modalita";
+  const flyerPlaceholders=["./assets/layout-refresh/img-15.jpg","./assets/layout-refresh/img-16.jpg"];
   function clienteHtml(){
     const el=document.getElementById("cliente-app");
     return el?el.textContent.replace(/<\\\/script/gi,"</script"):"";
@@ -5424,6 +5448,39 @@ boot();
     doc.open();
     doc.write(clienteHtml());
     doc.close();
+  }
+  function lightClienteFlyersForWrite(){
+    // Evita doc.write multi-MB: i PDF pubblicati si iniettano dopo nell'iframe vivo.
+    try{
+      const el=document.getElementById("cliente-app");
+      if(!el) return;
+      let text=el.textContent;
+      const pagesRe=/<script type="application\/json" id="flyer-pages">[\s\S]*?<\\?\/script>/i;
+      const pagesBlock='<script type="application/json" id="flyer-pages">\n'+JSON.stringify(flyerPlaceholders)+'\n<\\/script>';
+      if(pagesRe.test(text)) text=text.replace(pagesRe, pagesBlock);
+      const btnRe=/<script type="application\/json" id="flyer-buttons">[\s\S]*?<\\?\/script>/i;
+      const btnBlock='<script type="application/json" id="flyer-buttons">\n[]\n<\\/script>';
+      if(btnRe.test(text)) text=text.replace(btnRe, btnBlock);
+      el.textContent=text;
+    }catch(e){}
+  }
+  function injectFlyers(frame, pages, buttons){
+    if(!(frame&&Array.isArray(pages)&&pages.length)) return;
+    try{
+      const w=frame.contentWindow;
+      if(w&&typeof w.__clienteSetFlyers==="function"){
+        w.__clienteSetFlyers(pages, buttons||[]);
+        return;
+      }
+    }catch(e){}
+    try{
+      const doc=frame.contentDocument;
+      const el=doc&&doc.getElementById("flyer-pages");
+      if(!el) return;
+      el.textContent=JSON.stringify(pages);
+      const btn=doc.getElementById("flyer-buttons");
+      if(btn) btn.textContent=JSON.stringify(Array.isArray(buttons)?buttons:[]);
+    }catch(e){}
   }
   async function openSeller(){
     try{sessionStorage.setItem(key,"seller")}catch(e){}
@@ -5444,25 +5501,28 @@ boot();
     try{sessionStorage.setItem(key,"cliente")}catch(e){}
     closeOverlays();
     hidePick();
-    // Mostra subito l'iframe: attendere Firestore prima apriva una race col reload listino.
+    let pack=null;
+    if(typeof window.__ensurePublishedFlyers==="function"){
+      try{ pack=await window.__ensurePublishedFlyers(); }catch(e){}
+    }
+    try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+    const flyers=pack&&Array.isArray(pack.flyers)?pack.flyers:null;
+    const buttons=pack&&Array.isArray(pack.flyerButtons)?pack.flyerButtons:[];
+    lightClienteFlyersForWrite();
     const frame=document.createElement("iframe");
     frame.id="clienteFrame";
     frame.setAttribute("title","Preventivatore cliente");
     frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#FFD000";
     document.body.appendChild(frame);
     writeClienteFrame(frame);
-    if(typeof window.__ensurePublishedFlyers==="function"){
-      try{
-        await window.__ensurePublishedFlyers();
-        if(document.getElementById("clienteFrame")===frame) writeClienteFrame(frame);
-      }catch(e){}
-    }
+    if(flyers&&flyers.length) injectFlyers(frame, flyers, buttons);
   }
   window.__refreshClienteCatalog=function(){
     try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
     const frame=document.getElementById("clienteFrame");
-    if(frame) writeClienteFrame(frame);
-    else openCliente();
+    if(!frame){ openCliente(); return; }
+    lightClienteFlyersForWrite();
+    writeClienteFrame(frame);
   };
   let editorSeq=0;
   async function openEditor(){
