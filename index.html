@@ -159,13 +159,14 @@ header .header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 
 .qpage:not(.is-single) .qoffer-main{align-items:center}
 .qpage:not(.is-single) .qart{flex:0 0 auto;width:auto;height:auto;margin-right:0;z-index:1;justify-content:center}
-.qpage:not(.is-single) .qart img{height:268px;width:auto;max-width:none;object-fit:contain;object-position:center center}
-.qpage:not(.is-single) .qart--gas{margin-right:4px}
-.qpage:not(.is-single) .qart--gas img{height:268px;width:auto;max-height:none}
-.qpage:not(.is-single) .qbody{position:relative;z-index:1}
+.qpage:not(.is-single) .qart img{height:250px;width:auto;max-width:168px;object-fit:contain;object-position:center center}
+.qpage:not(.is-single) .qart--gas{margin-right:2px;max-width:168px}
+.qpage:not(.is-single) .qart--gas img{height:auto;width:auto;max-width:168px;max-height:250px;object-fit:contain}
+.qpage:not(.is-single) .qbody{position:relative;z-index:1;min-width:0}
 .qpage:not(.is-single) .qbox .val{font-size:14px}
-.qpage:not(.is-single) .qmonth{gap:3px;padding:4px 3px 4px 5px}
-.qpage:not(.is-single) .qmonth b{font-size:10px;padding:5px 3px}
+.qpage:not(.is-single) .qmonth{gap:2px;padding:4px 2px 4px 5px}
+.qpage:not(.is-single) .qmonth span{flex:0 1 auto;min-width:0}
+.qpage:not(.is-single) .qmonth b{font-size:10px;padding:5px 4px;overflow:hidden;text-overflow:ellipsis}
 .qbody{flex:1;min-width:0;padding-top:2px;overflow:hidden}
 .qban{background:#111;color:#FFD000;border-radius:14px;text-align:center;padding:11px 8px 12px;margin-bottom:10px}
 .qban small{display:block;font-style:italic;font-weight:800;font-size:11px;letter-spacing:.2px}
@@ -1877,7 +1878,7 @@ function armCatalogSwitch(){
     }else armCatalogSwitch();
   },wait+250);
 }
-const PROMO_CATALOG=activeCatalog();
+let PROMO_CATALOG=activeCatalog();
 armCatalogSwitch();
 function flatIsFw(){const el=$("flatFastweb");return !el||el.checked}
 function serviceCompareOn(prefix){const el=$(prefix+"Compare");return !el||el.checked}
@@ -1921,9 +1922,9 @@ function flatExpiryIso(cat){
   }
   return "";
 }
-const FLAT_EXPIRES=flatExpiryIso(PROMO_CATALOG);
-const LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
-const GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+let FLAT_EXPIRES=flatExpiryIso(PROMO_CATALOG);
+let LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+let GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
 const $=id=>document.getElementById(id);let folderHandle=null,currentQuote=null,quotes=[],trashQuotes=[],customers=[],toolMode="mix",mixFxDraft=null,mixSnap=null;
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n);
 const num=n=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(n);
@@ -2491,6 +2492,10 @@ function hideQuotePreview(){
 function pdfHtml(q){return buildQuoteHtml(q)}
 function downloadPdfFromCanvas(canvas){
   const W=canvas.width, H=canvas.height;
+  const pageW=595.28, pageH=841.89;
+  const fit=Math.min(pageW/W, pageH/H);
+  const drawW=W*fit, drawH=H*fit;
+  const ox=(pageW-drawW)/2, oy=(pageH-drawH)/2;
   const jpeg=canvas.toDataURL("image/jpeg",0.95).split(",")[1];
   const binary=atob(jpeg), bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
@@ -2500,9 +2505,9 @@ function downloadPdfFromCanvas(canvas){
   push(enc("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
   obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
   obj(2,"<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  obj(3,"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>");
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
   xref[4]=offset;push(enc(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`));push(bytes);push(enc("\nendstream\nendobj\n"));
-  const stream="q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ";
+  const stream=`q\n1 0.816 0 rg\n0 0 ${pageW} ${pageH} re\nf\nQ\nq\n${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${ox.toFixed(2)} ${oy.toFixed(2)} cm\n/Im0 Do\nQ`;
   obj(5,`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
   const startXref=offset;let x=`xref\n0 6\n0000000000 65535 f \n`;
   for(let i=1;i<=5;i++)x+=String(xref[i]).padStart(10,"0")+" 00000 n \n";
@@ -2716,11 +2721,31 @@ function monthCaption(ref){
   }
   return String(ref);
 }
-const COMMODITY_INDEX=(()=>{const row=indexSeries()[0]||{pun:0.208146,psv:0.843182};return {pun:Number(row.pun),psv:Number(row.psv)}})();
-function commodityFromCatalog(list){return list.map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
-const COMMODITY_OFFERS={
+let COMMODITY_INDEX=(()=>{const row=indexSeries()[0]||{pun:0.208146,psv:0.843182};return {pun:Number(row.pun),psv:Number(row.psv)}})();
+function commodityFromCatalog(list){return (list||[]).map(o=>{const x={id:o.id,name:o.name,kind:o.kind,comm:Number(o.comm),discountMonth:Number(o.discountMonth)||0,months:Number(o.months),unit:o.unit,point:o.point,expires:o.expires||""};if(o.kind==="fix")x.energy=Number(o.energy);else{x.spread=Number(o.spread);x.index=o.index}return x})}
+let COMMODITY_OFFERS={
   light:{private:commodityFromCatalog(PROMO_CATALOG.commodity.light.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.light.piva)},
   gas:{private:commodityFromCatalog(PROMO_CATALOG.commodity.gas.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.gas.piva)}
+};
+function applySellerCatalog(cat){
+  if(!(cat&&cat.flat&&Array.isArray(cat.flat.light)&&Array.isArray(cat.flat.gas)&&cat.commodity)) return false;
+  PROMO_CATALOG=cat;
+  FLAT_EXPIRES=flatExpiryIso(PROMO_CATALOG);
+  LIGHT_PROMOS=PROMO_CATALOG.flat.light.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+  GAS_PROMOS=PROMO_CATALOG.flat.gas.map(p=>({...p,expires:FLAT_EXPIRES||p.expires||"",annual:Number(p.monthly)*12,convergence:Number(p.convergence||0)}));
+  const row=(indexSeries()[0])||{pun:0.208146,psv:0.843182};
+  COMMODITY_INDEX={pun:Number(row.pun),psv:Number(row.psv)};
+  COMMODITY_OFFERS={
+    light:{private:commodityFromCatalog(PROMO_CATALOG.commodity.light&&PROMO_CATALOG.commodity.light.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.light&&PROMO_CATALOG.commodity.light.piva)},
+    gas:{private:commodityFromCatalog(PROMO_CATALOG.commodity.gas&&PROMO_CATALOG.commodity.gas.private),piva:commodityFromCatalog(PROMO_CATALOG.commodity.gas&&PROMO_CATALOG.commodity.gas.piva)}
+  };
+  try{ renderFlatPriceTables(); }catch(e){}
+  try{ fxFillOfferSelects(); }catch(e){}
+  try{ renderCommodityRateTables(); }catch(e){}
+  return true;
+}
+window.__refreshSellerCatalog=function(){
+  try{ applySellerCatalog(activeCatalog()); }catch(e){}
 };
 function fxAllOffers(){
   return [...COMMODITY_OFFERS.light.private,...COMMODITY_OFFERS.light.piva,...COMMODITY_OFFERS.gas.private,...COMMODITY_OFFERS.gas.piva];
@@ -3698,6 +3723,8 @@ setToolMode("mix");
       );
       if(modeBusy){
         try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+        try{ if(window.__refreshSellerCatalog) window.__refreshSellerCatalog(); }catch(e){}
+        try{ if(window.__refreshClienteCatalog&&document.getElementById("clienteFrame")) window.__refreshClienteCatalog(); }catch(e){}
         return;
       }
       location.reload();
@@ -3918,13 +3945,14 @@ body.fit-flyers .fs-btn.on{bottom:4px}
 
 .qpage:not(.is-single) .qoffer-main{align-items:center}
 .qpage:not(.is-single) .qart{flex:0 0 auto;width:auto;height:auto;margin-right:0;z-index:1;justify-content:center}
-.qpage:not(.is-single) .qart img{height:268px;width:auto;max-width:none;object-fit:contain;object-position:center center}
-.qpage:not(.is-single) .qart--gas{margin-right:4px}
-.qpage:not(.is-single) .qart--gas img{height:268px;width:auto;max-height:none}
-.qpage:not(.is-single) .qbody{position:relative;z-index:1}
+.qpage:not(.is-single) .qart img{height:250px;width:auto;max-width:168px;object-fit:contain;object-position:center center}
+.qpage:not(.is-single) .qart--gas{margin-right:2px;max-width:168px}
+.qpage:not(.is-single) .qart--gas img{height:auto;width:auto;max-width:168px;max-height:250px;object-fit:contain}
+.qpage:not(.is-single) .qbody{position:relative;z-index:1;min-width:0}
 .qpage:not(.is-single) .qbox .val{font-size:14px}
-.qpage:not(.is-single) .qmonth{gap:3px;padding:4px 3px 4px 5px}
-.qpage:not(.is-single) .qmonth b{font-size:10px;padding:5px 3px}
+.qpage:not(.is-single) .qmonth{gap:2px;padding:4px 2px 4px 5px}
+.qpage:not(.is-single) .qmonth span{flex:0 1 auto;min-width:0}
+.qpage:not(.is-single) .qmonth b{font-size:10px;padding:5px 4px;overflow:hidden;text-overflow:ellipsis}
 .qbody{flex:1;min-width:0;padding-top:2px;overflow:hidden}
 .qban{background:#111;color:#FFD000;border-radius:14px;text-align:center;padding:11px 8px 12px;margin-bottom:10px}
 .qban small{display:block;font-style:italic;font-weight:800;font-size:11px;letter-spacing:.2px}
@@ -5255,6 +5283,10 @@ function bindFit(){
 }
 function downloadPdfBlob(canvas){
   const W=canvas.width,H=canvas.height;
+  const pageW=595.28, pageH=841.89;
+  const fit=Math.min(pageW/W, pageH/H);
+  const drawW=W*fit, drawH=H*fit;
+  const ox=(pageW-drawW)/2, oy=(pageH-drawH)/2;
   const jpeg=canvas.toDataURL("image/jpeg",0.95).split(",")[1];
   const binary=atob(jpeg),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
@@ -5264,9 +5296,9 @@ function downloadPdfBlob(canvas){
   push(enc("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
   obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
   obj(2,"<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  obj(3,"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>");
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
   xref[4]=offset;push(enc(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`));push(bytes);push(enc("\nendstream\nendobj\n"));
-  const stream="q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ";
+  const stream=`q\n1 0.816 0 rg\n0 0 ${pageW} ${pageH} re\nf\nQ\nq\n${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${ox.toFixed(2)} ${oy.toFixed(2)} cm\n/Im0 Do\nQ`;
   obj(5,`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
   const startXref=offset;let x=`xref\n0 6\n0000000000 65535 f \n`;
   for(let i=1;i<=5;i++)x+=String(xref[i]).padStart(10,"0")+" 00000 n \n";
@@ -5503,6 +5535,11 @@ boot();
     try{sessionStorage.setItem(key,"seller")}catch(e){}
     closeOverlays();
     hidePick();
+    if(typeof window.__ensurePublishedFlyers==="function"){
+      try{ await window.__ensurePublishedFlyers(); }catch(e){}
+    }
+    try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
+    try{ if(window.__refreshSellerCatalog) window.__refreshSellerCatalog(); }catch(e){}
     if((window.isOfflineBundle&&window.isOfflineBundle())||window.__OFFLINE_BUNDLE||location.protocol==="file:"||location.protocol==="content:"){
       window.__staffRole="seller";
       window.__staffSource="offline-bundle";
