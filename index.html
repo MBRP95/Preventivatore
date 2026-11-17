@@ -3810,7 +3810,7 @@ body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;paddin
 .flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
 .flyer-cta.pos-custom{right:auto;left:auto;display:block;padding:0;overflow:hidden;box-sizing:border-box;font-size:0}
 .flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:1% 0}
-.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:-.8px;color:#FFD000;white-space:nowrap}
+.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:-1px;color:#FFD000;white-space:nowrap}
 .flyer-cta.pos-custom .cta-arrow{margin-left:.25em}
 .flyer-cta:hover{background:#000}
 .flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
@@ -4796,12 +4796,11 @@ function fitFlyerLabel(btn){
   const shell=btn.querySelector(".cta-fit");
   const label=btn.querySelector(".cta-text")||shell||btn;
   if(!shell) return;
-  // Padding orizzontale ≈ raggio del pill: evita che la freccia finisca
-  // nella curva e venga ritagliata da overflow+border-radius.
-  const inset=Math.max(10, Math.ceil(btn.clientHeight*0.46));
+  // Margine dalle curve del pill (basta ~1/3 altezza): più spazio = scritta più grande.
+  const inset=Math.max(8, Math.ceil(btn.clientHeight*0.34));
   shell.style.paddingLeft=inset+"px";
   shell.style.paddingRight=inset+"px";
-  const availW=Math.max(8, shell.clientWidth-inset*2-2);
+  const availW=Math.max(8, shell.clientWidth-inset*2-1);
   const availH=Math.max(8, shell.clientHeight);
   let lo=10, hi=Math.max(10, availH), best=10;
   while(lo<=hi){
