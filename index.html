@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-17T13:31:57.000Z"><meta name="update-url" content="/api/public-index">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-17T13:44:56.000Z"><meta name="update-url" content="/api/public-index">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -930,6 +930,41 @@ if (!firebaseConfigured()) {
     }
   }
   function listinoStorageKey(){ return "preventivatore-published-listino"; }
+  function listinoRomeOffsetMin(utcMs){
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Rome",hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(utcMs));
+    const n=function(t){return Number(parts.find(function(p){return p.type===t}).value)};
+    return Math.round((Date.UTC(n("year"),n("month")-1,n("day"),n("hour"),n("minute"),n("second"))-utcMs)/60000);
+  }
+  function listinoRomeMidnightMs(iso){
+    const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return NaN;
+    const guess=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]));
+    let off=listinoRomeOffsetMin(guess);
+    let ms=guess-off*60000;
+    const off2=listinoRomeOffsetMin(ms);
+    if(off2!==off) ms=guess-off2*60000;
+    return ms;
+  }
+  function resolvePublishedPair(catalogStr, nextStr){
+    const catalog=typeof catalogStr==="string"?catalogStr:"";
+    let nextRaw=typeof nextStr==="string"?nextStr.trim():"";
+    if(!nextRaw) return {catalog:catalog, next:"", promoted:false};
+    let nextObj=null;
+    try{ nextObj=JSON.parse(nextRaw); }catch(e){ return {catalog:catalog, next:"", promoted:false}; }
+    const from=String(nextObj&&nextObj.liveFrom||"").slice(0,10);
+    if(!(nextObj&&nextObj.flat&&nextObj.commodity&&/^\d{4}-\d{2}-\d{2}$/.test(from))){
+      return {catalog:catalog, next:nextRaw, promoted:false};
+    }
+    if(listinoRomeMidnightMs(from)>Date.now()){
+      return {catalog:catalog, next:nextRaw, promoted:false};
+    }
+    const body=Object.assign({}, nextObj);
+    delete body.liveFrom;
+    let promoted="";
+    try{ promoted=JSON.stringify(body); }catch(e){ return {catalog:catalog, next:nextRaw, promoted:false}; }
+    try{ JSON.parse(promoted); }catch(e){ return {catalog:catalog, next:nextRaw, promoted:false}; }
+    return {catalog:promoted, next:"", promoted:true, liveFrom:from};
+  }
   function normalizeFlyerPages(list){
     if(!Array.isArray(list)) return [];
     return list.map(function(page){ return String(page||""); }).filter(function(page){
@@ -987,15 +1022,42 @@ if (!firebaseConfigured()) {
         if(!(raw.indexOf("data:image/")===0 && raw.length>=32)) break;
         flyers.push(raw);
       }
+      const resolved=resolvePublishedPair(data.catalog, next);
       return {
-        catalog:data.catalog,
-        next:next,
+        catalog:resolved.catalog,
+        next:resolved.next,
         rev:String(data.rev||""),
         flyers:flyers,
-        flyerButtons:normalizeFlyerButtons(flyerButtons, flyers.length)
+        flyerButtons:normalizeFlyerButtons(flyerButtons, flyers.length),
+        promoted:!!resolved.promoted,
+        liveFrom:resolved.liveFrom||"",
+        rawCatalog:data.catalog,
+        rawNext:next,
+        flyerCount:flyerCount,
+        flyerButtonsRaw:typeof data.flyerButtons==="string"?data.flyerButtons:JSON.stringify(flyerButtons)
       };
     }catch(e){
       return null;
+    }
+  };
+  window.__persistDueListinoPromotion=async function(remote){
+    if(!(remote&&remote.promoted&&remote.catalog)) return {ok:false, skipped:true};
+    if((window.__staffRole||"")!=="admin") return {ok:false, skipped:true};
+    const api=await waitFirebase(8000);
+    if(!(api&&api.setDoc&&api.doc&&api.db&&api.auth&&api.auth.currentUser)) return {ok:false, skipped:true};
+    const rev=new Date().toISOString();
+    try{
+      await api.setDoc(api.doc(api.db,"listini","published"),{
+        catalog:remote.catalog,
+        next:"",
+        updatedAt:api.serverTimestamp(),
+        rev:rev,
+        flyerCount:Math.max(0, Number(remote.flyerCount)||(remote.flyers&&remote.flyers.length)||0),
+        flyerButtons:typeof remote.flyerButtonsRaw==="string"?remote.flyerButtonsRaw:JSON.stringify(remote.flyerButtons||[])
+      });
+      return {ok:true, rev:rev};
+    }catch(e){
+      return {ok:false, error:e&&e.message?e.message:String(e)};
     }
   };
   window.__publishListinoFirebase=async function(payload){
@@ -1525,6 +1587,38 @@ if (!firebaseConfigured()) {
   function read(){
     try{return JSON.parse(sessionStorage.getItem(KEY)||"null")}catch(e){return null}
   }
+  function romeOffsetMin(utcMs){
+    var parts=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Rome",hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(utcMs));
+    var n=function(t){return Number(parts.find(function(p){return p.type===t}).value)};
+    return Math.round((Date.UTC(n("year"),n("month")-1,n("day"),n("hour"),n("minute"),n("second"))-utcMs)/60000);
+  }
+  function romeMidnightMs(iso){
+    var m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return NaN;
+    var guess=Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]));
+    var off=romeOffsetMin(guess);
+    var ms=guess-off*60000;
+    var off2=romeOffsetMin(ms);
+    if(off2!==off) ms=guess-off2*60000;
+    return ms;
+  }
+  function resolvePair(catalogStr, nextStr){
+    var catalog=typeof catalogStr==="string"?catalogStr:"";
+    var nextRaw=typeof nextStr==="string"?String(nextStr).trim():"";
+    if(!nextRaw) return {catalog:catalog, next:"", promoted:false};
+    var nextObj=null;
+    try{ nextObj=JSON.parse(nextRaw); }catch(e){ return {catalog:catalog, next:"", promoted:false}; }
+    var from=String(nextObj&&nextObj.liveFrom||"").slice(0,10);
+    if(!(nextObj&&nextObj.flat&&nextObj.commodity&&/^\d{4}-\d{2}-\d{2}$/.test(from))){
+      return {catalog:catalog, next:nextRaw, promoted:false};
+    }
+    if(romeMidnightMs(from)>Date.now()) return {catalog:catalog, next:nextRaw, promoted:false};
+    var body={};
+    for(var k in nextObj){ if(Object.prototype.hasOwnProperty.call(nextObj,k)&&k!=="liveFrom") body[k]=nextObj[k]; }
+    var promoted="";
+    try{ promoted=JSON.stringify(body); JSON.parse(promoted); }catch(e){ return {catalog:catalog, next:nextRaw, promoted:false}; }
+    return {catalog:promoted, next:"", promoted:true};
+  }
   function setScript(id,jsonText){
     var el=document.getElementById(id);
     if(!jsonText){
@@ -1581,17 +1675,35 @@ if (!firebaseConfigured()) {
   function apply(){
     var saved=read();
     if(!saved||typeof saved.catalog!=="string"||!saved.catalog) return;
-    try{setScript("promo-catalog", saved.catalog)}catch(e){return}
+    var resolved=resolvePair(saved.catalog, saved.next||"");
+    try{setScript("promo-catalog", resolved.catalog)}catch(e){return}
     try{
-      if(saved.next) setScript("promo-catalog-next", saved.next);
+      if(resolved.next) setScript("promo-catalog-next", resolved.next);
       else setScript("promo-catalog-next", "");
     }catch(e){}
-    try{patchCliente(saved.catalog)}catch(e){}
+    try{patchCliente(resolved.catalog)}catch(e){}
+    try{
+      if(resolved.next) patchClienteScript("promo-catalog-next", resolved.next);
+      else patchClienteScript("promo-catalog-next", "");
+    }catch(e){}
+    if(resolved.promoted){
+      try{ sessionStorage.setItem(KEY, JSON.stringify({catalog:resolved.catalog, next:""})); }catch(e){}
+    }
     try{sessionStorage.removeItem(KEY+"-try")}catch(e){}
   }
   window.__applyPublishedListino=apply;
   window.__patchClienteFlyers=patchClienteFlyers;
   apply();
+  // Se nel file c'è già un listino programmato scaduto, diventa quello attuale subito.
+  (function promoteDueFromDom(){
+    var cur=document.getElementById("promo-catalog");
+    var nxt=document.getElementById("promo-catalog-next");
+    if(!cur||!nxt) return;
+    var resolved=resolvePair(String(cur.textContent||""), String(nxt.textContent||""));
+    if(!resolved.promoted) return;
+    try{ sessionStorage.setItem(KEY, JSON.stringify({catalog:resolved.catalog, next:""})); }catch(e){}
+    apply();
+  })();
 })();
 </script>
 <script>
@@ -3438,17 +3550,21 @@ setToolMode("mix");
           window.__patchClienteFlyers(remote.flyers, remote.flyerButtons||[]);
         }
       }catch(e){}
+      if(remote.promoted && typeof window.__persistDueListinoPromotion==="function"){
+        try{ await window.__persistDueListinoPromotion(remote); }catch(e){}
+      }
       let payload="";
       try{payload=JSON.stringify({catalog:remote.catalog,next:next})}catch(e){return}
       const key="preventivatore-published-listino";
       if(sessionStorage.getItem(key)===payload&&sessionStorage.getItem(key+"-try")==="1")return;
       const localCat=catalogNorm((document.getElementById("promo-catalog")||{textContent:""}).textContent);
-      if(catalogNorm(remote.catalog)===localCat){
-        const nextEl=document.getElementById("promo-catalog-next");
-        const localNext=nextEl?String(nextEl.textContent||"").trim():"";
-        if(catalogNorm(next||"")===catalogNorm(localNext||"")) return;
-      }
-      if(started&&!document.body.classList.contains("locked"))return;
+      const nextEl=document.getElementById("promo-catalog-next");
+      const localNext=nextEl?String(nextEl.textContent||"").trim():"";
+      const sameCatalog=catalogNorm(remote.catalog)===localCat;
+      const sameNext=catalogNorm(next||"")===catalogNorm(localNext||"");
+      if(sameCatalog&&sameNext&&!remote.promoted) return;
+      // Se il listino programmato è scaduto/dovuto, ricarica anche a pagina già aperta.
+      if(started&&!document.body.classList.contains("locked")&&!remote.promoted&&!next) return;
       sessionStorage.setItem(key,payload);
       sessionStorage.setItem(key+"-try","1");
       location.reload();
