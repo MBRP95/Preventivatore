@@ -40,7 +40,11 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /__readPublishedListino/);
   assert.match(indexSrc, /listini","published"/);
   assert.match(indexSrc, /firebasePublishMode/);
+  assert.match(indexSrc, /__patchClienteFlyers/);
+  assert.match(indexSrc, /flyerCount/);
+  assert.match(indexSrc, /extractClienteFlyers/);
   const rules = fs.readFileSync(path.join(root, "firestore.rules"), "utf8");
   assert.match(rules, /match \/listini\/\{docId\}/);
   assert.match(rules, /docId == 'published'/);
+  assert.match(rules, /flyer-\[0-9\]\+/);
 });
