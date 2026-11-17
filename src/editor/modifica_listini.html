@@ -660,14 +660,24 @@ function bindFlyerDraw(){
       box.style.width=(area.w*100)+"%";
       box.style.height=(area.h*100)+"%";
       const label=box.querySelector(".flyer-label");
-      let size=Math.max(8,canvas.clientHeight*area.h*0.42);
-      box.style.fontSize=size+"px";
-      requestAnimationFrame(()=>{
-        let guard=0;
-        while(label&&label.scrollWidth>label.clientWidth+1&&size>8&&guard<16){
-          size*=0.88; box.style.fontSize=size+"px"; guard++;
-        }
-      });
+      const boxH=Math.max(1, canvas.clientHeight*area.h);
+      let lo=10, hi=Math.max(10, Math.floor(boxH*0.72)), best=10;
+      box.style.whiteSpace="normal";
+      box.style.lineHeight="1.08";
+      box.style.display="flex";
+      box.style.alignItems="center";
+      box.style.justifyContent="center";
+      box.style.textAlign="center";
+      while(lo<=hi){
+        const mid=(lo+hi)>>1;
+        box.style.fontSize=mid+"px";
+        const overflow=label
+          ? (label.scrollWidth>box.clientWidth+1||label.scrollHeight>box.clientHeight+1)
+          : (box.scrollWidth>box.clientWidth+1||box.scrollHeight>box.clientHeight+1);
+        if(!overflow){ best=mid; lo=mid+1; }
+        else hi=mid-1;
+      }
+      box.style.fontSize=best+"px";
     };
     const refreshStatus=()=>{const status=$("flyerStatus");if(status)status.textContent=flyerStatusText()};
     paint(activeButtons()[i]);
