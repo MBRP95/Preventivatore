@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-17T13:44:56.000Z"><meta name="update-url" content="/api/public-index">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-rev" content="2026-11-17T14:03:11.000Z"><meta name="update-url" content="/api/public-index">
 <title>Gestionale preventivi energia — Offline</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#292929;background:#fffbea;--fw-yellow:#ffe500;--fw-yellow-deep:#f4d900;--fw-ink:#242424;--fw-muted:#66615a;--fw-border:#eadf83;--fw-pale:#fff8bf}
@@ -983,13 +983,79 @@ if (!firebaseConfigured()) {
     }
     return out;
   }
+  function flyerCacheKey(){ return "preventivatore-published-flyers"; }
+  function openFlyerDb(){
+    return new Promise(function(resolve, reject){
+      const req=indexedDB.open("preventivatore-listini", 1);
+      req.onupgradeneeded=function(){
+        const db=req.result;
+        if(!db.objectStoreNames.contains("cache")) db.createObjectStore("cache");
+      };
+      req.onsuccess=function(){ resolve(req.result); };
+      req.onerror=function(){ reject(req.error||Error("IndexedDB non disponibile")); };
+    });
+  }
+  async function saveFlyerCache(flyers, buttons, rev){
+    if(!Array.isArray(flyers)||!flyers.length) return;
+    try{
+      const db=await openFlyerDb();
+      await new Promise(function(resolve, reject){
+        const tx=db.transaction("cache","readwrite");
+        tx.objectStore("cache").put({
+          flyers:flyers,
+          flyerButtons:Array.isArray(buttons)?buttons:[],
+          rev:String(rev||""),
+          savedAt:Date.now()
+        }, flyerCacheKey());
+        tx.oncomplete=function(){ resolve(); };
+        tx.onerror=function(){ reject(tx.error); };
+      });
+      db.close();
+    }catch(e){}
+  }
+  async function readFlyerCache(){
+    try{
+      const db=await openFlyerDb();
+      const row=await new Promise(function(resolve, reject){
+        const tx=db.transaction("cache","readonly");
+        const req=tx.objectStore("cache").get(flyerCacheKey());
+        req.onsuccess=function(){ resolve(req.result||null); };
+        req.onerror=function(){ reject(req.error); };
+      });
+      db.close();
+      if(!(row&&Array.isArray(row.flyers)&&row.flyers.length)) return null;
+      return row;
+    }catch(e){ return null; }
+  }
+  function applyFlyersToDom(flyers, buttons){
+    if(!(window.__patchClienteFlyers && Array.isArray(flyers) && flyers.length)) return false;
+    try{ return !!window.__patchClienteFlyers(flyers, buttons||[]); }catch(e){ return false; }
+  }
+  window.__saveFlyerCache=saveFlyerCache;
+  window.__ensurePublishedFlyers=async function(){
+    const cached=await readFlyerCache();
+    if(cached&&cached.flyers&&cached.flyers.length){
+      applyFlyersToDom(cached.flyers, cached.flyerButtons||[]);
+    }
+    try{
+      if(typeof window.__readPublishedListino!=="function") return cached||null;
+      const remote=await window.__readPublishedListino();
+      if(remote&&Array.isArray(remote.flyers)&&remote.flyers.length){
+        applyFlyersToDom(remote.flyers, remote.flyerButtons||[]);
+        await saveFlyerCache(remote.flyers, remote.flyerButtons||[], remote.rev||"");
+        return remote;
+      }
+    }catch(e){}
+    return cached||null;
+  };
   function applyListinoPayload(payload){
     if(!payload||typeof payload.catalog!=="string"||!payload.catalog) return;
     try{ sessionStorage.setItem(listinoStorageKey(), JSON.stringify({catalog:payload.catalog, next:payload.next||""})); }catch(e){}
     try{ if(window.__applyPublishedListino) window.__applyPublishedListino(); }catch(e){}
     try{
-      if(window.__patchClienteFlyers && Array.isArray(payload.flyers) && payload.flyers.length){
-        window.__patchClienteFlyers(payload.flyers, payload.flyerButtons||[]);
+      if(Array.isArray(payload.flyers) && payload.flyers.length){
+        applyFlyersToDom(payload.flyers, payload.flyerButtons||[]);
+        saveFlyerCache(payload.flyers, payload.flyerButtons||[], payload.rev||"");
       }
     }catch(e){}
   }
@@ -1661,12 +1727,35 @@ if (!firebaseConfigured()) {
     }
     return false;
   }
+  function mergeYearsIntoCatalogJson(jsonText){
+    var incoming=null;
+    try{ incoming=JSON.parse(jsonText); }catch(e){ return jsonText; }
+    if(!(incoming&&incoming.flat)) return jsonText;
+    var years=Number(incoming.flat.years);
+    if(Number.isInteger(years)&&years>=1) return jsonText;
+    try{
+      var el=document.getElementById("cliente-app");
+      if(!el) return jsonText;
+      var m=String(el.textContent||"").match(/<script type="application\/json" id="promo-catalog">([\s\S]*?)<\\?\/script>/i);
+      if(!m) return jsonText;
+      var prev=JSON.parse(m[1]);
+      var prevYears=Number(prev&&prev.flat&&prev.flat.years);
+      if(!(Number.isInteger(prevYears)&&prevYears>=1)) return jsonText;
+      incoming.flat.years=prevYears;
+      return JSON.stringify(incoming);
+    }catch(e){ return jsonText; }
+  }
   function patchCliente(jsonText){
-    patchClienteScript("promo-catalog", jsonText);
+    patchClienteScript("promo-catalog", mergeYearsIntoCatalogJson(jsonText));
   }
   function patchClienteFlyers(pages, buttons){
     if(!Array.isArray(pages)||!pages.length) return false;
-    var pagesJson=JSON.stringify(pages);
+    var usable=pages.filter(function(page){
+      var raw=String(page||"");
+      return raw.indexOf("data:image/")===0 && raw.length>=1000 && raw.length<900000;
+    });
+    if(!usable.length) return false;
+    var pagesJson=JSON.stringify(usable);
     var buttonsJson=JSON.stringify(Array.isArray(buttons)?buttons:[]);
     var ok=patchClienteScript("flyer-pages", pagesJson);
     patchClienteScript("flyer-buttons", buttonsJson);
@@ -1676,18 +1765,19 @@ if (!firebaseConfigured()) {
     var saved=read();
     if(!saved||typeof saved.catalog!=="string"||!saved.catalog) return;
     var resolved=resolvePair(saved.catalog, saved.next||"");
-    try{setScript("promo-catalog", resolved.catalog)}catch(e){return}
+    var catalogJson=mergeYearsIntoCatalogJson(resolved.catalog);
+    try{setScript("promo-catalog", catalogJson)}catch(e){return}
     try{
       if(resolved.next) setScript("promo-catalog-next", resolved.next);
       else setScript("promo-catalog-next", "");
     }catch(e){}
-    try{patchCliente(resolved.catalog)}catch(e){}
+    try{patchCliente(catalogJson)}catch(e){}
     try{
       if(resolved.next) patchClienteScript("promo-catalog-next", resolved.next);
       else patchClienteScript("promo-catalog-next", "");
     }catch(e){}
     if(resolved.promoted){
-      try{ sessionStorage.setItem(KEY, JSON.stringify({catalog:resolved.catalog, next:""})); }catch(e){}
+      try{ sessionStorage.setItem(KEY, JSON.stringify({catalog:catalogJson, next:""})); }catch(e){}
     }
     try{sessionStorage.removeItem(KEY+"-try")}catch(e){}
   }
@@ -1703,6 +1793,12 @@ if (!firebaseConfigured()) {
     if(!resolved.promoted) return;
     try{ sessionStorage.setItem(KEY, JSON.stringify({catalog:resolved.catalog, next:""})); }catch(e){}
     apply();
+  })();
+  // Ripristina subito i volantini dall'ultima pubblicazione (prima del click su Cliente).
+  (async function restoreFlyerCacheEarly(){
+    try{
+      if(typeof window.__ensurePublishedFlyers==="function") await window.__ensurePublishedFlyers();
+    }catch(e){}
   })();
 })();
 </script>
@@ -3546,8 +3642,9 @@ setToolMode("mix");
         if(remote.next){ JSON.parse(remote.next); next=remote.next; }
       }catch(e){ next=""; }
       try{
-        if(window.__patchClienteFlyers && Array.isArray(remote.flyers) && remote.flyers.length){
-          window.__patchClienteFlyers(remote.flyers, remote.flyerButtons||[]);
+        if(Array.isArray(remote.flyers) && remote.flyers.length){
+          if(window.__patchClienteFlyers) window.__patchClienteFlyers(remote.flyers, remote.flyerButtons||[]);
+          if(typeof window.__saveFlyerCache==="function") await window.__saveFlyerCache(remote.flyers, remote.flyerButtons||[], remote.rev||"");
         }
       }catch(e){}
       if(remote.promoted && typeof window.__persistDueListinoPromotion==="function"){
@@ -5302,10 +5399,13 @@ boot();
     const input=document.getElementById("gatePassword");
     if(input)input.focus();
   }
-  function openCliente(){
+  async function openCliente(){
     try{sessionStorage.setItem(key,"cliente")}catch(e){}
     closeOverlays();
     hidePick();
+    if(typeof window.__ensurePublishedFlyers==="function"){
+      try{ await window.__ensurePublishedFlyers(); }catch(e){}
+    }
     const frame=document.createElement("iframe");
     frame.setAttribute("title","Preventivatore cliente");
     frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:30;background:#FFD000";
@@ -5372,7 +5472,7 @@ boot();
   }
   window.__openEditor=openEditor;
   window.__backToChoice=backToChoice;
-  document.getElementById("pickCliente").addEventListener("click",openCliente);
+  document.getElementById("pickCliente").addEventListener("click",function(){ openCliente(); });
   document.getElementById("pickSeller").addEventListener("click",openSeller);
   document.getElementById("modeBack").addEventListener("click",backToChoice);
   document.getElementById("sellerBack").addEventListener("click",backToChoice);
@@ -6625,20 +6725,63 @@ function extractClienteFlyers(fileHtml){
     return {flyers:[], flyerButtons:[]};
   }
 }
-async function publishFirebase(fileHtml){
+function usableFlyerPages(pages){
+  return (Array.isArray(pages)?pages:[]).filter(page=>{
+    const raw=String(page||"");
+    return raw.indexOf("data:image/")===0 && raw.length>=1000 && raw.length<900000;
+  });
+}
+function catalogJsonForFirebase(edited, fileHtml, from){
+  const body=finishCatalog(clone(edited));
+  if(!body.flat||typeof body.flat!=="object") body.flat={};
+  if(!Number.isInteger(Number(body.flat.years))||Number(body.flat.years)<1){
+    const fromCliente=loaded.cliente&&loaded.cliente.catalog&&loaded.cliente.catalog.flat&&loaded.cliente.catalog.flat.years;
+    body.flat.years=Number.isInteger(Number(fromCliente))&&Number(fromCliente)>=1?Number(fromCliente):2;
+  }else{
+    body.flat.years=Number(body.flat.years);
+  }
+  if(from){
+    let liveRaw="";
+    try{ liveRaw=catalogScriptJson(fileHtml,"promo-catalog"); }catch(e){ liveRaw=""; }
+    let liveObj=null;
+    try{ liveObj=JSON.parse(liveRaw); }catch(e){ liveObj=null; }
+    if(!(liveObj&&liveObj.flat&&liveObj.commodity)) liveObj=clone(body);
+    if(!liveObj.flat||typeof liveObj.flat!=="object") liveObj.flat={};
+    if(!Number.isInteger(Number(liveObj.flat.years))||Number(liveObj.flat.years)<1){
+      const held=loaded.cliente&&loaded.cliente.heldLive&&loaded.cliente.heldLive.flat&&loaded.cliente.heldLive.flat.years;
+      liveObj.flat.years=Number.isInteger(Number(held))&&Number(held)>=1?Number(held):body.flat.years;
+    }
+    const nextObj=clone(body);
+    nextObj.liveFrom=from;
+    return {catalog:JSON.stringify(liveObj), next:JSON.stringify(nextObj)};
+  }
+  return {catalog:JSON.stringify(body), next:""};
+}
+async function publishFirebase(fileHtml, edited, from){
   if(!(editorParent&&typeof editorParent.__publishListinoFirebase==="function")){
     throw Error("Pubblicazione online non disponibile. Ricarica la pagina e accedi di nuovo come Admin.");
   }
-  const catalog=catalogScriptJson(fileHtml,"promo-catalog");
-  if(!catalog) throw Error("Listino non trovato nel file da pubblicare.");
-  let next="";
-  try{ next=catalogScriptJson(fileHtml,"promo-catalog-next"); }catch(e){ next=""; }
-  const extras=extractClienteFlyers(fileHtml);
+  const pair=catalogJsonForFirebase(edited||catalog, fileHtml, from||"");
+  if(!pair.catalog||pair.catalog.length<100) throw Error("Listino non trovato nel file da pubblicare.");
+  let extras=extractClienteFlyers(fileHtml);
+  let flyers=usableFlyerPages(extras.flyers);
+  let flyerButtons=Array.isArray(extras.flyerButtons)?extras.flyerButtons:[];
+  // Non sovrascrivere volantini buoni già online con i placeholder dell'HTML Pages.
+  if(!flyers.length && editorParent&&typeof editorParent.__readPublishedListino==="function"){
+    try{
+      const remote=await editorParent.__readPublishedListino();
+      const remoteFlyers=usableFlyerPages(remote&&remote.flyers);
+      if(remoteFlyers.length){
+        flyers=remoteFlyers;
+        flyerButtons=Array.isArray(remote.flyerButtons)?remote.flyerButtons:flyerButtons;
+      }
+    }catch(e){}
+  }
   await editorParent.__publishListinoFirebase({
-    catalog,
-    next,
-    flyers:extras.flyers,
-    flyerButtons:extras.flyerButtons
+    catalog:pair.catalog,
+    next:pair.next,
+    flyers,
+    flyerButtons
   });
 }
 function applyRemoteListinoToPage(page, remote){
@@ -6691,7 +6834,7 @@ $("download").addEventListener("click",async()=>{
         return;
       }
       if(firebasePublishMode){
-        await publishFirebase(built.outer);
+        await publishFirebase(built.outer, next, built.from);
         rememberBuilt(built, next, built.from);
         clearPasswords();
         $("status").textContent=lead+scheduleSentence(built.from)+passwordNote;
