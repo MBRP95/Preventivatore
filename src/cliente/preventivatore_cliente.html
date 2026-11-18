@@ -1107,43 +1107,49 @@ function fitFlyerLabel(btn){
   if(!shell) return;
   // Invariante: riquadro = % del flyer; font in px naturali del flyer.
   // Dopo scale(schermo) riquadro+scritta restano identici rispetto al volantino.
-  const boxW=btn.clientWidth;
-  const boxH=btn.clientHeight;
-  const padX=Math.max(4, Math.round(boxH*0.12));
-  applyCtaBreath(btn, boxH);
+  const roughH=btn.clientHeight;
+  const padX=Math.max(4, Math.round(roughH*0.12));
+  applyCtaBreath(btn, roughH);
   shell.style.paddingLeft=padX+"px";
   shell.style.paddingRight=padX+"px";
+  shell.style.overflow="hidden";
+  // Misura DOPO il bordo (border-box riduce clientWidth).
+  void btn.offsetWidth;
+  const boxW=btn.clientWidth;
+  const boxH=btn.clientHeight;
+  const availW=Math.max(4, boxW-padX*2);
+  const availH=Math.max(4, boxH);
+  const text=String(label.textContent||"").replace(/\s+/g," ").trim();
   label.style.maxWidth="none";
   label.style.width="max-content";
   label.style.overflow="visible";
   label.style.textOverflow="clip";
   label.style.whiteSpace="nowrap";
+  label.style.padding="0";
+  label.style.margin="0";
+  label.style.transform="none";
+  label.style.transformOrigin="center center";
   label.style.fontFamily="Arial,Helvetica,sans-serif";
   label.style.fontWeight="900";
   label.style.lineHeight="1";
   label.style.letterSpacing="0";
-  const availW=Math.max(4, boxW-padX*2);
-  const availH=Math.max(4, boxH);
-  const prevOverflow=shell.style.overflow;
-  shell.style.overflow="visible";
-  let lo=6, hi=Math.max(6, Math.floor(availH*0.78)), best=6;
-  const fitsAt=px=>{
-    label.style.fontSize=px+"px";
-    void label.offsetWidth;
-    const r=label.getBoundingClientRect();
-    const w=Math.max(label.scrollWidth||0, r.width||0);
-    const h=Math.max(label.scrollHeight||0, r.height||0);
-    return w<=availW+0.5 && h<=availH+0.5;
-  };
+  const ctx=(fitFlyerLabel._fitCtx||(fitFlyerLabel._fitCtx=document.createElement("canvas").getContext("2d")));
+  let lo=6, hi=Math.max(6, Math.floor(availH*0.9)), best=6;
   while(lo<=hi){
     const mid=(lo+hi)>>1;
-    if(fitsAt(mid)){ best=mid; lo=mid+1; }
+    ctx.font="900 "+mid+"px Arial,Helvetica,sans-serif";
+    const w=ctx.measureText(text).width;
+    if(w<=availW && mid<=availH){ best=mid; lo=mid+1; }
     else hi=mid-1;
   }
-  let guard=24;
-  while(guard-- > 0 && best>6 && !fitsAt(best)){ best-=1; }
   label.style.fontSize=best+"px";
-  shell.style.overflow=prevOverflow||"hidden";
+  void label.offsetWidth;
+  const rw=Math.max(label.scrollWidth||0, label.getBoundingClientRect().width||0);
+  const rh=Math.max(label.scrollHeight||0, label.getBoundingClientRect().height||0);
+  if(rw>availW+0.5 || rh>availH+0.5){
+    const s=Math.max(0.35, Math.min(1, availW/Math.max(rw,1), availH/Math.max(rh,1)));
+    label.style.transform="scale("+s+")";
+  }
 }
 function fitFlyer(){
   const frame=$("flyerFit"), slot=$("flyerSlot"), page=$("flyerPage"), img=$("flyerImg");
