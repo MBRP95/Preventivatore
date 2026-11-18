@@ -5780,12 +5780,12 @@ href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 
   @media (prefers-reduced-motion:reduce){.flyer-box{animation:none}}
   .flyer-label-clip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:inherit;pointer-events:none;padding:0 var(--label-pad,8px);box-sizing:border-box}
   .flyer-label{display:block;width:max-content;max-width:none;overflow:visible;white-space:nowrap;pointer-events:none;padding:0;box-sizing:border-box;line-height:1}
-  .flyer-handle{position:absolute;width:var(--handle-size,18px);height:var(--handle-size,18px);background:#fff;border:2px solid #111;border-radius:4px;z-index:3;box-sizing:border-box;touch-action:none}
-  .flyer-handle::after{content:"";position:absolute;inset:-12px}
-  .flyer-handle.nw{left:var(--handle-offset,-9px);top:var(--handle-offset,-9px);cursor:nwse-resize}
-  .flyer-handle.ne{right:var(--handle-offset,-9px);top:var(--handle-offset,-9px);cursor:nesw-resize}
-  .flyer-handle.sw{left:var(--handle-offset,-9px);bottom:var(--handle-offset,-9px);cursor:nesw-resize}
-  .flyer-handle.se{right:var(--handle-offset,-9px);bottom:var(--handle-offset,-9px);cursor:nwse-resize}
+  .flyer-handle{position:absolute;width:var(--handle-size,8px);height:var(--handle-size,8px);background:#fff;border:1.5px solid #111;border-radius:2px;z-index:3;box-sizing:border-box;touch-action:none;opacity:.95;box-shadow:0 0 0 1px #ffd000aa}
+  .flyer-handle::after{content:"";position:absolute;inset:-18px}
+  .flyer-handle.nw{left:var(--handle-offset,-10px);top:var(--handle-offset,-10px);cursor:nwse-resize}
+  .flyer-handle.ne{right:var(--handle-offset,-10px);top:var(--handle-offset,-10px);cursor:nesw-resize}
+  .flyer-handle.sw{left:var(--handle-offset,-10px);bottom:var(--handle-offset,-10px);cursor:nesw-resize}
+  .flyer-handle.se{right:var(--handle-offset,-10px);bottom:var(--handle-offset,-10px);cursor:nwse-resize}
   .hidden{display:none}
   #liveFrom{max-width:220px}
   footer{max-width:1100px;margin:0 auto;padding:8px 18px 22px;display:flex;justify-content:flex-end}
@@ -6408,9 +6408,9 @@ function bindFlyerDraw(){
       const ring2=Math.max(ring+1, Math.round(boxH*0.1));
       const ringMid=Math.max(ring+1, Math.round(boxH*0.08));
       const ring2Mid=Math.max(ring2+1, Math.round(boxH*0.15));
-      // Maniglie abbastanza grandi da toccare su smartphone.
-      const handle=Math.max(16, Math.min(22, Math.round(boxH*0.35)));
-      const handleOff=-Math.round(handle/2);
+      // Maniglie piccole (non coprono la scritta); il tocco resta ampio via ::after.
+      const handle=8;
+      const handleOff=-(Math.round(handle/2)+6);
       const padX=Math.max(6, Math.round(boxH*0.14));
       box.style.setProperty("--cta-border", border+"px");
       box.style.setProperty("--cta-ring", ring+"px");
