@@ -58,6 +58,8 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /applySellerCatalog/);
   assert.match(indexSrc, /qart--gas\{margin-right:2px;max-width:168px\}/);
   assert.match(indexSrc, /flatLockedLabel\(\)/);
+  assert.match(indexSrc, /setFlyerZoom/);
+  assert.match(indexSrc, /Math\.floor\(boxH\*0\.72\)/);
   assert.doesNotMatch(indexSrc.slice(0, indexSrc.indexOf('id="cliente-app"')), /"PER 2 ANNI"/);
   assert.doesNotMatch(indexSrc, /window\.top\.location\.reload\(\)/);
   const rules = fs.readFileSync(path.join(root, "firestore.rules"), "utf8");
