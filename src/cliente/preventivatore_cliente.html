@@ -97,20 +97,22 @@ body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;paddin
 .flyer-page{position:absolute;left:0;top:0}
 .flyer-page img{display:block;width:100%;height:100%}
 .flyer-cta{position:absolute;z-index:3;border:4px solid #111;background:#111;color:#FFD000;font:900 28px/1 Arial,Helvetica,sans-serif;letter-spacing:-.3px;border-radius:999px;padding:14px 16px 14px 20px;cursor:pointer;white-space:nowrap;box-shadow:0 0 0 5px #fff,0 0 0 9px #111;animation:flyer-cta-pulse 1.25s ease-in-out infinite}
-.flyer-cta span{display:inline-block;margin-left:8px;font-size:1.08em}
+.flyer-cta:not(.pos-custom) span{display:inline-block;margin-left:8px;font-size:1.08em}
 .flyer-page.pos-gap .flyer-cta{top:3.6%;right:24.8%;font-size:24px;padding:12px 14px 12px 16px;letter-spacing:-.4px}
 .flyer-page.pos-gap .flyer-cta span{margin-left:6px}
 .flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
-.flyer-cta.pos-custom{right:auto;left:auto;display:block;padding:0;overflow:hidden;box-sizing:border-box;font-size:0;border-width:3px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111}
-.flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:0}
-.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:0;color:#FFD000;white-space:nowrap;overflow:visible;padding:0 8px;box-sizing:border-box}
+.flyer-cta.pos-custom{right:auto;left:auto;display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden;box-sizing:border-box;font-size:0;border-width:var(--cta-border,3px);box-shadow:0 0 0 var(--cta-ring,3px) #fff,0 0 0 var(--cta-ring2,6px) #111;animation:flyer-cta-pulse-custom 1.25s ease-in-out infinite}
+.flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:0;min-width:0;overflow:hidden}
+.flyer-cta.pos-custom .cta-text{display:block;width:max-content;max-width:none;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:0;color:#FFD000;white-space:nowrap;overflow:visible;padding:0;box-sizing:border-box}
 .flyer-cta.pos-custom .cta-arrow{margin-left:.25em}
 .flyer-cta:hover{background:#000}
 .flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
 .flyer-cta:active{transform:scale(.98)}
 @keyframes flyer-cta-pulse{0%,100%{box-shadow:0 0 0 4px #fff,0 0 0 8px #111}50%{box-shadow:0 0 0 9px #fff,0 0 0 14px #111}}
-.flyer-cta.pos-custom{animation:flyer-cta-pulse-custom 1.25s ease-in-out infinite}
-@keyframes flyer-cta-pulse-custom{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #111}50%{box-shadow:0 0 0 7px #fff,0 0 0 11px #111}}
+@keyframes flyer-cta-pulse-custom{
+  0%,100%{box-shadow:0 0 0 var(--cta-ring,3px) #fff,0 0 0 var(--cta-ring2,6px) #111}
+  50%{box-shadow:0 0 0 var(--cta-ring-mid,7px) #fff,0 0 0 var(--cta-ring2-mid,11px) #111}
+}
 @media (prefers-reduced-motion:reduce){.flyer-cta{animation:none}}
 .flyer-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:5;width:56px;height:56px;border-radius:50%;border:2px solid #111;background:#fff;color:#111;font:900 34px/1 Arial,Helvetica,sans-serif;cursor:pointer}
 .flyer-arrow.left{left:12px}
@@ -1080,26 +1082,46 @@ function setFlyerZoom(next){
   flyerZoom=Math.max(1, Math.min(4, Number(next)||1));
   fitFlyer();
 }
+function applyCtaBreath(el, boxH){
+  if(!el)return;
+  const h=Math.max(1, Number(boxH)||el.clientHeight||1);
+  const border=Math.max(2, Math.round(h*0.045));
+  const ring=Math.max(2, Math.round(h*0.055));
+  const ring2=Math.max(ring+2, Math.round(h*0.11));
+  const ringMid=Math.max(ring+1, Math.round(h*0.09));
+  const ring2Mid=Math.max(ring2+2, Math.round(h*0.17));
+  el.style.setProperty("--cta-border", border+"px");
+  el.style.setProperty("--cta-ring", ring+"px");
+  el.style.setProperty("--cta-ring2", ring2+"px");
+  el.style.setProperty("--cta-ring-mid", ringMid+"px");
+  el.style.setProperty("--cta-ring2-mid", ring2Mid+"px");
+  el.style.borderWidth=border+"px";
+}
 function fitFlyerLabel(btn){
   if(!btn||!btn.clientWidth||!btn.clientHeight)return;
   const shell=btn.querySelector(".cta-fit");
   const label=btn.querySelector(".cta-text")||shell||btn;
   if(!shell) return;
-  // Font in px sul flyer a dimensione naturale: resta proporzionale al volantino
-  // anche dopo scale/pinch (niente ellipsis in misura, altrimenti il fit “mente”).
-  shell.style.paddingLeft="0px";
-  shell.style.paddingRight="0px";
+  // Misura senza max-width/ellipsis: altrimenti scrollWidth ≈ clientWidth e il font resta troppo grande.
+  const boxW=btn.clientWidth;
+  const boxH=btn.clientHeight;
+  const padX=Math.max(4, Math.round(boxH*0.12));
+  applyCtaBreath(btn, boxH);
+  shell.style.paddingLeft=padX+"px";
+  shell.style.paddingRight=padX+"px";
+  label.style.maxWidth="none";
+  label.style.width="max-content";
   label.style.overflow="visible";
   label.style.textOverflow="clip";
   label.style.whiteSpace="nowrap";
-  const boxW=btn.clientWidth;
-  const boxH=btn.clientHeight;
-  let lo=8, hi=Math.max(8, Math.floor(boxH*0.7)), best=8;
+  const availW=Math.max(8, boxW-padX*2);
+  const availH=Math.max(8, boxH);
+  let lo=6, hi=Math.max(6, Math.floor(boxH*0.62)), best=6;
   while(lo<=hi){
     const mid=(lo+hi)>>1;
     label.style.fontSize=mid+"px";
     void label.offsetWidth;
-    const fits=label.scrollWidth<=boxW+1&&label.scrollHeight<=boxH+1;
+    const fits=label.scrollWidth<=availW+0.5&&label.scrollHeight<=availH+0.5;
     if(fits){ best=mid; lo=mid+1; }
     else hi=mid-1;
   }
