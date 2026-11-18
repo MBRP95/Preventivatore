@@ -3819,15 +3819,11 @@ body.fit-result #quotePreview{position:relative;flex:1;min-height:0;display:flex
 body.fit-result .quote-frame{width:100%;height:100%;overflow:auto;background:var(--bg-soft);padding:0;display:flex;align-items:center;justify-content:center;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 body.fit-result .nav{margin-top:4px;gap:6px;align-items:center;height:30px}
 body.fit-result #step .nav button{flex:1;height:28px;padding:0 8px;font-size:13px;line-height:1;border-radius:8px;min-height:0}
-.quote-zoom{display:flex;gap:4px;flex:none;height:28px}
-.quote-zoom button{flex:none;width:28px;height:28px;padding:0;border:2px solid #111;border-radius:8px;background:#ffe500;color:#111;font:900 16px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:none}
 @media (orientation:landscape) and (max-height:500px){
   body.fit-result main{padding:2px 6px 2px}
   body.fit-result #step{padding:0 4px 2px}
   body.fit-result .nav{margin-top:2px;gap:4px;height:26px}
   body.fit-result #step .nav button{height:24px;padding:0 6px;font-size:12px}
-  .quote-zoom{height:24px}
-  .quote-zoom button{width:24px;height:24px;font-size:15px}
 }
 body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:#FFD000!important;background-color:#FFD000!important}
 body.fit-flyers header,body.fit-flyers footer{display:none}
@@ -5228,7 +5224,7 @@ const VIEWS={
   result(){
     const html=buildSheets();
     const hint=outcomeNote();
-    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><div class="quote-zoom"><button type="button" id="zoomOut" aria-label="Riduci">−</button><button type="button" id="zoomIn" aria-label="Ingrandisci">+</button></div><button type="button" id="pdfBtn">Apri il PDF</button><button type="button" class="secondary" id="restartBtn">Ricomincia</button></div><p class="err" id="err" role="alert"></p>`,mount(){
+    return {title:"Il tuo preventivo",hint,body:`<div id="quotePreview"><div class="quote-frame" id="quoteFrame"><div class="quote-slot" id="quoteSlot"><div class="quote-pair">${html}</div></div></div></div><div class="nav"><button type="button" class="secondary" id="backBtn">Indietro</button><button type="button" id="pdfBtn">Apri il PDF</button><button type="button" class="secondary" id="restartBtn">Ricomincia</button></div><p class="err" id="err" role="alert"></p>`,mount(){
       $("printArea").innerHTML=`<div class="quote-pair">${html}</div>`;
       bindBack();
       $("restartBtn").addEventListener("click",restart);
@@ -5393,9 +5389,6 @@ function bindFit(){
       setQuoteZoom(quoteZoom*(ev.deltaY<0?1.12:1/1.12));
     },{passive:false});
   }
-  const zoomIn=$("zoomIn"), zoomOut=$("zoomOut");
-  if(zoomIn)zoomIn.addEventListener("click",()=>setQuoteZoom(quoteZoom*1.25));
-  if(zoomOut)zoomOut.addEventListener("click",()=>setQuoteZoom(quoteZoom/1.25));
   requestAnimationFrame(()=>requestAnimationFrame(fitQuote));
 }
 function downloadPdfBlob(canvas){
