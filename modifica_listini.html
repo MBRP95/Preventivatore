@@ -689,28 +689,47 @@ function bindFlyerDraw(){
       box.style.setProperty("--label-pad", padX+"px");
       box.style.borderWidth=border+"px";
       box.style.overflow="visible";
-      const availW=Math.max(8, boxW-padX*2-border*2);
-      const availH=Math.max(8, boxH-border*2);
+      // clientWidth/Height sono già dentro il bordo.
+      const availW=Math.max(4, boxW-padX*2);
+      const availH=Math.max(4, boxH);
+      if(clip){
+        clip.style.paddingLeft=clip.style.paddingRight=padX+"px";
+        clip.style.overflow="visible"; // misura reale (hidden sottostima scrollWidth su mobile)
+      }
       if(label){
         label.style.maxWidth="none";
         label.style.width="max-content";
         label.style.overflow="visible";
         label.style.whiteSpace="nowrap";
         label.style.padding="0";
+        label.style.fontFamily="Arial,Helvetica,sans-serif";
+        label.style.fontWeight="900";
+        label.style.lineHeight="1";
+        label.style.letterSpacing="0";
       }
-      let lo=6, hi=Math.max(6, Math.floor(availH*0.72)), best=6;
+      let lo=6, hi=Math.max(6, Math.floor(availH*0.78)), best=6;
+      const fitsAt=px=>{
+        if(!label) return true;
+        label.style.fontSize=px+"px";
+        void label.offsetWidth;
+        const r=label.getBoundingClientRect();
+        const w=Math.max(label.scrollWidth||0, r.width||0);
+        const h=Math.max(label.scrollHeight||0, r.height||0);
+        return w<=availW+0.5 && h<=availH+0.5;
+      };
       while(lo<=hi){
         const mid=(lo+hi)>>1;
-        if(label) label.style.fontSize=mid+"px";
-        void (label||box).offsetWidth;
-        const fits=label
-          ? (label.scrollWidth<=availW+0.5&&label.scrollHeight<=availH+0.5)
-          : true;
-        if(fits){ best=mid; lo=mid+1; }
+        if(fitsAt(mid)){ best=mid; lo=mid+1; }
         else hi=mid-1;
       }
-      if(label) label.style.fontSize=best+"px";
-      if(clip) clip.style.paddingLeft=clip.style.paddingRight=padX+"px";
+      if(label){
+        label.style.fontSize=best+"px";
+        // Riduci ancora se dopo il layout resta overflow (pinch/zoom/subpixel).
+        let guard=24;
+        while(guard-- > 0 && best>6 && !fitsAt(best)){ best-=1; }
+        label.style.fontSize=best+"px";
+      }
+      if(clip) clip.style.overflow="hidden";
     };
     const refreshStatus=()=>{const status=$("flyerStatus");if(status)status.textContent=flyerStatusText()};
     paint(activeButtons()[i]);
