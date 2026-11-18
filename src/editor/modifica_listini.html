@@ -42,7 +42,7 @@ href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 
   .flyer-box:active{cursor:grabbing}
   @keyframes flyer-box-pulse{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #111}50%{box-shadow:0 0 0 7px #fff,0 0 0 11px #111}}
   @media (prefers-reduced-motion:reduce){.flyer-box{animation:none}}
-  .flyer-label{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;padding:0 8px}
+  .flyer-label{display:block;max-width:100%;overflow:visible;text-overflow:clip;white-space:nowrap;pointer-events:none;padding:0 8px;box-sizing:border-box}
   .flyer-handle{position:absolute;width:16px;height:16px;background:#fff;border:2px solid #111;border-radius:4px;z-index:2}
   .flyer-handle.nw{left:-8px;top:-8px;cursor:nwse-resize}
   .flyer-handle.ne{right:-8px;top:-8px;cursor:nesw-resize}
@@ -660,23 +660,33 @@ function bindFlyerDraw(){
       box.style.width=(area.w*100)+"%";
       box.style.height=(area.h*100)+"%";
       const label=box.querySelector(".flyer-label");
-      const boxH=Math.max(1, canvas.clientHeight*area.h);
-      let lo=10, hi=Math.max(10, Math.floor(boxH*0.72)), best=10;
-      box.style.whiteSpace="normal";
-      box.style.lineHeight="1.08";
+      // Misura sul box in % del flyer (canvas): font proporzionale al volantino, non allo schermo.
+      const boxH=Math.max(1, box.clientHeight||canvas.clientHeight*area.h);
+      const boxW=Math.max(1, box.clientWidth||canvas.clientWidth*area.w);
+      let lo=8, hi=Math.max(8, Math.floor(boxH*0.7)), best=8;
+      box.style.whiteSpace="nowrap";
+      box.style.lineHeight="1";
       box.style.display="flex";
       box.style.alignItems="center";
       box.style.justifyContent="center";
       box.style.textAlign="center";
+      if(label){
+        label.style.overflow="visible";
+        label.style.textOverflow="clip";
+        label.style.whiteSpace="nowrap";
+      }
       while(lo<=hi){
         const mid=(lo+hi)>>1;
+        if(label) label.style.fontSize=mid+"px";
         box.style.fontSize=mid+"px";
+        void (label||box).offsetWidth;
         const overflow=label
-          ? (label.scrollWidth>box.clientWidth+1||label.scrollHeight>box.clientHeight+1)
-          : (box.scrollWidth>box.clientWidth+1||box.scrollHeight>box.clientHeight+1);
+          ? (label.scrollWidth>boxW+1||label.scrollHeight>boxH+1)
+          : (box.scrollWidth>boxW+1||box.scrollHeight>boxH+1);
         if(!overflow){ best=mid; lo=mid+1; }
         else hi=mid-1;
       }
+      if(label) label.style.fontSize=best+"px";
       box.style.fontSize=best+"px";
     };
     const refreshStatus=()=>{const status=$("flyerStatus");if(status)status.textContent=flyerStatusText()};

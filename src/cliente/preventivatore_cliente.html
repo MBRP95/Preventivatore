@@ -6,7 +6,7 @@
 <title>Il tuo preventivo Promo Energia</title>
 <style>
 
-:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#fffbea;--bg-soft:#fffbea;--brand-yellow:#FFD000}
+:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#f3f3f0;--bg-soft:#f3f3f0;--brand-yellow:#FFD000}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg-soft)}
 header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.leave-btn{border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;flex:0 0 auto}
@@ -103,7 +103,7 @@ body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;paddin
 .flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
 .flyer-cta.pos-custom{right:auto;left:auto;display:block;padding:0;overflow:hidden;box-sizing:border-box;font-size:0;border-width:3px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111}
 .flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:0}
-.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:0;color:#FFD000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;box-sizing:border-box}
+.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:0;color:#FFD000;white-space:nowrap;overflow:visible;padding:0 8px;box-sizing:border-box}
 .flyer-cta.pos-custom .cta-arrow{margin-left:.25em}
 .flyer-cta:hover{background:#000}
 .flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
@@ -1085,17 +1085,22 @@ function fitFlyerLabel(btn){
   const shell=btn.querySelector(".cta-fit");
   const label=btn.querySelector(".cta-text")||shell||btn;
   if(!shell) return;
-  // Stesso algoritmo dell'anteprima admin: padding 8px e tetto al 72% dell'altezza.
+  // Font in px sul flyer a dimensione naturale: resta proporzionale al volantino
+  // anche dopo scale/pinch (niente ellipsis in misura, altrimenti il fit “mente”).
   shell.style.paddingLeft="0px";
   shell.style.paddingRight="0px";
-  const boxH=Math.max(1, btn.clientHeight);
-  let lo=10, hi=Math.max(10, Math.floor(boxH*0.72)), best=10;
+  label.style.overflow="visible";
+  label.style.textOverflow="clip";
+  label.style.whiteSpace="nowrap";
+  const boxW=btn.clientWidth;
+  const boxH=btn.clientHeight;
+  let lo=8, hi=Math.max(8, Math.floor(boxH*0.7)), best=8;
   while(lo<=hi){
     const mid=(lo+hi)>>1;
     label.style.fontSize=mid+"px";
     void label.offsetWidth;
-    const overflow=label.scrollWidth>btn.clientWidth+1||label.scrollHeight>btn.clientHeight+1;
-    if(!overflow){ best=mid; lo=mid+1; }
+    const fits=label.scrollWidth<=boxW+1&&label.scrollHeight<=boxH+1;
+    if(fits){ best=mid; lo=mid+1; }
     else hi=mid-1;
   }
   label.style.fontSize=best+"px";
@@ -1103,12 +1108,18 @@ function fitFlyerLabel(btn){
 function fitFlyer(){
   const frame=$("flyerFit"), slot=$("flyerSlot"), page=$("flyerPage"), img=$("flyerImg");
   if(!frame||!slot||!page||!img||!img.naturalWidth)return;
+  // Prima layout a px naturali del flyer, poi scale: così il font è ∝ al volantino.
   page.style.transform="none";
   page.style.width=img.naturalWidth+"px";
   page.style.height=img.naturalHeight+"px";
   const pw=img.naturalWidth, ph=img.naturalHeight;
   const fw=frame.clientWidth, fh=frame.clientHeight;
   if(!fw||!fh)return;
+  const cta=$("flyerCta");
+  if(cta&&cta.classList.contains("pos-custom")){
+    void cta.offsetWidth;
+    fitFlyerLabel(cta);
+  }
   const base=Math.min(fw/pw, fh/ph);
   const scale=base*flyerZoom;
   const zoomed=flyerZoom>1.01;
@@ -1121,8 +1132,6 @@ function fitFlyer(){
     frame.scrollLeft=0;
     frame.scrollTop=0;
   }
-  const cta=$("flyerCta");
-  if(cta&&cta.classList.contains("pos-custom"))fitFlyerLabel(cta);
 }
 function renderFlyers(){
   const pages=flyerSources();
