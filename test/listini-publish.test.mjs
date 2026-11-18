@@ -62,7 +62,9 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /applyCtaBreath/);
   assert.match(indexSrc, /--handle-size/);
   assert.match(indexSrc, /flyer-label-clip/);
-  assert.match(indexSrc, /--bg-soft:#eceef1/);
+  assert.match(indexSrc, /--bg-soft:#fffbea/);
+  assert.match(indexSrc, /linear-gradient\(180deg,#ffe500 0,#fff2a3 220px,#fffbea 520px\)/);
+  assert.doesNotMatch(indexSrc, /Continuità cromatica cliente-volantino[\s\S]{0,80}#ffd000!important/);
   assert.match(indexSrc, /--brand-yellow:#FFD000/);
   assert.match(indexSrc, /Prima layout a px naturali del flyer/);
   assert.match(indexSrc, /Invariante: riquadro/);

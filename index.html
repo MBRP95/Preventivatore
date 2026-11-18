@@ -3748,9 +3748,9 @@ setToolMode("mix");
 <title>Il tuo preventivo Promo Energia</title>
 <style>
 
-:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#eceef1;--bg-soft:#eceef1;--brand-yellow:#FFD000}
+:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#fffbea;--bg-soft:#fffbea;--brand-yellow:#FFD000}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#eceef1!important;background-color:#eceef1!important}
+html,body{margin:0;min-height:100%;background:#fffbea!important;background-color:#fffbea!important}
 header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-right:140px;background:transparent}
 .leave-btn{position:fixed;z-index:32;top:10px;left:12px;border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer}
 header .brand{font-weight:900;font-style:italic;letter-spacing:-.3px;font-size:15px}
@@ -4069,8 +4069,8 @@ body.fit-flyers .leave-btn{top:auto;left:12px;bottom:14px}
 }
 /* Customer layout refresh */header{max-width:1040px;padding:24px clamp(16px,3vw,30px) 12px;align-items:center}header h1{font-size:clamp(27px,3vw,36px)}main{max-width:1040px;padding:12px clamp(14px,2vw,22px) 36px}#step{max-width:900px;margin:0 auto;border:1px solid #eadf83;border-top:5px solid #111;border-radius:22px;padding:clamp(20px,3vw,34px);box-shadow:0 14px 38px rgba(62,51,13,.12)}.progress{height:9px;background:#fff2ae}#step h2{font-size:clamp(25px,3vw,32px);line-height:1.12;margin:14px 0 10px}.hint,.context{font-size:15px;line-height:1.55}.choices,.promo-grid{gap:12px}.choice,.pcard{border:1.5px solid #e3d47b;border-radius:16px;padding:18px;background:#fffefa;transition:.15s}.choice:hover,.pcard:hover{border-color:#242424;box-shadow:0 6px 16px rgba(40,34,8,.08);transform:translateY(-1px)}.choice.selected,.pcard.selected{border:2px solid #191919;background:#fff8c9}#step input,#step select{min-height:50px;padding:13px 14px;border:1.5px solid #d4c86a;border-radius:12px;font-size:18px;background:#fffefa}.nav{gap:12px;margin-top:24px}#step .nav button{min-height:50px;border-radius:999px;padding:13px 20px;font-size:15px;box-shadow:0 3px 0 rgba(0,0,0,.12)}#step .nav button.secondary{background:#fff;border-color:#242424}@media(max-width:700px){header{padding:18px 16px 10px}main{padding:8px 12px 24px}#step{padding:20px 16px;border-radius:17px}#step h2{font-size:25px}.choice,.pcard{padding:15px}#step .nav button{min-width:calc(50% - 8px);padding:12px 14px}}
 /* Design system refresh v2 — esperienza cliente */
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#20242b;background:#f4f6f8}
-body{background:#f4f6f8;color:#20242b}
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#20242b;background:#fffbea}
+body{background:#fffbea;color:#20242b}
 header{max-width:1040px;padding:24px clamp(16px,3vw,28px) 16px;align-items:center}
 header .brand{font-size:12px;letter-spacing:1.5px;color:#6c7280;font-style:normal}
 header h1{font-size:clamp(28px,4vw,36px);font-weight:850;letter-spacing:-1px;color:#20242b}
@@ -4092,15 +4092,15 @@ main{max-width:1040px}
 #step .nav button.secondary{border:1px solid #d8dde4}
 @media(max-width:700px){header{padding:18px 16px 12px}}
 
-/* Continuità cromatica cliente-volantino */
-:root{background:#ffd000}
-html,body{background:#ffd000!important;color:#20242b}
-body{min-height:100vh;background:linear-gradient(180deg,#ffd000 0%,#ffd000 100%)!important}
+/* Sfondo wizard = stesso layout del resto dell'app; giallo pieno solo su fit-flyers. */
+:root{background:#fffbea;--bg-soft:#fffbea}
+html,body{background:#fffbea!important;background-color:#fffbea!important;color:#20242b}
+body{min-height:100vh;background:linear-gradient(180deg,#ffe500 0,#fff2a3 220px,#fffbea 520px)!important}
 header{background:transparent;max-width:1040px;padding:28px clamp(16px,3vw,28px) 14px}
 header .brand{color:#302800;font-size:12px;letter-spacing:1.7px;font-weight:900}
 header h1{color:#20242b;font-size:clamp(29px,4vw,38px);letter-spacing:-1.1px}
 .leave-btn{border:1px solid #20242b;background:#fff;border-radius:10px}
-main{padding-top:10px}
+main{padding-top:10px;background:transparent}
 #step{background:#fff;border:1px solid rgba(32,36,43,.12);border-top:4px solid #20242b;box-shadow:0 12px 32px rgba(48,37,0,.14)}
 .progress{background:#fff0a0}
 .progress span{background:#20242b}
@@ -4108,10 +4108,11 @@ main{padding-top:10px}
 .choice.selected,.pcard.selected{background:#fff4a8;border-color:#20242b}
 @media(max-width:700px){header{padding:20px 16px 12px}}
 
-/* Cliente: testata più leggera, sfondo coordinato al volantino */
+/* Cliente: testata leggera; volantino resta giallo pieno */
 header{background:transparent;border:0;box-shadow:none;padding:24px clamp(16px,3vw,28px) 12px}
 header .brand{letter-spacing:1.2px}
 header h1{font-weight:800;letter-spacing:-.7px}
+body.fit-flyers,html.fit-flyers,body.fit-flyers main{background:#FFD000!important;background-color:#FFD000!important}
 </style>
 </head>
 <body>
@@ -5286,8 +5287,8 @@ function render(){
     document.documentElement.style.setProperty("background","#FFD000","important");
     document.body.style.setProperty("background","#FFD000","important");
   }else{
-    document.documentElement.style.setProperty("background","#eceef1","important");
-    document.body.style.setProperty("background","#eceef1","important");
+    document.documentElement.style.setProperty("background","#fffbea","important");
+    document.body.style.setProperty("background","linear-gradient(180deg,#ffe500 0,#fff2a3 220px,#fffbea 520px)","important");
     const mainEl=document.querySelector("main");
     if(mainEl) mainEl.style.setProperty("background","transparent","important");
   }
@@ -5678,7 +5679,7 @@ boot();
     const frame=document.createElement("iframe");
     frame.id="clienteFrame";
     frame.setAttribute("title","Preventivatore cliente");
-    frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#eceef1";
+    frame.style.cssText="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#fffbea";
     document.body.appendChild(frame);
     writeClienteFrame(frame);
     if(flyers&&flyers.length) injectFlyers(frame, flyers, buttons);
