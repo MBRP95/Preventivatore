@@ -6,9 +6,10 @@
 <title>Il tuo preventivo Promo Energia</title>
 <style>
 
-:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#eceef1;--bg-soft:#eceef1;--brand-yellow:#FFD000}
+:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#fffbea;--bg-soft:#fffbea;--brand-yellow:#FFD000}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#eceef1!important;background-color:#eceef1!important}
+html,body{margin:0;min-height:100%;background:#fffbea!important;background-color:#fffbea!important}
+body:not(.fit-flyers):not(.fit-result){background:linear-gradient(180deg,#ffe500 0,#fff2a3 220px,#fffbea 520px)!important}
 header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-right:140px;background:transparent}
 .leave-btn{position:fixed;z-index:32;top:10px;left:12px;border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer}
 header .brand{font-weight:900;font-style:italic;letter-spacing:-.3px;font-size:15px}
@@ -1532,8 +1533,8 @@ function render(){
     document.documentElement.style.setProperty("background","#FFD000","important");
     document.body.style.setProperty("background","#FFD000","important");
   }else{
-    document.documentElement.style.setProperty("background","#eceef1","important");
-    document.body.style.setProperty("background","#eceef1","important");
+    document.documentElement.style.setProperty("background","#fffbea","important");
+    document.body.style.setProperty("background","linear-gradient(180deg,#ffe500 0,#fff2a3 220px,#fffbea 520px)","important");
     const mainEl=document.querySelector("main");
     if(mainEl) mainEl.style.setProperty("background","transparent","important");
   }
