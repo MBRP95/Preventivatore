@@ -38,16 +38,19 @@ href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 
   .flyer-pick{margin-top:14px}
   .flyer-canvas{position:relative;width:100%;cursor:crosshair;user-select:none;touch-action:none}
   .flyer-canvas img{display:block;width:100%;height:auto;border:2px solid #111;border-radius:12px;background:#FFD000}
-  .flyer-box{position:absolute;box-sizing:border-box;border:3px solid #111;background:#111;color:#FFD000;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:999px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111;cursor:grab;animation:flyer-box-pulse 1.25s ease-in-out infinite}
+  .flyer-box{position:absolute;box-sizing:border-box;border:var(--cta-border,2px) solid #111;background:#111;color:#FFD000;font-weight:900;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:999px;overflow:hidden;box-shadow:0 0 0 var(--cta-ring,2px) #fff,0 0 0 var(--cta-ring2,4px) #111;cursor:grab;animation:flyer-box-pulse 1.25s ease-in-out infinite}
   .flyer-box:active{cursor:grabbing}
-  @keyframes flyer-box-pulse{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #111}50%{box-shadow:0 0 0 7px #fff,0 0 0 11px #111}}
+  @keyframes flyer-box-pulse{
+    0%,100%{box-shadow:0 0 0 var(--cta-ring,2px) #fff,0 0 0 var(--cta-ring2,4px) #111}
+    50%{box-shadow:0 0 0 var(--cta-ring-mid,4px) #fff,0 0 0 var(--cta-ring2-mid,7px) #111}
+  }
   @media (prefers-reduced-motion:reduce){.flyer-box{animation:none}}
-  .flyer-label{display:block;max-width:100%;overflow:visible;text-overflow:clip;white-space:nowrap;pointer-events:none;padding:0 8px;box-sizing:border-box}
-  .flyer-handle{position:absolute;width:16px;height:16px;background:#fff;border:2px solid #111;border-radius:4px;z-index:2}
-  .flyer-handle.nw{left:-8px;top:-8px;cursor:nwse-resize}
-  .flyer-handle.ne{right:-8px;top:-8px;cursor:nesw-resize}
-  .flyer-handle.sw{left:-8px;bottom:-8px;cursor:nesw-resize}
-  .flyer-handle.se{right:-8px;bottom:-8px;cursor:nwse-resize}
+  .flyer-label{display:block;width:max-content;max-width:none;overflow:visible;text-overflow:clip;white-space:nowrap;pointer-events:none;padding:0;box-sizing:border-box}
+  .flyer-handle{position:absolute;width:var(--handle-size,10px);height:var(--handle-size,10px);background:#fff;border:1px solid #111;border-radius:3px;z-index:2;box-sizing:border-box}
+  .flyer-handle.nw{left:var(--handle-offset,-5px);top:var(--handle-offset,-5px);cursor:nwse-resize}
+  .flyer-handle.ne{right:var(--handle-offset,-5px);top:var(--handle-offset,-5px);cursor:nesw-resize}
+  .flyer-handle.sw{left:var(--handle-offset,-5px);bottom:var(--handle-offset,-5px);cursor:nesw-resize}
+  .flyer-handle.se{right:var(--handle-offset,-5px);bottom:var(--handle-offset,-5px);cursor:nwse-resize}
   .hidden{display:none}
   #liveFrom{max-width:220px}
   footer{max-width:1100px;margin:0 auto;padding:8px 18px 22px;display:flex;justify-content:flex-end}
@@ -660,29 +663,51 @@ function bindFlyerDraw(){
       box.style.width=(area.w*100)+"%";
       box.style.height=(area.h*100)+"%";
       const label=box.querySelector(".flyer-label");
-      // Misura sul box in % del flyer (canvas): font proporzionale al volantino, non allo schermo.
+      // Dimensioni del riquadro in % del flyer: font, breath e maniglie ∝ al box.
       const boxH=Math.max(1, box.clientHeight||canvas.clientHeight*area.h);
       const boxW=Math.max(1, box.clientWidth||canvas.clientWidth*area.w);
-      let lo=8, hi=Math.max(8, Math.floor(boxH*0.7)), best=8;
+      const border=Math.max(1, Math.round(boxH*0.045));
+      const ring=Math.max(1, Math.round(boxH*0.05));
+      const ring2=Math.max(ring+1, Math.round(boxH*0.1));
+      const ringMid=Math.max(ring+1, Math.round(boxH*0.08));
+      const ring2Mid=Math.max(ring2+1, Math.round(boxH*0.15));
+      const handle=Math.max(6, Math.min(12, Math.round(boxH*0.22)));
+      const handleOff=-Math.round(handle/2);
+      box.style.setProperty("--cta-border", border+"px");
+      box.style.setProperty("--cta-ring", ring+"px");
+      box.style.setProperty("--cta-ring2", ring2+"px");
+      box.style.setProperty("--cta-ring-mid", ringMid+"px");
+      box.style.setProperty("--cta-ring2-mid", ring2Mid+"px");
+      box.style.setProperty("--handle-size", handle+"px");
+      box.style.setProperty("--handle-offset", handleOff+"px");
+      box.style.borderWidth=border+"px";
       box.style.whiteSpace="nowrap";
       box.style.lineHeight="1";
       box.style.display="flex";
       box.style.alignItems="center";
       box.style.justifyContent="center";
       box.style.textAlign="center";
+      box.style.overflow="hidden";
+      const padX=Math.max(4, Math.round(boxH*0.12));
+      const availW=Math.max(8, boxW-padX*2);
+      const availH=Math.max(8, boxH);
       if(label){
+        label.style.maxWidth="none";
+        label.style.width="max-content";
         label.style.overflow="visible";
         label.style.textOverflow="clip";
         label.style.whiteSpace="nowrap";
+        label.style.padding="0";
       }
+      let lo=6, hi=Math.max(6, Math.floor(boxH*0.62)), best=6;
       while(lo<=hi){
         const mid=(lo+hi)>>1;
         if(label) label.style.fontSize=mid+"px";
         box.style.fontSize=mid+"px";
         void (label||box).offsetWidth;
         const overflow=label
-          ? (label.scrollWidth>boxW+1||label.scrollHeight>boxH+1)
-          : (box.scrollWidth>boxW+1||box.scrollHeight>boxH+1);
+          ? (label.scrollWidth>availW+0.5||label.scrollHeight>availH+0.5)
+          : (box.scrollWidth>availW+0.5||box.scrollHeight>availH+0.5);
         if(!overflow){ best=mid; lo=mid+1; }
         else hi=mid-1;
       }
