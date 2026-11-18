@@ -59,12 +59,13 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /qart--gas\{margin-right:2px;max-width:168px\}/);
   assert.match(indexSrc, /flatLockedLabel\(\)/);
   assert.match(indexSrc, /setFlyerZoom/);
-  assert.match(indexSrc, /Math\.floor\(boxH\*0\.62\)/);
   assert.match(indexSrc, /applyCtaBreath/);
   assert.match(indexSrc, /--handle-size/);
-  assert.match(indexSrc, /--bg-soft:#f3f3f0/);
+  assert.match(indexSrc, /flyer-label-clip/);
+  assert.match(indexSrc, /--bg-soft:#eceef1/);
   assert.match(indexSrc, /--brand-yellow:#FFD000/);
   assert.match(indexSrc, /Prima layout a px naturali del flyer/);
+  assert.match(indexSrc, /Invariante: riquadro/);
   assert.doesNotMatch(indexSrc, /flyerZoomBtns|flyerZoomIn|flyerZoomOut/);
   assert.doesNotMatch(indexSrc, /\.cta-text\{[^}]*text-overflow:ellipsis/);
   assert.doesNotMatch(indexSrc.slice(0, indexSrc.indexOf('id="cliente-app"')), /"PER 2 ANNI"/);

@@ -6,10 +6,11 @@
 <title>Il tuo preventivo Promo Energia</title>
 <style>
 
-:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#f3f3f0;--bg-soft:#f3f3f0;--brand-yellow:#FFD000}
+:root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#eceef1;--bg-soft:#eceef1;--brand-yellow:#FFD000}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg-soft)}
-header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.leave-btn{border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;flex:0 0 auto}
+html,body{margin:0;background:var(--bg-soft)}
+header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-right:140px}
+.leave-btn{position:fixed;z-index:32;top:10px;left:12px;border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer}
 header .brand{font-weight:900;font-style:italic;letter-spacing:-.3px;font-size:15px}
 header h1{margin:4px 0 0;font-size:34px;line-height:1.05;letter-spacing:-.8px}
 header p{margin:8px 0 0;color:#403c27;font-size:16px}
@@ -118,11 +119,12 @@ body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;paddin
 .flyer-arrow.left{left:12px}
 .flyer-arrow.right{right:12px}
 .flyer-arrow[hidden]{display:none}
-.fs-btn{position:fixed;z-index:30;top:10px;right:12px;border:2px solid #111;background:#FFD000;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 3px 0 #00000040}
+.fs-btn{position:fixed;z-index:31;top:10px;right:12px;border:2px solid #111;background:#FFD000;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 3px 0 #00000040}
 .fs-btn.on{background:#111;color:#FFD000;font-size:11px;padding:4px 7px;box-shadow:none}
 .fs-note{position:fixed;z-index:30;left:16px;right:16px;bottom:64px;margin:0 auto;max-width:560px;background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
 body.fit-flyers .fs-btn{top:auto;right:auto;left:50%;bottom:14px;transform:translateX(-50%)}
 body.fit-flyers .fs-btn.on{bottom:4px}
+body.fit-flyers .leave-btn{top:auto;left:12px;bottom:14px}
 @media (orientation:landscape) and (max-height:900px){
   header{padding:10px 16px 4px}
   header h1{font-size:26px}
@@ -1102,7 +1104,8 @@ function fitFlyerLabel(btn){
   const shell=btn.querySelector(".cta-fit");
   const label=btn.querySelector(".cta-text")||shell||btn;
   if(!shell) return;
-  // Misura senza max-width/ellipsis: altrimenti scrollWidth ≈ clientWidth e il font resta troppo grande.
+  // Invariante: riquadro = % del flyer; font in px naturali del flyer.
+  // Dopo scale(schermo) riquadro+scritta restano identici rispetto al volantino.
   const boxW=btn.clientWidth;
   const boxH=btn.clientHeight;
   const padX=Math.max(4, Math.round(boxH*0.12));
@@ -1116,7 +1119,7 @@ function fitFlyerLabel(btn){
   label.style.whiteSpace="nowrap";
   const availW=Math.max(8, boxW-padX*2);
   const availH=Math.max(8, boxH);
-  let lo=6, hi=Math.max(6, Math.floor(boxH*0.62)), best=6;
+  let lo=6, hi=Math.max(6, Math.floor(availH*0.72)), best=6;
   while(lo<=hi){
     const mid=(lo+hi)>>1;
     label.style.fontSize=mid+"px";
@@ -1502,6 +1505,10 @@ function render(){
   const id=list[stepIndex];
   document.body.classList.toggle("fit-result",id==="result");
   document.body.classList.toggle("fit-flyers",id==="flyers");
+  if(id!=="flyers"){
+    document.documentElement.style.background="";
+    document.body.style.background="";
+  }
   if(id==="flyers"){render.lastId=id;renderFlyers();return}
   const view=VIEWS[id]();
   const known=!!answers.services;
