@@ -70,6 +70,7 @@ test("index espone pubblicazione Firebase e regole listini", () => {
   assert.match(indexSrc, /Invariante: riquadro/);
   assert.doesNotMatch(indexSrc, /flyerZoomBtns|flyerZoomIn|flyerZoomOut/);
   assert.doesNotMatch(indexSrc, /flyer-arrow|flyerPrev|flyerNext/);
+  assert.doesNotMatch(indexSrc, /quote-zoom|id="zoomIn"|id="zoomOut"/);
   assert.match(indexSrc, /flyer-dots/);
   assert.doesNotMatch(indexSrc, /\.cta-text\{[^}]*text-overflow:ellipsis/);
   assert.doesNotMatch(indexSrc.slice(0, indexSrc.indexOf('id="cliente-app"')), /"PER 2 ANNI"/);
