@@ -117,10 +117,10 @@ html.fit-flyers{background:#FFD000!important;background-color:#FFD000!important}
   50%{box-shadow:0 0 0 var(--cta-ring-mid,7px) #fff,0 0 0 var(--cta-ring2-mid,11px) #111}
 }
 @media (prefers-reduced-motion:reduce){.flyer-cta{animation:none}}
-.flyer-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:5;width:56px;height:56px;border-radius:50%;border:2px solid #111;background:#fff;color:#111;font:900 34px/1 Arial,Helvetica,sans-serif;cursor:pointer}
-.flyer-arrow.left{left:12px}
-.flyer-arrow.right{right:12px}
-.flyer-arrow[hidden]{display:none}
+.flyer-dots{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:5;display:flex;gap:8px;pointer-events:none}
+.flyer-dots i{width:8px;height:8px;border-radius:50%;background:#1113;border:1.5px solid #111;box-sizing:border-box}
+.flyer-dots i.on{background:#111}
+body.fit-flyers .flyer-dots{bottom:72px}
 .fs-btn{position:fixed;z-index:31;top:10px;right:12px;border:2px solid #111;background:#FFD000;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 3px 0 #00000040}
 .fs-btn.on{background:#111;color:#FFD000;font-size:11px;padding:4px 7px;box-shadow:none}
 .fs-note{position:fixed;z-index:30;left:16px;right:16px;bottom:64px;margin:0 auto;max-width:560px;background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
@@ -1192,7 +1192,8 @@ function renderFlyers(){
   const ctaLabel=area
     ? `<span class="cta-fit"><span class="cta-text">Calcola il preventivo per te! <span class="cta-arrow" aria-hidden="true">→</span></span></span>`
     : `Calcola il preventivo per te!<span aria-hidden="true">→</span>`;
-  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">${ctaLabel}</button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
+  const dots=n>1?`<div class="flyer-dots" aria-hidden="true">${Array.from({length:n},(_,i)=>`<i class="${i===flyerIndex?"on":""}"></i>`).join("")}</div>`:"";
+  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">${ctaLabel}</button></div></div></div>${dots}`;
   const btn=$("flyerCta");
   if(area){
     btn.classList.add("pos-custom");
@@ -1207,32 +1208,44 @@ function renderFlyers(){
   img.src=pages[flyerIndex];
   if(img.complete)fitFlyer();
   $("flyerCta").addEventListener("click",()=>{const i=steps().indexOf("services");stepIndex=i<0?1:i;render()});
-  const prev=$("flyerPrev"), next=$("flyerNext");
-  if(prev)prev.addEventListener("click",()=>{flyerIndex--;renderFlyers()});
-  if(next)next.addEventListener("click",()=>{flyerIndex++;renderFlyers()});
   const frame=$("flyerFit");
-  let x0=null, pinch0=0, zoom0=1;
+  let x0=null, y0=null, pinch0=0, zoom0=1, swiping=false;
   const pinchDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
   frame.addEventListener("touchstart",ev=>{
     if(ev.touches.length===2){
-      x0=null;
+      x0=y0=null; swiping=false;
       pinch0=pinchDist(ev.touches);
       zoom0=flyerZoom;
       return;
     }
-    if(ev.changedTouches[0])x0=ev.changedTouches[0].clientX;
+    if(ev.changedTouches[0]){
+      x0=ev.changedTouches[0].clientX;
+      y0=ev.changedTouches[0].clientY;
+      swiping=false;
+    }
   },{passive:true});
   frame.addEventListener("touchmove",ev=>{
-    if(ev.touches.length!==2||!pinch0)return;
-    ev.preventDefault();
-    setFlyerZoom(zoom0*pinchDist(ev.touches)/pinch0);
+    if(ev.touches.length===2&&pinch0){
+      ev.preventDefault();
+      setFlyerZoom(zoom0*pinchDist(ev.touches)/pinch0);
+      return;
+    }
+    if(x0==null||y0==null||ev.touches.length!==1||flyerZoom>1.01)return;
+    const t=ev.touches[0];
+    const dx=t.clientX-x0, dy=t.clientY-y0;
+    if(Math.abs(dx)>24 && Math.abs(dx)>Math.abs(dy)*1.25) swiping=true;
   },{passive:false});
   frame.addEventListener("touchend",ev=>{
     if(ev.touches.length<2)pinch0=0;
-    if(x0==null||!ev.changedTouches[0]||flyerZoom>1.01){x0=null;return}
-    const dx=ev.changedTouches[0].clientX-x0; x0=null;
-    if(dx<-50&&flyerIndex<n-1){flyerIndex++;renderFlyers()}
-    else if(dx>50&&flyerIndex>0){flyerIndex--;renderFlyers()}
+    if(x0==null||y0==null||!ev.changedTouches[0]||flyerZoom>1.01){x0=y0=null;swiping=false;return}
+    const dx=ev.changedTouches[0].clientX-x0;
+    const dy=ev.changedTouches[0].clientY-y0;
+    x0=y0=null;
+    const horizontal=swiping || (Math.abs(dx)>48 && Math.abs(dx)>Math.abs(dy)*1.25);
+    swiping=false;
+    if(!horizontal||n<2)return;
+    if(dx<-48&&flyerIndex<n-1){flyerIndex++;renderFlyers()}
+    else if(dx>48&&flyerIndex>0){flyerIndex--;renderFlyers()}
   },{passive:true});
   if(window.__fitFlyer)window.removeEventListener("resize",window.__fitFlyer);
   window.__fitFlyer=()=>{if(document.body.classList.contains("fit-flyers"))fitFlyer()};
