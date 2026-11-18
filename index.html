@@ -3832,8 +3832,10 @@ body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden
 body.fit-flyers header,body.fit-flyers footer{display:none}
 body.fit-flyers main{flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:0;display:flex;align-self:stretch}
 body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;display:flex;align-self:stretch;max-width:none;position:relative}
-.flyer-fit{position:fixed;inset:0;z-index:1;min-width:0;min-height:0;width:auto;height:auto;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:auto}
+.flyer-fit{position:fixed;inset:0;z-index:1;min-width:0;min-height:0;width:auto;height:auto;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:auto;touch-action:pan-x pan-y}
+.flyer-fit.is-zoomed{overflow:auto;align-items:flex-start;justify-content:flex-start;-webkit-overflow-scrolling:touch}
 .flyer-slot{position:relative;flex:none;margin:0}
+.flyer-fit.is-zoomed .flyer-slot{margin:0}
 .flyer-page{position:absolute;left:0;top:0}
 .flyer-page img{display:block;width:100%;height:100%}
 .flyer-cta{position:absolute;z-index:3;border:4px solid #111;background:#111;color:#FFD000;font:900 28px/1 Arial,Helvetica,sans-serif;letter-spacing:-.3px;border-radius:999px;padding:14px 16px 14px 20px;cursor:pointer;white-space:nowrap;box-shadow:0 0 0 5px #fff,0 0 0 9px #111;animation:flyer-cta-pulse 1.25s ease-in-out infinite}
@@ -3841,19 +3843,24 @@ body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;paddin
 .flyer-page.pos-gap .flyer-cta{top:3.6%;right:24.8%;font-size:24px;padding:12px 14px 12px 16px;letter-spacing:-.4px}
 .flyer-page.pos-gap .flyer-cta span{margin-left:6px}
 .flyer-page.pos-corner .flyer-cta{top:12.4%;right:2.6%}
-.flyer-cta.pos-custom{right:auto;left:auto;display:block;padding:0;overflow:hidden;box-sizing:border-box;font-size:0}
-.flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:1% 0}
-.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:-1px;color:#FFD000;white-space:nowrap}
+.flyer-cta.pos-custom{right:auto;left:auto;display:block;padding:0;overflow:hidden;box-sizing:border-box;font-size:0;border-width:3px;box-shadow:0 0 0 3px #fff,0 0 0 6px #111}
+.flyer-cta.pos-custom .cta-fit{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:100%;padding:0}
+.flyer-cta.pos-custom .cta-text{display:block;max-width:100%;text-align:center;line-height:1;font:900 16px/1 Arial,Helvetica,sans-serif;letter-spacing:0;color:#FFD000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;box-sizing:border-box}
 .flyer-cta.pos-custom .cta-arrow{margin-left:.25em}
 .flyer-cta:hover{background:#000}
 .flyer-cta:focus{outline:3px solid #111;outline-offset:6px}
 .flyer-cta:active{transform:scale(.98)}
 @keyframes flyer-cta-pulse{0%,100%{box-shadow:0 0 0 4px #fff,0 0 0 8px #111}50%{box-shadow:0 0 0 9px #fff,0 0 0 14px #111}}
+.flyer-cta.pos-custom{animation:flyer-cta-pulse-custom 1.25s ease-in-out infinite}
+@keyframes flyer-cta-pulse-custom{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 6px #111}50%{box-shadow:0 0 0 7px #fff,0 0 0 11px #111}}
 @media (prefers-reduced-motion:reduce){.flyer-cta{animation:none}}
 .flyer-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:5;width:56px;height:56px;border-radius:50%;border:2px solid #111;background:#fff;color:#111;font:900 34px/1 Arial,Helvetica,sans-serif;cursor:pointer}
 .flyer-arrow.left{left:12px}
 .flyer-arrow.right{right:12px}
 .flyer-arrow[hidden]{display:none}
+.flyer-zoom{position:fixed;z-index:6;top:12px;right:12px;display:flex;gap:6px}
+.flyer-zoom button{width:44px;height:44px;padding:0;border:2px solid #111;border-radius:12px;background:#fff;color:#111;font:900 24px/1 Arial,Helvetica,sans-serif;cursor:pointer;box-shadow:0 3px 0 #00000030}
+body.fit-flyers.fs-on .flyer-zoom{top:12px;right:12px}
 .fs-btn{position:fixed;z-index:30;top:10px;right:12px;border:2px solid #111;background:#FFD000;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer;box-shadow:0 3px 0 #00000040}
 .fs-btn.on{background:#111;color:#FFD000;font-size:11px;padding:4px 7px;box-shadow:none}
 .fs-note{position:fixed;z-index:30;left:16px;right:16px;bottom:64px;margin:0 auto;max-width:560px;background:#111;color:#FFD000;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}
@@ -4825,24 +4832,27 @@ function flyerButtonArea(index){
     return {x,y,w,h};
   }catch(e){return null}
 }
+let flyerZoom=1;
+function setFlyerZoom(next){
+  flyerZoom=Math.max(1, Math.min(4, Number(next)||1));
+  fitFlyer();
+}
 function fitFlyerLabel(btn){
   if(!btn||!btn.clientWidth||!btn.clientHeight)return;
   const shell=btn.querySelector(".cta-fit");
   const label=btn.querySelector(".cta-text")||shell||btn;
   if(!shell) return;
-  // Margine dalle curve del pill (basta ~1/3 altezza): più spazio = scritta più grande.
-  const inset=Math.max(8, Math.ceil(btn.clientHeight*0.34));
-  shell.style.paddingLeft=inset+"px";
-  shell.style.paddingRight=inset+"px";
-  const availW=Math.max(8, shell.clientWidth-inset*2-1);
-  const availH=Math.max(8, shell.clientHeight);
-  let lo=10, hi=Math.max(10, availH), best=10;
+  // Stesso algoritmo dell'anteprima admin: padding 8px e tetto al 72% dell'altezza.
+  shell.style.paddingLeft="0px";
+  shell.style.paddingRight="0px";
+  const boxH=Math.max(1, btn.clientHeight);
+  let lo=10, hi=Math.max(10, Math.floor(boxH*0.72)), best=10;
   while(lo<=hi){
     const mid=(lo+hi)>>1;
     label.style.fontSize=mid+"px";
     void label.offsetWidth;
-    const fits=label.scrollWidth<=availW+1&&label.scrollHeight<=availH+1;
-    if(fits){ best=mid; lo=mid+1; }
+    const overflow=label.scrollWidth>btn.clientWidth+1||label.scrollHeight>btn.clientHeight+1;
+    if(!overflow){ best=mid; lo=mid+1; }
     else hi=mid-1;
   }
   label.style.fontSize=best+"px";
@@ -4856,11 +4866,18 @@ function fitFlyer(){
   const pw=img.naturalWidth, ph=img.naturalHeight;
   const fw=frame.clientWidth, fh=frame.clientHeight;
   if(!fw||!fh)return;
-  const scale=Math.min(fw/pw, fh/ph);
+  const base=Math.min(fw/pw, fh/ph);
+  const scale=base*flyerZoom;
+  const zoomed=flyerZoom>1.01;
+  frame.classList.toggle("is-zoomed", zoomed);
   page.style.transform=`scale(${scale})`;
   page.style.transformOrigin="top left";
   slot.style.width=(pw*scale)+"px";
   slot.style.height=(ph*scale)+"px";
+  if(!zoomed){
+    frame.scrollLeft=0;
+    frame.scrollTop=0;
+  }
   const cta=$("flyerCta");
   if(cta&&cta.classList.contains("pos-custom"))fitFlyerLabel(cta);
 }
@@ -4869,13 +4886,14 @@ function renderFlyers(){
   if(!pages.length){stepIndex=Math.max(stepIndex,1);render();return}
   if(flyerIndex<0)flyerIndex=0;
   if(flyerIndex>=pages.length)flyerIndex=pages.length-1;
+  flyerZoom=1;
   const area=flyerButtonArea(flyerIndex);
   const pos=area?"pos-custom":(flyerIndex===0?"pos-gap":"pos-corner");
   const n=pages.length;
   const ctaLabel=area
-    ? `<span class="cta-fit"><span class="cta-text">Calcola il preventivo per te!<span class="cta-arrow" aria-hidden="true">→</span></span></span>`
+    ? `<span class="cta-fit"><span class="cta-text">Calcola il preventivo per te! <span class="cta-arrow" aria-hidden="true">→</span></span></span>`
     : `Calcola il preventivo per te!<span aria-hidden="true">→</span>`;
-  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">${ctaLabel}</button></div></div></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
+  $("step").innerHTML=`<div class="flyer-fit" id="flyerFit"><div class="flyer-slot" id="flyerSlot"><div class="flyer-page ${pos}" id="flyerPage"><img id="flyerImg" alt="Volantino ${flyerIndex+1} di ${n}"><button type="button" class="flyer-cta" id="flyerCta">${ctaLabel}</button></div></div></div><div class="flyer-zoom" id="flyerZoomBtns"><button type="button" id="flyerZoomOut" aria-label="Riduci volantino">−</button><button type="button" id="flyerZoomIn" aria-label="Ingrandisci volantino">+</button></div>${n>1?`<button type="button" class="flyer-arrow left" id="flyerPrev" aria-label="Volantino precedente"${flyerIndex===0?" hidden":""}>‹</button><button type="button" class="flyer-arrow right" id="flyerNext" aria-label="Volantino successivo"${flyerIndex===n-1?" hidden":""}>›</button>`:""}`;
   const btn=$("flyerCta");
   if(area){
     btn.classList.add("pos-custom");
@@ -4893,14 +4911,38 @@ function renderFlyers(){
   const prev=$("flyerPrev"), next=$("flyerNext");
   if(prev)prev.addEventListener("click",()=>{flyerIndex--;renderFlyers()});
   if(next)next.addEventListener("click",()=>{flyerIndex++;renderFlyers()});
-  let x0=null;
-  $("flyerFit").addEventListener("touchstart",ev=>{if(ev.changedTouches[0])x0=ev.changedTouches[0].clientX},{passive:true});
-  $("flyerFit").addEventListener("touchend",ev=>{
-    if(x0==null||!ev.changedTouches[0])return;
+  const zoomIn=$("flyerZoomIn"), zoomOut=$("flyerZoomOut");
+  if(zoomIn)zoomIn.addEventListener("click",()=>setFlyerZoom(flyerZoom*1.25));
+  if(zoomOut)zoomOut.addEventListener("click",()=>setFlyerZoom(flyerZoom/1.25));
+  const frame=$("flyerFit");
+  let x0=null, pinch0=0, zoom0=1;
+  const pinchDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  frame.addEventListener("touchstart",ev=>{
+    if(ev.touches.length===2){
+      x0=null;
+      pinch0=pinchDist(ev.touches);
+      zoom0=flyerZoom;
+      return;
+    }
+    if(ev.changedTouches[0])x0=ev.changedTouches[0].clientX;
+  },{passive:true});
+  frame.addEventListener("touchmove",ev=>{
+    if(ev.touches.length!==2||!pinch0)return;
+    ev.preventDefault();
+    setFlyerZoom(zoom0*pinchDist(ev.touches)/pinch0);
+  },{passive:false});
+  frame.addEventListener("touchend",ev=>{
+    if(ev.touches.length<2)pinch0=0;
+    if(x0==null||!ev.changedTouches[0]||flyerZoom>1.01){x0=null;return}
     const dx=ev.changedTouches[0].clientX-x0; x0=null;
     if(dx<-50&&flyerIndex<n-1){flyerIndex++;renderFlyers()}
     else if(dx>50&&flyerIndex>0){flyerIndex--;renderFlyers()}
   },{passive:true});
+  frame.addEventListener("wheel",ev=>{
+    if(!ev.ctrlKey&&!ev.metaKey)return;
+    ev.preventDefault();
+    setFlyerZoom(flyerZoom*(ev.deltaY<0?1.12:1/1.12));
+  },{passive:false});
   if(window.__fitFlyer)window.removeEventListener("resize",window.__fitFlyer);
   window.__fitFlyer=()=>{if(document.body.classList.contains("fit-flyers"))fitFlyer()};
   window.addEventListener("resize",window.__fitFlyer);
@@ -5390,10 +5432,19 @@ function bindFullscreen(){
     }
     syncFsBtn();
   });
-  const onChange=()=>{syncFsBtn();quoteZoom=1;if(window.__fitFlyer)window.__fitFlyer();setTimeout(fitQuote,60);setTimeout(fitQuote,280)};
+  const onChange=()=>{
+    syncFsBtn();
+    document.body.classList.toggle("fs-on", !!fsElement());
+    quoteZoom=1;
+    flyerZoom=1;
+    if(window.__fitFlyer)window.__fitFlyer();
+    setTimeout(fitQuote,60);
+    setTimeout(fitQuote,280);
+  };
   document.addEventListener("fullscreenchange",onChange);
   document.addEventListener("webkitfullscreenchange",onChange);
   syncFsBtn();
+  document.body.classList.toggle("fs-on", !!fsElement());
   const leave=$("leaveBtn");
   const leaveParent=window.parent&&window.parent!==window?window.parent:null;
   if(leave&&leaveParent&&typeof leaveParent.__logoutStaff==="function"){
