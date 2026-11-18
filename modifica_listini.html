@@ -666,19 +666,18 @@ function bindFlyerDraw(){
       box.style.height=(area.h*100)+"%";
       const label=box.querySelector(".flyer-label");
       const clip=box.querySelector(".flyer-label-clip");
+      // Prima stima altezza (pre-bordo) solo per border/pad/ring ∝ box.
       void box.offsetWidth;
-      // Dimensioni del riquadro in % del flyer: font, breath e maniglie ∝ al box.
-      const boxH=Math.max(1, box.clientHeight||canvas.clientHeight*area.h);
-      const boxW=Math.max(1, box.clientWidth||canvas.clientWidth*area.w);
-      const border=Math.max(1, Math.round(boxH*0.045));
-      const ring=Math.max(1, Math.round(boxH*0.05));
-      const ring2=Math.max(ring+1, Math.round(boxH*0.1));
-      const ringMid=Math.max(ring+1, Math.round(boxH*0.08));
-      const ring2Mid=Math.max(ring2+1, Math.round(boxH*0.15));
+      const roughH=Math.max(1, box.clientHeight||canvas.clientHeight*area.h);
+      const border=Math.max(1, Math.round(roughH*0.045));
+      const ring=Math.max(1, Math.round(roughH*0.05));
+      const ring2=Math.max(ring+1, Math.round(roughH*0.1));
+      const ringMid=Math.max(ring+1, Math.round(roughH*0.08));
+      const ring2Mid=Math.max(ring2+1, Math.round(roughH*0.15));
       // Maniglie piccole (non coprono la scritta); il tocco resta ampio via ::after.
       const handle=8;
       const handleOff=-(Math.round(handle/2)+6);
-      const padX=Math.max(6, Math.round(boxH*0.14));
+      const padX=Math.max(4, Math.round(roughH*0.12));
       box.style.setProperty("--cta-border", border+"px");
       box.style.setProperty("--cta-ring", ring+"px");
       box.style.setProperty("--cta-ring2", ring2+"px");
@@ -689,47 +688,50 @@ function bindFlyerDraw(){
       box.style.setProperty("--label-pad", padX+"px");
       box.style.borderWidth=border+"px";
       box.style.overflow="visible";
-      // clientWidth/Height sono già dentro il bordo.
-      const availW=Math.max(4, boxW-padX*2);
-      const availH=Math.max(4, boxH);
       if(clip){
         clip.style.paddingLeft=clip.style.paddingRight=padX+"px";
-        clip.style.overflow="visible"; // misura reale (hidden sottostima scrollWidth su mobile)
+        clip.style.overflow="hidden";
       }
+      // Misura DOPO il bordo: con border-box clientWidth si riduce, altrimenti la scritta esce.
+      void box.offsetWidth;
+      const boxH=Math.max(1, box.clientHeight||Math.max(1, roughH-border*2));
+      const boxW=Math.max(1, box.clientWidth||canvas.clientWidth*area.w);
+      const availW=Math.max(4, boxW-padX*2);
+      const availH=Math.max(4, boxH);
       if(label){
+        const text=String(label.textContent||"").replace(/\s+/g," ").trim();
         label.style.maxWidth="none";
         label.style.width="max-content";
         label.style.overflow="visible";
         label.style.whiteSpace="nowrap";
         label.style.padding="0";
+        label.style.margin="0";
+        label.style.transform="none";
+        label.style.transformOrigin="center center";
         label.style.fontFamily="Arial,Helvetica,sans-serif";
         label.style.fontWeight="900";
         label.style.lineHeight="1";
         label.style.letterSpacing="0";
-      }
-      let lo=6, hi=Math.max(6, Math.floor(availH*0.78)), best=6;
-      const fitsAt=px=>{
-        if(!label) return true;
-        label.style.fontSize=px+"px";
+        // Canvas measureText: affidabile su mobile (scrollWidth/getBoundingClientRect no).
+        const ctx=(bindFlyerDraw._fitCtx||(bindFlyerDraw._fitCtx=document.createElement("canvas").getContext("2d")));
+        let lo=6, hi=Math.max(6, Math.floor(availH*0.9)), best=6;
+        while(lo<=hi){
+          const mid=(lo+hi)>>1;
+          ctx.font="900 "+mid+"px Arial,Helvetica,sans-serif";
+          const w=ctx.measureText(text).width;
+          if(w<=availW && mid<=availH){ best=mid; lo=mid+1; }
+          else hi=mid-1;
+        }
+        label.style.fontSize=best+"px";
         void label.offsetWidth;
-        const r=label.getBoundingClientRect();
-        const w=Math.max(label.scrollWidth||0, r.width||0);
-        const h=Math.max(label.scrollHeight||0, r.height||0);
-        return w<=availW+0.5 && h<=availH+0.5;
-      };
-      while(lo<=hi){
-        const mid=(lo+hi)>>1;
-        if(fitsAt(mid)){ best=mid; lo=mid+1; }
-        else hi=mid-1;
+        // Cintura di sicurezza: se ancora overflow, scala il testo nel riquadro.
+        const rw=Math.max(label.scrollWidth||0, label.getBoundingClientRect().width||0);
+        const rh=Math.max(label.scrollHeight||0, label.getBoundingClientRect().height||0);
+        if(rw>availW+0.5 || rh>availH+0.5){
+          const s=Math.max(0.35, Math.min(1, availW/Math.max(rw,1), availH/Math.max(rh,1)));
+          label.style.transform="scale("+s+")";
+        }
       }
-      if(label){
-        label.style.fontSize=best+"px";
-        // Riduci ancora se dopo il layout resta overflow (pinch/zoom/subpixel).
-        let guard=24;
-        while(guard-- > 0 && best>6 && !fitsAt(best)){ best-=1; }
-        label.style.fontSize=best+"px";
-      }
-      if(clip) clip.style.overflow="hidden";
     };
     const refreshStatus=()=>{const status=$("flyerStatus");if(status)status.textContent=flyerStatusText()};
     paint(activeButtons()[i]);
@@ -784,7 +786,30 @@ function bindFlyerDraw(){
       syncClear();
       refreshStatus();
     });
+    canvas.__flyerPaint=paint;
+    const img=canvas.querySelector("img");
+    if(img){
+      const refit=()=>paint(activeButtons()[i]);
+      if(!img.complete) img.addEventListener("load", refit, {once:true});
+      else requestAnimationFrame(refit);
+    }
   });
+  if(!bindFlyerDraw._resizeBound){
+    bindFlyerDraw._resizeBound=true;
+    let t=0;
+    window.addEventListener("resize",()=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{
+        document.querySelectorAll(".flyer-canvas").forEach(canvas=>{
+          if(typeof canvas.__flyerPaint==="function"){
+            const i=Number(canvas.dataset.i);
+            const area=Array.isArray(flyerButtons)?flyerButtons[i]:null;
+            try{ canvas.__flyerPaint(area); }catch(e){}
+          }
+        });
+      }, 80);
+    });
+  }
 }
 function renderEditor(){
   const c=catalog;
