@@ -3750,13 +3750,13 @@ setToolMode("mix");
 
 :root{font-family:Arial,Helvetica,sans-serif;color:#242424;background:#eceef1;--bg-soft:#eceef1;--brand-yellow:#FFD000}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg-soft)}
-header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-right:140px}
+html,body{margin:0;min-height:100%;background:#eceef1!important;background-color:#eceef1!important}
+header{padding:28px 20px 10px;max-width:920px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-right:140px;background:transparent}
 .leave-btn{position:fixed;z-index:32;top:10px;left:12px;border:2px solid #111;background:#fff;color:#111;font:900 15px/1 Arial,Helvetica,sans-serif;border-radius:999px;padding:10px 14px;cursor:pointer}
 header .brand{font-weight:900;font-style:italic;letter-spacing:-.3px;font-size:15px}
 header h1{margin:4px 0 0;font-size:34px;line-height:1.05;letter-spacing:-.8px}
 header p{margin:8px 0 0;color:#403c27;font-size:16px}
-main{max-width:920px;margin:0 auto;padding:8px 16px 28px}
+main{max-width:920px;margin:0 auto;padding:8px 16px 28px;background:transparent}
 #step{background:#fff;border:1px solid #eadf83;border-top:4px solid #111;border-radius:18px;padding:22px 20px 18px;box-shadow:0 10px 28px #3e330d14}
 .progress{height:8px;background:#fff3b0;border-radius:99px;overflow:hidden}
 .progress span{display:block;height:100%;background:#111}
@@ -3829,10 +3829,11 @@ body.fit-result #step .nav button{flex:1;height:28px;padding:0 8px;font-size:13p
   .quote-zoom{height:24px}
   .quote-zoom button{width:24px;height:24px;font-size:15px}
 }
-body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:var(--brand-yellow)}
+body.fit-flyers{display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:#FFD000!important;background-color:#FFD000!important}
 body.fit-flyers header,body.fit-flyers footer{display:none}
-body.fit-flyers main{flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:0;display:flex;align-self:stretch;background:var(--brand-yellow)}
+body.fit-flyers main{flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:0;display:flex;align-self:stretch;background:#FFD000!important;background-color:#FFD000!important}
 body.fit-flyers #step{flex:1;min-width:0;width:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;display:flex;align-self:stretch;max-width:none;position:relative}
+html.fit-flyers{background:#FFD000!important;background-color:#FFD000!important}
 .flyer-fit{position:fixed;inset:0;z-index:1;min-width:0;min-height:0;width:auto;height:auto;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:auto;touch-action:pan-x pan-y}
 .flyer-fit.is-zoomed{overflow:auto;align-items:flex-start;justify-content:flex-start;-webkit-overflow-scrolling:touch}
 .flyer-slot{position:relative;flex:none;margin:0}
@@ -4871,18 +4872,32 @@ function fitFlyerLabel(btn){
   label.style.overflow="visible";
   label.style.textOverflow="clip";
   label.style.whiteSpace="nowrap";
-  const availW=Math.max(8, boxW-padX*2);
-  const availH=Math.max(8, boxH);
-  let lo=6, hi=Math.max(6, Math.floor(availH*0.72)), best=6;
+  label.style.fontFamily="Arial,Helvetica,sans-serif";
+  label.style.fontWeight="900";
+  label.style.lineHeight="1";
+  label.style.letterSpacing="0";
+  const availW=Math.max(4, boxW-padX*2);
+  const availH=Math.max(4, boxH);
+  const prevOverflow=shell.style.overflow;
+  shell.style.overflow="visible";
+  let lo=6, hi=Math.max(6, Math.floor(availH*0.78)), best=6;
+  const fitsAt=px=>{
+    label.style.fontSize=px+"px";
+    void label.offsetWidth;
+    const r=label.getBoundingClientRect();
+    const w=Math.max(label.scrollWidth||0, r.width||0);
+    const h=Math.max(label.scrollHeight||0, r.height||0);
+    return w<=availW+0.5 && h<=availH+0.5;
+  };
   while(lo<=hi){
     const mid=(lo+hi)>>1;
-    label.style.fontSize=mid+"px";
-    void label.offsetWidth;
-    const fits=label.scrollWidth<=availW+0.5&&label.scrollHeight<=availH+0.5;
-    if(fits){ best=mid; lo=mid+1; }
+    if(fitsAt(mid)){ best=mid; lo=mid+1; }
     else hi=mid-1;
   }
+  let guard=24;
+  while(guard-- > 0 && best>6 && !fitsAt(best)){ best-=1; }
   label.style.fontSize=best+"px";
+  shell.style.overflow=prevOverflow||"hidden";
 }
 function fitFlyer(){
   const frame=$("flyerFit"), slot=$("flyerSlot"), page=$("flyerPage"), img=$("flyerImg");
@@ -5259,9 +5274,16 @@ function render(){
   const id=list[stepIndex];
   document.body.classList.toggle("fit-result",id==="result");
   document.body.classList.toggle("fit-flyers",id==="flyers");
-  if(id!=="flyers"){
-    document.documentElement.style.background="";
-    document.body.style.background="";
+  document.documentElement.classList.toggle("fit-flyers",id==="flyers");
+  // Solo i volantini sono gialli; wizard/result restano grigio soft (niente cache gialla).
+  if(id==="flyers"){
+    document.documentElement.style.setProperty("background","#FFD000","important");
+    document.body.style.setProperty("background","#FFD000","important");
+  }else{
+    document.documentElement.style.setProperty("background","#eceef1","important");
+    document.body.style.setProperty("background","#eceef1","important");
+    const mainEl=document.querySelector("main");
+    if(mainEl) mainEl.style.setProperty("background","transparent","important");
   }
   if(id==="flyers"){render.lastId=id;renderFlyers();return}
   const view=VIEWS[id]();
@@ -6422,28 +6444,47 @@ function bindFlyerDraw(){
       box.style.setProperty("--label-pad", padX+"px");
       box.style.borderWidth=border+"px";
       box.style.overflow="visible";
-      const availW=Math.max(8, boxW-padX*2-border*2);
-      const availH=Math.max(8, boxH-border*2);
+      // clientWidth/Height sono già dentro il bordo.
+      const availW=Math.max(4, boxW-padX*2);
+      const availH=Math.max(4, boxH);
+      if(clip){
+        clip.style.paddingLeft=clip.style.paddingRight=padX+"px";
+        clip.style.overflow="visible"; // misura reale (hidden sottostima scrollWidth su mobile)
+      }
       if(label){
         label.style.maxWidth="none";
         label.style.width="max-content";
         label.style.overflow="visible";
         label.style.whiteSpace="nowrap";
         label.style.padding="0";
+        label.style.fontFamily="Arial,Helvetica,sans-serif";
+        label.style.fontWeight="900";
+        label.style.lineHeight="1";
+        label.style.letterSpacing="0";
       }
-      let lo=6, hi=Math.max(6, Math.floor(availH*0.72)), best=6;
+      let lo=6, hi=Math.max(6, Math.floor(availH*0.78)), best=6;
+      const fitsAt=px=>{
+        if(!label) return true;
+        label.style.fontSize=px+"px";
+        void label.offsetWidth;
+        const r=label.getBoundingClientRect();
+        const w=Math.max(label.scrollWidth||0, r.width||0);
+        const h=Math.max(label.scrollHeight||0, r.height||0);
+        return w<=availW+0.5 && h<=availH+0.5;
+      };
       while(lo<=hi){
         const mid=(lo+hi)>>1;
-        if(label) label.style.fontSize=mid+"px";
-        void (label||box).offsetWidth;
-        const fits=label
-          ? (label.scrollWidth<=availW+0.5&&label.scrollHeight<=availH+0.5)
-          : true;
-        if(fits){ best=mid; lo=mid+1; }
+        if(fitsAt(mid)){ best=mid; lo=mid+1; }
         else hi=mid-1;
       }
-      if(label) label.style.fontSize=best+"px";
-      if(clip) clip.style.paddingLeft=clip.style.paddingRight=padX+"px";
+      if(label){
+        label.style.fontSize=best+"px";
+        // Riduci ancora se dopo il layout resta overflow (pinch/zoom/subpixel).
+        let guard=24;
+        while(guard-- > 0 && best>6 && !fitsAt(best)){ best-=1; }
+        label.style.fontSize=best+"px";
+      }
+      if(clip) clip.style.overflow="hidden";
     };
     const refreshStatus=()=>{const status=$("flyerStatus");if(status)status.textContent=flyerStatusText()};
     paint(activeButtons()[i]);
